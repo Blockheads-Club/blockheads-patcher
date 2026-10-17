@@ -1,0 +1,5 @@
+# Cloudflare Pages project (static assets from the SvelteKit build).
+# Deploy: bun run --filter @bh-patcher/app build:web && bunx wrangler pages deploy app/build
+name = "blockheads-patcher"
+pages_build_output_dir = "app/build"
+compatibility_date = "2025-01-01"

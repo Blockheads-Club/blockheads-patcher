@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <queries>
+        <package android:name="com.noodlecake.blockheads" />
+    </queries>
+    <application>
+        <provider
+            android:name="com.blockheadspatcher.apktools.ApkFileProvider"
+            android:authorities="${applicationId}.apkfileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/apk_file_paths" />
+        </provider>
+    </application>
+</manifest>

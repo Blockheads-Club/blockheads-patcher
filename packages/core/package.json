@@ -1,0 +1,25 @@
+{
+  "name": "@bh-patcher/core",
+  "version": "0.1.0",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run --coverage --passWithNoTests",
+    "test:cov": "vitest run --coverage --passWithNoTests"
+  },
+  "dependencies": {
+    "fflate": "0.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.0",
+    "fake-indexeddb": "^6.2.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

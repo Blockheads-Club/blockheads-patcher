@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-installed-package"
+description = "Enables the get_installed_package command without any pre-configured scope."
+commands.allow = ["get_installed_package"]
+
+[[permission]]
+identifier = "deny-get-installed-package"
+description = "Denies the get_installed_package command without any pre-configured scope."
+commands.deny = ["get_installed_package"]

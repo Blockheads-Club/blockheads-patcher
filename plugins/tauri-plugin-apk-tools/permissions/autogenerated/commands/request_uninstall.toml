@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-request-uninstall"
+description = "Enables the request_uninstall command without any pre-configured scope."
+commands.allow = ["request_uninstall"]
+
+[[permission]]
+identifier = "deny-request-uninstall"
+description = "Denies the request_uninstall command without any pre-configured scope."
+commands.deny = ["request_uninstall"]

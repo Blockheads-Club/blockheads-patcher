@@ -1,0 +1,6 @@
+[default]
+description = "Allows all apk-tools commands"
+permissions = [
+  "allow-get-installed-package", "allow-read-installed-apk", "allow-request-uninstall",
+  "allow-install-apk", "allow-can-request-installs", "allow-open-install-settings",
+]
