@@ -1,16 +1,28 @@
 import type { Engine, LoadedApk, ApplicableReport, PatchApkResult } from './engine';
-import type { PickedApk, PlatformAdapter } from './platform/types';
+import { GAME_PACKAGE, type PickedApk, type PlatformAdapter } from './platform/types';
+import { formatBytes } from './format';
 
 export type Stage = 'idle' | 'loaded' | 'patching' | 'done' | 'error';
 export type ProgressStage = 'read' | 'parse' | 'patch' | 'write' | 'sign' | 'done';
+export interface LogLine { time: Date; kind: string; text: string; }
+/** Why the chosen file cannot be patched at all (no patch applies). Shown on the Choose step. */
+export interface Unsupported {
+  name: string; packageName: string; versionName?: string; versionCode?: number;
+  wrongPackage: boolean; reason?: { code: string; params: Record<string, string | number> };
+}
 
 const isCancelled = (e: unknown): boolean => e instanceof Error && e.name === 'CancelledError';
 const tick = () => new Promise<void>((r) => setTimeout(r, 0));
+const errorText = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 export class PatcherState {
   stage = $state<Stage>('idle');
   loading = $state(false);
+  /** File being read right now (name + size) for the Choose step's "reading" state. */
+  pending = $state.raw<{ name: string; size: number } | null>(null);
   picked = $state.raw<PickedApk | null>(null);
+  /** Size of the picked file in bytes (the worker takes ownership of the buffer, so `picked.bytes` is empty afterwards). */
+  fileSize = $state(0);
   loaded = $state.raw<LoadedApk | null>(null);
   report = $state.raw<ApplicableReport>([]);
   selected = $state<string[]>([]);
@@ -18,8 +30,16 @@ export class PatcherState {
   result = $state.raw<PatchApkResult | null>(null);
   /** Raw thrown value; render with describeError() so it is translated. */
   error = $state.raw<unknown>(null);
+  /** Name of the last file the user gave us (kept for the Choose step's error message). */
+  lastName = $state<string | null>(null);
+  unsupported = $state.raw<Unsupported | null>(null);
+  /** True after a failed patch run (not a cancel): the Patch step shows the failure screen. */
+  runFailed = $state(false);
+  /** Technical log for bug reports: real stage transitions with timestamps. */
+  log = $state.raw<LogLine[]>([]);
 
   private abort: AbortController | null = null;
+  private loadSeq = 0;
 
   constructor(readonly platform: PlatformAdapter, readonly engine: Engine) {}
 
@@ -28,23 +48,51 @@ export class PatcherState {
     this.stage === 'idle' || (this.stage === 'error' && !this.loaded) ? 1 : this.stage === 'loaded' ? 2 : this.stage === 'patching' ? 3 : this.stage === 'done' ? 4 : 2
   );
 
+  private addLog(kind: string, text: string): void {
+    this.log = [...this.log, { time: new Date(), kind, text }];
+  }
+
   async load(p: PickedApk): Promise<void> {
+    const seq = ++this.loadSeq;
     this.error = null;
+    this.unsupported = null;
+    this.lastName = p.name;
+    const size = p.bytes.length;
+    this.pending = { name: p.name, size };
     this.loading = true;
+    this.log = [];
+    this.addLog('read', `${p.name} (${formatBytes(p.bytes.length, 'en')})`);
     try {
       await tick();
-      await this.parse(p);
+      const loaded = await this.engine.loadApk(p.bytes);
+      const report = this.engine.listPatches(loaded);
+      if (seq !== this.loadSeq) { this.engine.release?.(loaded); return; }
+      const { packageName, versionName, versionCode } = loaded.info;
+      this.addLog('detect', `${packageName} version ${versionName} (code ${versionCode})`);
+      if (report.length > 0 && report.every((r) => r.status === 'incompatible')) {
+        this.engine.release?.(loaded);
+        this.unsupported = { name: p.name, packageName, versionName, versionCode, wrongPackage: packageName !== GAME_PACKAGE, reason: report[0]!.reasonCode };
+        this.addLog('error', `no patch applies: ${report[0]!.reasonCode?.code ?? 'incompatible'}`);
+        return;
+      }
+      this.adopt(p, loaded, report, size);
     } catch (e) {
-      this.fail(e);
+      if (seq === this.loadSeq) { this.addLog('error', errorText(e)); this.fail(e); }
     } finally {
-      this.loading = false;
+      if (seq === this.loadSeq) { this.loading = false; this.pending = null; }
     }
   }
 
-  private async parse(p: PickedApk): Promise<void> {
-    const loaded = await this.engine.loadApk(p.bytes);
-    const report = this.engine.listPatches(loaded);
+  /** Abandons a file that is still being read; its result is dropped. */
+  cancelLoad(): void {
+    this.loadSeq++;
+    this.loading = false;
+    this.pending = null;
+  }
+
+  private adopt(p: PickedApk, loaded: LoadedApk, report: ApplicableReport, size: number): void {
     this.picked = p;
+    this.fileSize = size;
     this.loaded = loaded;
     this.report = report;
     this.selected = report.filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
@@ -55,17 +103,24 @@ export class PatcherState {
     const picked = this.picked, loaded = this.loaded;
     if (!picked || !loaded || this.selected.length === 0) return;
     this.error = null;
+    this.runFailed = false;
     this.stage = 'patching';
     this.progress = { stage: 'read', fraction: 0 };
+    this.addLog('patch', `start: ${this.selected.join(', ')}`);
     const abort = this.abort = new AbortController();
+    let last: ProgressStage | null = null;
     try {
       await tick();
       // Reuse the already parsed archive (no second read/inflate); it is mutated, so drop it afterwards.
       this.result = await this.engine.patchLoaded(loaded, {
         patchIds: [...this.selected],
         signal: abort.signal,
-        onProgress: (stage, fraction) => { this.progress = { stage, fraction }; }
+        onProgress: (stage, fraction) => {
+          this.progress = { stage, fraction };
+          if (stage !== last) { last = stage; this.addLog(stage, stage === 'sign' ? 'signing' : stage === 'done' ? 'finished' : 'complete'); }
+        }
       });
+      this.addLog('done', `${this.result.suggestedFileName} (${formatBytes(this.result.bytes.length, 'en')})`);
       this.loaded = null; this.picked = null; this.report = [];
       this.stage = 'done';
     } catch (e) {
@@ -75,10 +130,13 @@ export class PatcherState {
           await this.engine.reload(loaded);
           this.report = this.engine.listPatches(loaded);
           this.stage = 'loaded';
-        } else await this.parse(picked);
+        } else {
+          const fresh = await this.engine.loadApk(picked.bytes);
+          this.adopt(picked, fresh, this.engine.listPatches(fresh), this.fileSize);
+        }
       } catch { this.loaded = null; }
-      if (isCancelled(e)) this.stage = this.loaded ? 'loaded' : 'idle';
-      else this.fail(e);
+      if (isCancelled(e)) { this.addLog('cancel', 'cancelled by user'); this.stage = this.loaded ? 'loaded' : 'idle'; }
+      else { this.addLog('error', errorText(e)); this.runFailed = true; this.fail(e); }
     } finally {
       this.abort = null;
     }
@@ -92,6 +150,7 @@ export class PatcherState {
   back(): void {
     this.error = null;
     this.result = null;
+    this.runFailed = false;
     this.stage = this.loaded ? 'loaded' : 'idle';
   }
 
@@ -99,7 +158,7 @@ export class PatcherState {
     if (this.loaded) this.engine.release?.(this.loaded);
     this.stage = 'idle';
     this.picked = null; this.loaded = null; this.report = []; this.selected = [];
-    this.result = null; this.error = null;
+    this.result = null; this.error = null; this.unsupported = null; this.runFailed = false; this.lastName = null; this.log = [];
   }
 
   private fail(e: unknown): void {

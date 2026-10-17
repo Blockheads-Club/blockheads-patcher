@@ -13,16 +13,15 @@ test('placeholders match between en and tr', () => {
   for (const k of Object.keys(en) as (keyof typeof en)[]) expect(ph(tr[k]), k).toBe(ph(en[k]));
 });
 test('required keys exist', () => {
-  for (const k of ['app.title', 'legal.notice', 'picker.choose', 'picker.useInstalled', 'patches.title', 'status.applied',
-    'status.notApplied', 'status.incompatible', 'action.patch', 'result.save', 'result.uninstall', 'result.install',
-    'keys.title', 'keys.export', 'keys.import', 'keys.regenerate', 'error.generic',
-    'patch.fix-welcome-popup-deadlock.name', 'patch.fix-welcome-popup-deadlock.description'])
+  for (const k of ['app.title', 'legal.notice', 'drop.browse', 'installed.use', 'review.patchesFor', 'badge.applied',
+    'result.save', 'swap.s1Button', 'swap.s2Button', 'keys.title', 'keys.export', 'keys.import', 'keys.generate', 'error.generic',
+    'patch.fix-welcome-popup-deadlock.name', 'patch.fix-welcome-popup-deadlock.summary', 'patch.fix-iap-store-font-crash.summary'])
     expect(k in en, k).toBe(true);
 });
 test('interpolation, language switch and persistence', () => {
   setLanguage('tr');
   expect(get(lang)).toBe('tr');
-  expect(get(t)('result.file', { name: 'a.apk' })).toBe('Dosya: a.apk');
+  expect(get(t)('review.detected', { version: '1.7.4' })).toBe('1.7.4 sürümü bulundu');
   expect(localStorage.getItem('bhp.lang')).toBe('tr');
   setLanguage('xx');
   expect(get(lang)).toBe('tr');

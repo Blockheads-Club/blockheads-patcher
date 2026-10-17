@@ -15,15 +15,21 @@ import { get } from 'svelte/store';
 test('layout flags', () => { expect(ssr).toBe(false); expect(prerender).toBe(false); });
 
 test('page renders the app', () => {
+  localStorage.setItem('bhp.consent', '1');
   render(Page);
   expect(document.title).toBeTruthy();
   expect(screen.getAllByRole('heading').length).toBeGreaterThan(0);
 });
 
-test('layout renders children and sets lang', () => {
+test('layout renders children, sprite, sets lang and applies the saved theme', () => {
+  localStorage.setItem('bhp.theme', 'dark');
   render(Layout, { children: createRawSnippet(() => ({ render: () => '<p>kid</p>' })) });
   expect(screen.getByText('kid')).toBeInTheDocument();
   expect(document.documentElement.lang).toBe('en');
+  expect(document.documentElement.dataset.theme).toBe('dark');
+  expect(document.getElementById('i-key')).toBeTruthy();
+  localStorage.removeItem('bhp.theme');
+  document.documentElement.removeAttribute('data-theme');
 });
 
 test('page title follows the language', async () => {

@@ -91,8 +91,8 @@ describe('i18n', () => {
     setLanguage('en');
     const f = get(t);
     expect(f('no.such.key')).toBe('no.such.key');
-    expect(f('result.file', { name: 'a' })).toContain('a');
-    expect(f('result.file', {})).toContain('{name}');
+    expect(f('review.detected', { version: 'a' })).toContain('a');
+    expect(f('review.detected', {})).toContain('{version}');
   });
 });
 
