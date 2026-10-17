@@ -48,7 +48,7 @@ jobs:
             echo "::error::semantic-release dry run failed (exit $status)"
             exit "$status"
           fi
-          version=$(echo "$bunx_out" | sed -n 's/.*The next release version is \(.*\)$/\1/p' | tail -1)
+          version=$(echo "$bunx_out" | sed -n 's/.*[Tt]he next release version is \(.*\)$/\1/p' | tail -1)
           if [ -z "$version" ]; then
             echo "::notice::No releasable commits; nothing to build."
           else
@@ -140,10 +140,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install NDK
         run: |
-          sdkmanager "ndk;27.2.12479018" "platforms;android-36" "platforms;android-37" "build-tools;35.0.0"
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses >/dev/null || true
+          "$SDKM" "ndk;27.2.12479018" "platforms;android-36" "platforms;android-37" "build-tools;35.0.0"
           echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@stable
         with:
