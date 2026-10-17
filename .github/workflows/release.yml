@@ -1,0 +1,216 @@
+name: release
+
+# main = stable (v1.0.0), dev = prerelease channel "dev" (v1.0.0-dev.N). Tags + GitHub release only.
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: next version (semantic-release dry run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      bundle_version: ${{ steps.v.outputs.bundle_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: v
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # semantic-release needs at least one non-prerelease branch (main) to exist on the remote.
+          if ! git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/main
+          fi
+          set +e
+          bunx_out=$(bunx semantic-release@24 --dry-run --no-ci 2>&1)
+          status=$?
+          set -e
+          echo "$bunx_out"
+          if [ "$status" -ne 0 ]; then
+            echo "::error::semantic-release dry run failed (exit $status)"
+            exit "$status"
+          fi
+          version=$(echo "$bunx_out" | sed -n 's/.*The next release version is \(.*\)$/\1/p' | tail -1)
+          if [ -z "$version" ]; then
+            echo "::notice::No releasable commits; nothing to build."
+          else
+            # MSI only accepts numeric prerelease identifiers: 1.0.0-dev.3 -> 1.0.0-3 for bundle metadata.
+            bundle=$(echo "$version" | sed -E 's/-dev\./-/')
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "bundle_version=$bundle" >> "$GITHUB_OUTPUT"
+          fi
+
+  web:
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run --filter @bh-patcher/app build:web
+      - name: Zip
+        run: |
+          mkdir -p dist-release
+          (cd app/build && zip -r -q "$GITHUB_WORKSPACE/dist-release/blockheads-patcher-web-${{ needs.version.outputs.version }}.zip" .)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rel-web
+          path: dist-release/*
+          if-no-files-found: error
+
+  desktop:
+    needs: version
+    if: needs.version.outputs.version != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            args: --bundles nsis,msi
+          - name: linux
+            os: ubuntu-22.04
+            args: --bundles appimage,deb
+          - name: macos
+            os: macos-latest
+            args: --target universal-apple-darwin --bundles dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'macos' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+      - name: Linux system libraries
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
+      - run: bun install --frozen-lockfile
+      - name: Build bundles
+        working-directory: app
+        shell: bash
+        run: bun tauri build ${{ matrix.args }} --config '{"version":"${{ needs.version.outputs.bundle_version }}"}'
+      - name: Collect
+        shell: bash
+        run: |
+          mkdir -p dist-release
+          find app/src-tauri/target -path '*/release/bundle/*' -type f \
+            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) \
+            -exec cp {} dist-release/ \;
+          ls -la dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rel-${{ matrix.name }}
+          path: dist-release/*
+          if-no-files-found: error
+
+  android:
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: ubuntu-latest
+    env:
+      HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install NDK
+        run: |
+          sdkmanager "ndk;27.2.12479018" "platforms;android-36" "platforms;android-37" "build-tools;35.0.0"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri
+      - run: bun install --frozen-lockfile
+      - name: Build APKs (debug, no signing secrets)
+        if: env.HAS_SIGNING != 'true'
+        working-directory: app
+        run: bun tauri android build --debug --apk --split-per-abi --target aarch64 --target armv7 --target x86_64 --config '{"version":"${{ needs.version.outputs.bundle_version }}"}'
+      - name: Build APKs (release, signed)
+        if: env.HAS_SIGNING == 'true'
+        working-directory: app
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          cat > src-tauri/gen/android/keystore.properties <<PROPS
+          password=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          storeFile=$RUNNER_TEMP/release.jks
+          PROPS
+          bun tauri android build --apk --split-per-abi --target aarch64 --target armv7 --target x86_64 --config '{"version":"${{ needs.version.outputs.bundle_version }}"}'
+      - name: Collect
+        run: |
+          mkdir -p dist-release
+          find app/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | while read -r f; do
+            abi=$(echo "$f" | sed -E 's#.*/apk/([^/]+)/.*#\1#')
+            cp "$f" "dist-release/blockheads-patcher-${{ needs.version.outputs.version }}-android-${abi}.apk"
+          done
+          ls -la dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rel-android
+          path: dist-release/*
+          if-no-files-found: error
+
+  publish:
+    name: tag + GitHub release
+    needs: [version, web, desktop, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rel-*
+          path: dist-release
+          merge-multiple: true
+      - run: ls -la dist-release
+      - name: semantic-release (tag + release assets, no commit back)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bunx semantic-release@24
