@@ -393,6 +393,55 @@ export class DexClass {
     this.dex.dirty = true;
   }
 
+  /** The body of a method (undefined for abstract and native methods). The returned object is live: do not mutate it, use `patchInsns` / `prependCode`. */
+  codeOf(m: MethodInfo): CodeItem | undefined {
+    return this.entry(m).code ?? undefined;
+  }
+
+  /** Edits the instructions of a method in place. `fn` may overwrite code units but must not change the length. */
+  patchInsns(m: MethodInfo, fn: (insns: Uint16Array) => void): void {
+    const code = this.entry(m).code;
+    if (!code) throw new DexError(`${m.name} has no code to patch`);
+    fn(code.insns);
+    this.dex.dirty = true;
+  }
+
+  /**
+   * Inserts instructions at the very start of an existing method, keeping the original body (try ranges and handler
+   * addresses move with it; branch offsets are relative and stay valid). `make(registers, ins)` returns the prefix; it
+   * must only use registers below `registers` and may branch to a label at its own end to fall through into the
+   * original code. The prefix is padded to an even number of code units so data payloads keep their alignment.
+   * Debug info of the method is dropped.
+   */
+  prependCode(m: MethodInfo, make: (registers: number, ins: number) => CodeBuilder): void {
+    const e = this.entry(m);
+    if (!e.code) throw new DexError(`${m.name} has no code to extend`);
+    const old = e.code;
+    const pre = make(old.registers, old.ins).build(old.ins);
+    if (pre.tries.length) throw new DexError('a prefix cannot contain try blocks');
+    const lead = pre.insns.length + (pre.insns.length % 2);
+    const insns = new Uint16Array(lead + old.insns.length);
+    insns.set(pre.insns, 0);
+    insns.set(old.insns, lead);
+    e.code = {
+      registers: old.registers, ins: old.ins, outs: Math.max(old.outs, pre.outs), insns, debugOff: 0,
+      tries: old.tries.map((t) => ({ ...t, start: t.start + lead })),
+      handlers: old.handlers.map((h) => ({ catches: h.catches.map((c) => ({ ...c, addr: c.addr + lead })), ...(h.catchAll === undefined ? {} : { catchAll: h.catchAll + lead }) })),
+    };
+    this.dex.dirty = true;
+  }
+
+  /** Adds a static field without initial value (null / zero) and returns its provisional field_ids index. */
+  addStaticField(name: string, type: string, access: number): number {
+    const d = this.dex;
+    const idx = d.field(this.descriptor, name, type);
+    const data = d.classData(this.def);
+    if ([...data.staticFields, ...data.instanceFields].some((f) => f.idx === idx)) throw new DexError(`field ${name} already exists in ${this.descriptor}`);
+    data.staticFields.push({ idx, flags: access | ACC.STATIC });
+    d.dirty = true;
+    return idx;
+  }
+
   /** Adds a new method; static/private/constructor methods become direct, the rest virtual. */
   addMethod(spec: MethodSpec): MethodInfo {
     const d = this.dex;

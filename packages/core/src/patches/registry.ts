@@ -8,6 +8,9 @@ import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
 import { adaptiveIcon } from './adaptive-icon';
+import { signEditorCentred } from './sign-editor-centred';
+import { lanMulticast } from './lan-multicast';
+import { tabletLayout } from './tablet-layout';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -29,4 +32,5 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   fixWebviewCrash, fixEmailShareLink,
   fixJoinLinks,
   adaptiveIcon,
+  signEditorCentred, lanMulticast, tabletLayout,
 ]);

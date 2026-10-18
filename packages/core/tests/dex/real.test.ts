@@ -4,7 +4,11 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DexFile, validateDex } from '../../src/dex';
-import { fixEmailShareLink, fixWebviewCrash, loadApk, GUARD_CLASS, MAIL_FIX_CLASS, type PatchContext } from '../../src';
+import {
+  fixEmailShareLink, fixWebviewCrash, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
+  type PatchContext,
+} from '../../src';
+import { findElementsByName } from '../../src/axml';
 import { dexNames } from '../../src/dex';
 import { getEntry } from '../../src/zip';
 import { haveApk } from '../helpers';
@@ -75,6 +79,35 @@ describe.each(APKS)('real game %s', (version, file) => {
         }
       }
       expect(guard && mail).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  it.skipIf(!run)('applies the sign, LAN and tablet patches; output validates, dexdump shows the edits and d8 accepts it', async () => {
+    const ctx = await ctxOf();
+    const patches = [signEditorCentred, lanMulticast, tabletLayout];
+    for (const p of patches) expect(p.detect(ctx), `${version} ${p.id}`).toBe('notApplied');
+    for (const p of patches) p.apply(ctx);
+    for (const p of patches) expect(p.detect(ctx), `${version} ${p.id}`).toBe('applied');
+    expect(findElementsByName(ctx.manifest, 'uses-permission', MULTICAST_PERMISSION)).toHaveLength(1);
+    const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
+    try {
+      let text = '';
+      for (const name of dexNames(ctx.zip)) {
+        const out = getEntry(ctx.zip, name)!.data;
+        expect(validateDex(out), `${version} ${name}`).toEqual([]);
+        if (dexdump) text += dump(out, dir);
+        if (d8) {
+          const f = join(dir, name), o = join(dir, `o-${name}`);
+          writeFileSync(f, out);
+          execFileSync('mkdir', ['-p', o]);
+          execFileSync(d8, ['--release', '--min-api', '21', '--lib', androidJar!, '--output', o, f], { env: { ...process.env, JAVA_HOME: jdk, PATH: `${jdk}/bin:${process.env.PATH}` }, stdio: 'pipe' });
+        }
+      }
+      if (dexdump) {
+        expect(text).toMatch(/const\/16 v1, #int 49 \/\/ #31\s+\S+: \S+ \S+ \S+\s+\|\w+: invoke-virtual \{v0, v1\}, Lcom\/apportable\/ui\/TextView\$EditText;\.setGravity/);
+        for (const needle of [`${MULTICAST_CLASS.slice(1, -1)};.acquire`, `${MULTICAST_CLASS.slice(1, -1)};.release`, `${TABLET_CLASS.slice(1, -1)};.init`, `${TABLET_CLASS.slice(1, -1)};.splash`]) expect(text).toContain(needle);
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -12,3 +12,6 @@ export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
 export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
 export { fixJoinLinks, joinLinkFilters, JOIN_SCHEME, JOIN_HOSTS, JOIN_PATH } from './fix-join-links';
 export { adaptiveIcon, ADAPTIVE_API } from './adaptive-icon';
+export { signEditorCentred, GRAVITY_ORIGINAL, GRAVITY_CENTRED } from './sign-editor-centred';
+export { lanMulticast, MULTICAST_CLASS, MULTICAST_PERMISSION } from './lan-multicast';
+export { tabletLayout, TABLET_CLASS, TABLET_MIN_DP, SPLASH_2X_PX } from './tablet-layout';
