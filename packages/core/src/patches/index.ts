@@ -8,3 +8,4 @@ export { enableAudioCapture } from './enable-audio-capture';
 export { keepDataOnUninstall } from './keep-data-on-uninstall';
 export { disableMultiWindow } from './disable-multi-window';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
+export { adaptiveIcon, ADAPTIVE_API } from './adaptive-icon';
