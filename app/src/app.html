@@ -15,7 +15,56 @@
     <meta property="og:image" content="https://blockheads-club.github.io/blockheads-patcher/og-image.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <title>Blockheads Patcher</title>
+    <style>
+      html { background: #fbf8f4; }
+      @media (prefers-color-scheme: dark) { html:not([data-theme='light']) { background: #14110f; } }
+      html[data-theme='dark'] { background: #14110f; }
+      html.bs-off #boot-splash { display: none; }
+      #boot-splash { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: inherit; transition: opacity 0.18s ease-out; font-family: 'Atkinson Hyperlegible Next Variable', 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+      #boot-splash.bs-fade { opacity: 0; pointer-events: none; }
+      #boot-splash * { box-sizing: border-box; }
+      #boot-splash p { margin: 0; }
+      .bs-card { width: 600px; max-width: 100%; height: 380px; border-radius: 18px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px 24px 48px; color: #fff; background-color: #c2410c; background-image: repeating-conic-gradient(from -3deg at 50% 118%, rgba(255, 242, 192, 0.16) 0deg 7deg, transparent 7deg 22deg); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.25); }
+      .bs-icon { width: 120px; height: 120px; border-radius: 28px; box-shadow: 0 8px 0 #7a2a08; transform: rotate(-4deg); animation: bs-drop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+      @keyframes bs-drop { from { transform: translateY(-28px) rotate(-10deg); opacity: 0; } to { transform: translateY(0) rotate(-4deg); opacity: 1; } }
+      .bs-wm { display: flex; align-items: center; gap: 8px; font: 800 30px/1 'Bricolage Grotesque Variable', ui-rounded, 'Segoe UI', system-ui, sans-serif; letter-spacing: -0.02em; }
+      .bs-tg { display: inline-block; padding: 3px 8px 4px; border-radius: 7px; transform: rotate(-6deg); font-size: 24px; background: #ffd27a; color: #1f1a17; box-shadow: 0 3px 0 #7a2a08; }
+      .bs-bar { width: 260px; max-width: 100%; height: 8px; border-radius: 999px; overflow: hidden; position: relative; margin-top: 6px; background: rgba(255, 255, 255, 0.25); }
+      .bs-bar span { position: absolute; top: 0; bottom: 0; width: 35%; border-radius: 999px; background: #ffd27a; animation: bs-slide 1.3s ease-in-out infinite; }
+      @keyframes bs-slide { from { left: -35%; } to { left: 100%; } }
+      .bs-msg { font-size: 14.5px; color: #ffe3d2; }
+      .bs-foot { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: #ffe3d2; }
+      .bs-foot b { font: 400 12.5px ui-monospace, 'JetBrains Mono Variable', Menlo, Consolas, monospace; }
+      html[data-bl='tr'] .bs-en, html:not([data-bl='tr']) .bs-tr { display: none; }
+      @media (prefers-reduced-motion: reduce) { .bs-icon, .bs-bar span { animation: none; } .bs-bar span { left: 0; width: 100%; opacity: 0.6; } #boot-splash { transition: none; } }
+    </style>
+    <script>
+      // Runs before the first paint: theme and language of the static start-up card, and no card in the Tauri
+      // shells (desktop has a separate splash window, Android a system splash plus its own in-app screen).
+      (function () {
+        var d = document.documentElement;
+        try {
+          var th = localStorage.getItem('bhp.theme');
+          if (th === 'light' || th === 'dark') d.setAttribute('data-theme', th);
+          var l = localStorage.getItem('bhp.lang') || (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+          if (String(l).toLowerCase().slice(0, 2) === 'tr') d.setAttribute('data-bl', 'tr');
+        } catch (e) {}
+        if (window.__TAURI_INTERNALS__) d.classList.add('bs-off');
+      })();
+    </script>
     %sveltekit.head%
   </head>
-  <body data-sveltekit-preload-data="hover"><div style="display: contents">%sveltekit.body%</div></body>
+  <body data-sveltekit-preload-data="hover">
+    <!-- Static start-up card: in the first HTML so it paints before any script loads; the app removes it once it has booted (or replaced it with its own identical card for the slow and error states). -->
+    <div id="boot-splash" role="status" aria-label="Blockheads Patcher">
+      <section class="bs-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="bs-icon" width="120" height="120" aria-hidden="true"><defs><clipPath id="bsr"><rect width="512" height="512" rx="96"/></clipPath><radialGradient id="bsbg" cx="0.5" cy="0.25" r="0.85"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#e2553a"/></radialGradient></defs><g clip-path="url(#bsr)"><rect width="512" height="512" fill="url(#bsbg)"/><polygon points="256,256 1156.0,256.0 1147.163012802801,381.8113055819495" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 1066.8719811121773,646.4953652058023 1004.3226510722907,756.013209717642" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 817.1408216728603,959.6483342212268 713.2678107218766,1031.181365409168" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 456.268840560683,1133.435120963641 331.64547243632285,1152.8153447058571" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 55.73115943931708,1133.435120963641 -64.95937939608166,1096.82404626514" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 -305.14082167286017,959.648334221227 -397.9942898306242,874.2972334314117" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 -554.8719811121771,646.4953652058024 -601.4976104506065,529.3090705986535" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 -644.0,256.0000000000001 -635.1630128028011,130.18869441805077" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 -554.8719811121772,-134.49536520580222 -492.3226510722909,-244.01320971764176" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 -305.1408216728603,-447.6483342212267 -201.2678107218768,-519.1813654091678" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 55.73115943931688,-621.4351209636412 180.35452756367687,-640.8153447058572" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 456.268840560682,-621.4351209636415 576.9593793960805,-584.8240462651403" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 817.14082167286,-447.64833422122695 909.9942898306241,-362.29723343141177" fill="#fff2c0" opacity="0.15"/><polygon points="256,256 1066.8719811121773,-134.49536520580176 1113.4976104506068,-17.30907059865291" fill="#fff2c0" opacity="0.15"/><g transform="translate(370,250) rotate(35)"><rect x="-12.0" y="-150.0" width="24.0" height="300" rx="9.0" fill="#8b5a2b"/><path d="M-135.0,-114.0 Q0,-186.0 135.0,-114.0 L114.0,-90.0 Q0,-144.0 -114.0,-90.0 Z" fill="#c3ccd4"/></g><g transform="translate(240,280) rotate(-6)"><rect x="-150.0" y="-150.0" width="300" height="300" rx="12.0" fill="#f6c79c"/><rect x="129.0" y="-150.0" width="21.000000000000004" height="300" fill="#e3a97a" opacity="0.6"/><path d="M-150,-150 H150 V-60 Q144,-90 108,-90 H-84 Q-135,-90 -150,-48 Z" fill="#1f1a17"/><rect x="-103.5" y="-43.5" width="75.0" height="51.00000000000001" rx="21.42" fill="#ffffff"/><rect x="-77.25" y="-40.5" width="22.5" height="45.0" rx="11.25" fill="#111"/><rect x="22.5" y="-43.5" width="75.0" height="51.00000000000001" rx="21.42" fill="#ffffff"/><rect x="48.75" y="-40.5" width="22.5" height="45.0" rx="11.25" fill="#111"/><rect x="-30.0" y="9.0" width="60.0" height="27.0" rx="13.5" fill="#f0a35c"/><path d="M-48.0,60.0 Q0,114.0 48.0,60.0 Z" fill="#8a2d0c"/><rect x="-30.0" y="61.49999999999999" width="60.0" height="12.0" fill="#fff"/></g></g></svg>
+        <div class="bs-wm">Blockheads<span class="bs-tg">Patcher</span></div>
+        <div class="bs-bar"><span></span></div>
+        <p class="bs-msg"><span class="bs-en">Loading fixes and your signing key…</span><span class="bs-tr">Düzeltmeler ve imza anahtarınız yükleniyor…</span></p>
+        <div class="bs-foot"><span><span class="bs-en">A Blockheads Club project · unofficial</span><span class="bs-tr">Bir Blockheads Club projesi · resmî değil</span></span><b>%sveltekit.env.PUBLIC_APP_VERSION%</b></div>
+      </section>
+    </div>
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
 </html>

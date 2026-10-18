@@ -14,11 +14,11 @@ import { get } from 'svelte/store';
 
 test('layout flags', () => { expect(ssr).toBe(false); expect(prerender).toBe(false); });
 
-test('page renders the app', () => {
+test('page renders the app once the boot work is done', async () => {
   localStorage.setItem('bhp.consent', '1');
   render(Page);
   expect(document.title).toBeTruthy();
-  expect(screen.getAllByRole('heading').length).toBeGreaterThan(0);
+  expect((await screen.findAllByRole('heading')).length).toBeGreaterThan(0);
 });
 
 test('layout renders children, sprite, sets lang and applies the saved theme', () => {
@@ -34,6 +34,7 @@ test('layout renders children, sprite, sets lang and applies the saved theme', (
 
 test('page title follows the language', async () => {
   render(Page);
+  await screen.findAllByRole('heading');
   const title = () => get(t)('app.title');
   expect(document.title).toBe(title());
   setLanguage('tr');
