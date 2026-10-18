@@ -4,6 +4,10 @@ import { enableAudioCapture } from './enable-audio-capture';
 import { keepDataOnUninstall } from './keep-data-on-uninstall';
 import { disableMultiWindow } from './disable-multi-window';
 import { raiseTargetSdk } from './raise-target-sdk';
+import { fixPrivacyDialog } from './fix-privacy-dialog';
+import { fixWelcomeMessageText } from './fix-welcome-message-text';
+import { fixInviteEmailTypo } from './fix-invite-email-typo';
+import { signsLowercase } from './signs-lowercase';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
@@ -13,6 +17,9 @@ import { fixTextActivityFreeze } from './fix-text-activity-freeze';
 import { fixSurfaceDestroyFreeze } from './fix-surface-destroy-freeze';
 import { fixBackgroundWakeup } from './fix-background-wakeup';
 import { adaptiveIcon } from './adaptive-icon';
+import { signEditorCentred } from './sign-editor-centred';
+import { lanMulticast } from './lan-multicast';
+import { tabletLayout } from './tablet-layout';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -31,8 +38,10 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
+  fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
   fixWebviewCrash, fixEmailShareLink,
   fixJoinLinks,
   musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixBackgroundWakeup,
   adaptiveIcon,
+  signEditorCentred, lanMulticast, tabletLayout,
 ]);

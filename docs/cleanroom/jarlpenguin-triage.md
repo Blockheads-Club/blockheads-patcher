@@ -117,3 +117,31 @@ versions, verified on the real 1.7.4/1.7.5/1.7.6 APKs: aapt2 parses the output, 
 * Needs a device test: the native binary only contains `http://theblockheads.net/join.php?...` and a `blockheads://`
   literal; we did not trace whether the native parser accepts `https` or a `blockheads://` URI exactly as delivered. If
   https is rejected, drop it from `joinLinkFilters()` (one line).
+
+## Items 6a, 8, 13b/13c notes (`tablet-layout`, `lan-multicast`, `sign-editor-centred`)
+
+All three are DEX patches addressed by class and method plus an expected-code check (detect returns `incompatible` when the
+expected instructions are not found). Helper classes live under `com.blockheadsclub.patch`. Implementation details come from
+our own analysis (`analysis-display-lan-signs.md`) and local `dexdump`; verified on 1.7.4, 1.7.5 and 1.7.6 (validate, dexdump,
+d8, apksigner v1+v2). None is verified on a device yet.
+
+* **`sign-editor-centred` (13b, opt-in).** `com.apportable.ui.TextView.init()V` creates the Android `EditText` for every
+  `UITextView` and calls `setGravity(0x33)` (top-left); the literal becomes `0x31` (top-centre). Nothing in the Java class or
+  in the native strings lets us tell the sign editor apart from other text views, so the change is global to all
+  `UITextView`s (hence opt-in). Device test: edit a sign (text centred, wraps like the placed sign), and check the other
+  text boxes (welcome message) still behave.
+* **13c (padding / wrapping) is not implemented.** The options (zero padding, `includeFontPadding(false)`, loading
+  `BlockheadsFont-Regular.otf` in `TextView.setFont`, matching the 120 px wrap width) all need on-device tuning against an iOS
+  reference, and the font option changes metrics of every text view. Follow-up once 13b is confirmed on a device.
+* **`lan-multicast` (8).** Adds `CHANGE_WIFI_MULTICAST_STATE` and `MulticastHold` (non-reference-counted
+  `WifiManager.MulticastLock`, kept in a static field). The activity methods `onResume` (acquire) and `onPause` /
+  `onDestroy` (release) get a call prepended to their existing bodies. Device test: `adb shell dumpsys wifi | grep -i
+  multicast` shows the lock while the game is in the foreground and not after it is backgrounded; host a LOCAL NETWORK world
+  on one device and see it in JOIN LOCAL WORLD on a second device on the same Wi-Fi; logcat should show no
+  `didNotPublish`. If publishing still fails the cause is the native mDNS daemon bring-up (analysis doc, cause 2).
+* **`tablet-layout` (6a, opt-in, experimental).** The native `LibraryLoader.init()` call at the end of
+  `LibraryManager.initializeLibv()` is redirected to `TabletMode.init()`, which sets `TABLET=yes` when
+  `smallestScreenWidthDp >= 600` and then calls the original. `SplashScreen.getSplashScreen()` gets a prefix that returns
+  `Default-Portrait~ipad.png` (or `@2x` when the long side is at least 1536 px) on tablets and otherwise falls through to the
+  original list. Device test on a tablet or unfolded foldable: game starts, menu sizes, splash is the iPad image in both
+  rotations, and the photo, share and instructions buttons (UIPopoverController paths) do not crash. Phones must be unchanged.

@@ -176,6 +176,10 @@ describe('listPatches / applyPatches', () => {
       ['keep-data-on-uninstall', 'notApplied'],
       ['disable-multi-window', 'incompatible'],
       ['raise-target-sdk', 'incompatible'],
+      ['fix-privacy-setting-dialog', 'incompatible'],
+      ['fix-welcome-message-text', 'incompatible'],
+      ['fix-invite-email-typo', 'incompatible'],
+      ['signs-lowercase', 'incompatible'],
       ['fix-webview-crash', 'incompatible'],
       ['fix-email-share-link', 'incompatible'],
       ['fix-join-links', 'incompatible'],
@@ -185,6 +189,9 @@ describe('listPatches / applyPatches', () => {
       ['fix-surface-destroy-freeze', 'incompatible'],
       ['fix-background-wakeup', 'incompatible'],
       ['adaptive-icon', 'incompatible'],
+      ['sign-editor-centred', 'incompatible'],
+      ['lan-multicast', 'incompatible'],
+      ['tablet-layout', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

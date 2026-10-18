@@ -8,6 +8,11 @@ export { enableAudioCapture } from './enable-audio-capture';
 export { keepDataOnUninstall } from './keep-data-on-uninstall';
 export { disableMultiWindow } from './disable-multi-window';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
+export { fixPrivacyDialog } from './fix-privacy-dialog';
+export { fixWelcomeMessageText } from './fix-welcome-message-text';
+export { fixInviteEmailTypo } from './fix-invite-email-typo';
+export { GAME_LIB_PATH, GAME_V174, GAME_V175, GAME_V176 } from './game-versions';
+export { signsLowercase } from './signs-lowercase';
 export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
 export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
 export { fixJoinLinks, joinLinkFilters, JOIN_SCHEME, JOIN_HOSTS, JOIN_PATH } from './fix-join-links';
@@ -19,3 +24,6 @@ export { fixSurfaceDestroyFreeze, fixSurfaceDestroyFreezeSpec, GL_SURFACE_VIEW_C
 export { fixBackgroundWakeup, fixBackgroundWakeupSpec, LIFECYCLE_CLASS, WAKE_METHOD } from './fix-background-wakeup';
 export { makeMethodRewritePatch, type MethodRewriteSpec } from './method-rewrite';
 export { makeTranslucentActivityPatch, type TranslucentActivitySpec } from './translucent-activity';
+export { signEditorCentred, GRAVITY_ORIGINAL, GRAVITY_CENTRED } from './sign-editor-centred';
+export { lanMulticast, MULTICAST_CLASS, MULTICAST_PERMISSION } from './lan-multicast';
+export { tabletLayout, TABLET_CLASS, TABLET_MIN_DP, SPLASH_2X_PX } from './tablet-layout';

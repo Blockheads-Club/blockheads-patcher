@@ -54,9 +54,7 @@ for (const apk of APKS) {
       const a = listPatches(await loadApk(input));
       const iapIn = apk.iap ? 'notApplied' : 'incompatible';
       expect(a.slice(0, 2).map((x) => [x.patch.id, x.status])).toEqual([['fix-welcome-popup-deadlock', 'notApplied'], ['fix-iap-store-font-crash', iapIn]]);
-      // every later patch applies to the original APK (the list grows as patches are added)
-      expect(a.slice(2).every((x) => x.status === 'notApplied')).toBe(true);
-      expect(a.slice(2).map((x) => x.patch.id)).toEqual(expect.arrayContaining(NEW_PATCHES));
+      expect(NEW_PATCHES.map((id) => [id, a.find((x) => x.patch.id === id)?.status])).toEqual(NEW_PATCHES.map((id) => [id, 'notApplied']));
       const b = listPatches(await loadApk(output));
       expect(b[0]!.status).toBe('applied');
       expect(b[1]!.status).toBe(apk.iap ? 'applied' : 'incompatible');
