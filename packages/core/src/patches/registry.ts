@@ -6,6 +6,8 @@ import { disableMultiWindow } from './disable-multi-window';
 import { raiseTargetSdk } from './raise-target-sdk';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
+import { fixJoinLinks } from './fix-join-links';
+import { adaptiveIcon } from './adaptive-icon';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -25,4 +27,6 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
   fixWebviewCrash, fixEmailShareLink,
+  fixJoinLinks,
+  adaptiveIcon,
 ]);

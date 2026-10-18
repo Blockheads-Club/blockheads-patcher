@@ -10,3 +10,5 @@ export { disableMultiWindow } from './disable-multi-window';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
 export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
 export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
+export { fixJoinLinks, joinLinkFilters, JOIN_SCHEME, JOIN_HOSTS, JOIN_PATH } from './fix-join-links';
+export { adaptiveIcon, ADAPTIVE_API } from './adaptive-icon';

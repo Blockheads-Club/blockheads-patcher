@@ -9,3 +9,5 @@ export * from './pipeline';
 export * from './elf';
 export * from './dex';
 export { sha256HexSync } from './elf/sha256';
+export * from './arsc';
+export * from './image';
