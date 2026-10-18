@@ -176,6 +176,10 @@ describe('listPatches / applyPatches', () => {
       ['keep-data-on-uninstall', 'notApplied'],
       ['disable-multi-window', 'incompatible'],
       ['raise-target-sdk', 'incompatible'],
+      ['fix-privacy-setting-dialog', 'incompatible'],
+      ['fix-welcome-message-text', 'incompatible'],
+      ['fix-invite-email-typo', 'incompatible'],
+      ['signs-lowercase', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

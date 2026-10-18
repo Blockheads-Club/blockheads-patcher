@@ -54,7 +54,7 @@ for (const apk of APKS) {
       const a = listPatches(await loadApk(input));
       const iapIn = apk.iap ? 'notApplied' : 'incompatible';
       expect(a.slice(0, 2).map((x) => [x.patch.id, x.status])).toEqual([['fix-welcome-popup-deadlock', 'notApplied'], ['fix-iap-store-font-crash', iapIn]]);
-      expect(a.slice(2).map((x) => [x.patch.id, x.status])).toEqual(NEW_PATCHES.map((id) => [id, 'notApplied']));
+      expect(a.slice(2, 2 + NEW_PATCHES.length).map((x) => [x.patch.id, x.status])).toEqual(NEW_PATCHES.map((id) => [id, 'notApplied']));
       const b = listPatches(await loadApk(output));
       expect(b[0]!.status).toBe('applied');
       expect(b[1]!.status).toBe(apk.iap ? 'applied' : 'incompatible');

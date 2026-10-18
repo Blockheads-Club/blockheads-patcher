@@ -8,3 +8,8 @@ export { enableAudioCapture } from './enable-audio-capture';
 export { keepDataOnUninstall } from './keep-data-on-uninstall';
 export { disableMultiWindow } from './disable-multi-window';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
+export { fixPrivacyDialog } from './fix-privacy-dialog';
+export { fixWelcomeMessageText } from './fix-welcome-message-text';
+export { fixInviteEmailTypo } from './fix-invite-email-typo';
+export { GAME_LIB_PATH, GAME_V174, GAME_V175, GAME_V176 } from './game-versions';
+export { signsLowercase } from './signs-lowercase';
