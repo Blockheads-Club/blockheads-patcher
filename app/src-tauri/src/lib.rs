@@ -1,4 +1,5 @@
 mod entry;
+pub mod splash;
 
 pub use entry::run;
 
@@ -10,6 +11,15 @@ pub fn configure<R: Runtime>(builder: Builder<R>) -> Builder<R> {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_apk_tools::init())
+        .manage(splash::Splash::from_env())
+        .invoke_handler(tauri::generate_handler![
+            splash::splash_set,
+            splash::splash_get,
+            splash::splash_retry,
+            entry::app_quit,
+            entry::main_ready,
+            entry::open_log,
+        ])
 }
 
 #[cfg(test)]
