@@ -19,6 +19,13 @@ a Windows desktop app and an Android app (Tauri 2). All processing is local; the
 joining a multiplayer server (opaque popup Activity stops the game activity, causing a main-thread deadlock).
 The patch changes the popup activity theme in `AndroidManifest.xml` to a translucent framework theme.
 
+## Credits
+
+Bug list and ideas from [JarlPenguin/blockheads-android-patches](https://github.com/JarlPenguin/blockheads-android-patches);
+implemented independently by Blockheads Club. That project has no licence, so we used only its public list of bugs as
+ideas and wrote every fix from our own analysis of the game; see `docs/cleanroom/jarlpenguin-triage.md`. Patches that
+originate from that list carry the credit in their metadata and in the app (patch details and Settings, Credits).
+
 ## Repository layout
 
 | Path | Purpose |
