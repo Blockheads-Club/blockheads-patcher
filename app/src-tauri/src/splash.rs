@@ -9,10 +9,9 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
-use tauri::{
-    AppHandle, Emitter, LogicalSize, Manager, Runtime, State, WebviewUrl, WebviewWindowBuilder,
-    Window,
-};
+use tauri::{AppHandle, Emitter, LogicalSize, Manager, Runtime, State, Window};
+#[cfg(desktop)]
+use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 pub const SPLASH: &str = "splash";
 pub const MAIN: &str = "main";
@@ -209,6 +208,7 @@ pub fn boot_error(splash: &Splash) -> String {
 /// Opens the small frameless splash window. Transparent so the card's rounded corners show; macOS cannot do that
 /// without the private API, so it gets a plain undecorated window there. Created hidden and shown once laid out
 /// (GTK warns when a frameless window gets its title bar after it was shown).
+#[cfg(desktop)]
 pub fn open_splash<R: Runtime, M: Manager<R>>(manager: &M) -> tauri::Result<()> {
     let mac = cfg!(target_os = "macos");
     let w = WebviewWindowBuilder::new(manager, SPLASH, WebviewUrl::App(SPLASH.into()))
@@ -228,6 +228,7 @@ pub fn open_splash<R: Runtime, M: Manager<R>>(manager: &M) -> tauri::Result<()> 
 
 /// App setup. The main window comes hidden from tauri.conf.json and `main_ready` shows it. Should the splash fail to
 /// open, the main window is shown right away (it draws the same card itself while it boots).
+#[cfg_attr(mobile, allow(unused_variables))]
 pub fn setup<R: Runtime>(app: &mut tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(desktop)]
     if let Err(e) = open_splash(app) {
