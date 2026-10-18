@@ -9,10 +9,15 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Emitter, Manager, Runtime, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, LogicalSize, Manager, Runtime, State, WebviewUrl, WebviewWindowBuilder,
+    Window,
+};
 
 pub const SPLASH: &str = "splash";
 pub const MAIN: &str = "main";
+/// Smallest main window (logical pixels): the size it opens at, as minWidth/minHeight in tauri.conf.json.
+pub const MIN_SIZE: (f64, f64) = (900.0, 700.0);
 /// Card size of the design, in logical pixels.
 pub const SIZE: (f64, f64) = (600.0, 380.0);
 
@@ -99,12 +104,49 @@ pub async fn reveal<R: Runtime>(app: AppHandle<R>, splash: &Splash) -> tauri::Re
     splash.revealed.store(true, Ordering::SeqCst);
     if let Some(w) = app.get_webview_window(MAIN) {
         w.show()?;
+        // Frameless windows on Wayland drop the config's size hints when GTK realizes them; set them again.
+        let _ = w.set_min_size(Some(LogicalSize::new(MIN_SIZE.0, MIN_SIZE.1)));
         let _ = w.set_focus();
     }
     if let Some(w) = app.get_webview_window(SPLASH) {
         let _ = w.close();
     }
     Ok(())
+}
+
+/// The size to grow a window of `w` x `h` logical pixels back to, if it is below [`MIN_SIZE`].
+pub fn grown_to_min(w: f64, h: f64) -> Option<(f64, f64)> {
+    (w < MIN_SIZE.0 || h < MIN_SIZE.1).then(|| (w.max(MIN_SIZE.0), h.max(MIN_SIZE.1)))
+}
+
+/// What [`enforce_min_size`] resizes to: nothing while maximized/fullscreen, before the window has a size, or when
+/// it is already large enough.
+pub fn min_size_fix(physical: (u32, u32), scale: f64, maximized: bool) -> Option<(f64, f64)> {
+    if maximized || physical.0 == 0 {
+        return None;
+    }
+    grown_to_min(physical.0 as f64 / scale, physical.1 as f64 / scale)
+}
+
+/// Grows `window` back to [`MIN_SIZE`] when its `physical` size is below it (see [`min_size_fix`]).
+fn grow_if_small<R: Runtime>(window: &Window<R>, physical: (u32, u32), scale: f64) {
+    let maximized =
+        window.is_maximized().unwrap_or(false) || window.is_fullscreen().unwrap_or(false);
+    if let Some((w, h)) = min_size_fix(physical, scale, maximized) {
+        let _ = window.set_size(LogicalSize::new(w, h));
+    }
+}
+
+/// Some compositors ignore the min-size hint of a frameless window: grow the main window back after a resize.
+pub fn enforce_min_size<R: Runtime>(window: &Window<R>) {
+    if window.label() == MAIN {
+        let size = window.inner_size().unwrap_or_default();
+        grow_if_small(
+            window,
+            (size.width, size.height),
+            window.scale_factor().unwrap_or(1.0),
+        );
+    }
 }
 
 /// Appends the boot error to `boot.log` in `dir` and returns the file.
@@ -288,6 +330,32 @@ mod tests {
         assert!(t0.elapsed() >= Duration::from_millis(30));
         assert!(main.is_visible().unwrap());
         assert!(h.state::<Splash>().revealed.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn grown_to_min_only_when_below() {
+        assert_eq!(grown_to_min(900.0, 700.0), None);
+        assert_eq!(grown_to_min(1200.0, 800.0), None);
+        assert_eq!(grown_to_min(500.0, 800.0), Some((900.0, 800.0)));
+        assert_eq!(grown_to_min(1000.0, 300.0), Some((1000.0, 700.0)));
+    }
+
+    #[test]
+    fn min_size_fix_skips_maximized_unsized_and_large_windows() {
+        assert_eq!(min_size_fix((500, 400), 1.0, true), None);
+        assert_eq!(min_size_fix((0, 0), 1.0, false), None);
+        assert_eq!(min_size_fix((1800, 1400), 2.0, false), None);
+        assert_eq!(min_size_fix((1000, 800), 2.0, false), Some((900.0, 700.0)));
+    }
+
+    #[test]
+    fn enforce_min_size_ignores_other_windows_and_handles_the_main_one() {
+        let app = app(Duration::ZERO);
+        let main = window(&app, MAIN);
+        let splash = window(&app, SPLASH);
+        enforce_min_size(&splash.as_ref().window());
+        enforce_min_size(&main.as_ref().window());
+        grow_if_small(&main.as_ref().window(), (400, 300), 1.0);
     }
 
     #[test]

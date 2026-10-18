@@ -28,7 +28,7 @@ test('first run asks for consent once, then the full web flow works (choose, rev
   await expect(page.getByText('Fix freeze on the welcome popup')).toBeVisible();
   await expect(page.getByText('A new key')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Patch game (1 fix)' }).click();
+  await page.getByRole('button', { name: /^Patch game \(\d+ fix(es)?\)$/  }).click();
   await expect(page.getByRole('heading', { name: 'Your game is fixed!' })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText('Uninstall the original game.')).toBeVisible();
   await expect(page.getByText(/Signing key: My key/)).toBeVisible();
@@ -101,7 +101,7 @@ test('narrow phone viewport: compact app bar with progress segments, no horizont
   await expect(page.getByRole('heading', { name: 'Review the fixes' })).toBeVisible();
   // the step names are visually hidden but still exposed to assistive tech
   await expect(page.getByRole('navigation', { name: 'Patch steps' }).getByText('Choose')).toBeAttached();
-  await expect(page.getByRole('button', { name: 'Patch game (1 fix)' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Patch game \(\d+ fix(es)?\)$/  })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });

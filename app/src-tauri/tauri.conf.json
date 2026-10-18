@@ -16,9 +16,11 @@
         "title": "Blockheads Patcher",
         "width": 900,
         "height": 700,
-        "minWidth": 360,
-        "minHeight": 480,
+        "minWidth": 900,
+        "minHeight": 700,
         "center": true,
+        "decorations": false,
+        "transparent": true,
         "visible": false
       }
     ],

@@ -42,10 +42,10 @@ pub fn on_close_requested<R: tauri::Runtime>(window: &tauri::Window<R>) {
 pub fn run() {
     crate::configure(tauri::Builder::default())
         .setup(crate::splash::setup)
-        .on_window_event(|window, event| {
-            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
-                on_close_requested(window);
-            }
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { .. } => on_close_requested(window),
+            tauri::WindowEvent::Resized(_) => crate::splash::enforce_min_size(window),
+            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("error while running Blockheads Patcher");
