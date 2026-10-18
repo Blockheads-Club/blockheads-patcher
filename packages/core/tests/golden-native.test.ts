@@ -9,7 +9,7 @@ import { ElfImage, GAME_LIB_PATH, GAME_V174, GAME_V175, GAME_V176, MemoryKeystor
 
 const BT = join(homedir(), 'Android/Sdk/build-tools/35.0.0');
 const tools = existsSync(join(BT, 'apksigner')) && existsSync(join(BT, 'zipalign'));
-const IDS = ['fix-privacy-setting-dialog', 'fix-welcome-message-text', 'fix-invite-email-typo', 'signs-lowercase'];
+const IDS = ['fix-privacy-setting-dialog', 'fix-welcome-message-text', 'fix-invite-email-typo', 'signs-lowercase', 'music-resume', 'menu-music-loop', 'world-selection-keep'];
 
 interface Sample {
   name: string;
@@ -20,17 +20,39 @@ interface Sample {
   /** CFString data-pointer slots that are re-pointed (each followed by a length field). */
   slots: number[];
   appended: boolean;
+  /** Audio / lifecycle patch sites (hand-checked against our own analysis): address -> new words. */
+  audio: Record<number, number[]>;
 }
+/** New words that are identical in every version (analysis-audio-lifecycle.md, section 6). */
+const COMMON_AUDIO: Record<string, number[]> = {
+  stop: [0xe590106c, 0xe3a02000, 0xe3510000, 0x15d1202c, 0xe5c02072, 0xe3520000, 0x11a00001, 0, 0xe12fff1e],
+  restart: [0xe5d02072, 0xe3520000, 0x1590006c, 0x13500000, 0x012fff1e, 0],
+  loop: [0xe3e02000],
+  wrapper: [0xe92d4010, 0xe24dd008, 0xe3a03000, 0xe58d3000, 0xe58d3004, 0xebffffa2, 0xe28dd008, 0xe8bd8010,
+    0xe92d4010, 0xe1a04000, 0xebfffff4, 0xe5d42059, 0xe1a00004, 0xeb000409, 0xe8bd8010],
+  select: [0xe320f000, 0xe51bc020, 0xe59c0014, 0xe5dcc16a, 0xe35c0000, 0xe51b2094, 0xe5921000, 0xe51b307c, 0x012fff33],
+};
+const audioWords = (stop: number, restart: number, loop: number, wrapper: number, calls: number[], select: number, pause: number, play: number): Record<number, number[]> => ({
+  [stop]: COMMON_AUDIO.stop!.map((w, i) => (i === 7 ? pause : w)),
+  [restart]: COMMON_AUDIO.restart!.map((w, i) => (i === 5 ? play : w)),
+  [loop]: COMMON_AUDIO.loop!,
+  [wrapper]: COMMON_AUDIO.wrapper!,
+  ...Object.fromEntries(calls.map((c, i) => [c, [[0xeb09a56e, 0xeb0942ad, 0xeb096412][i]!]])),
+  [select]: COMMON_AUDIO.select!,
+});
 const SAMPLES: Sample[] = [
   { name: '1.7.4', path: '/home/kahverengi/Downloads/The Blockheads_1.7.4_APKPure.apk', versionCode: GAME_V174.versionCode, appended: true,
     words: { 0x944ad0: [0x1a00003a, 0x1a000077], 0x938ea8: [0xe50b008c, 0xe1a00000], 0x9ebdec: [0xe50b0064, 0xe1a00000], 0x9e58b8: [0xe12fff33, 0xe1a00000] },
-    slots: [0xf92f98, 0xf976d8] },
+    slots: [0xf92f98, 0xf976d8],
+    audio: audioWords(0xb8b698, 0xb8b714, 0xb8c940, 0xb8b888, [0x9222e8, 0x93adec, 0x932858], 0x9301b8, 0x1ad958c6, 0xead9581a) },
   { name: '1.7.5', path: '/home/kahverengi/Downloads/The Blockheads_1.7.5_APKPure.apk', versionCode: GAME_V175.versionCode, appended: false,
     words: { 0x9446f8: [0x1a00003a, 0x1a000077], 0x938ad0: [0xe50b008c, 0xe1a00000], 0x9eba14: [0xe50b0064, 0xe1a00000], 0x9e54e0: [0xe12fff33, 0xe1a00000] },
-    slots: [0xf91c18, 0xf96348] },
+    slots: [0xf91c18, 0xf96348],
+    audio: audioWords(0xb8b2c0, 0xb8b33c, 0xb8c568, 0xb8b4b0, [0x921f10, 0x93aa14, 0x932480], 0x92fde0, 0x1ad9593c, 0xead95890) },
   { name: '1.7.6', path: process.env.BH_APK_176 ?? '/home/kahverengi/Downloads/The Blockheads_1.7.6.apk', versionCode: GAME_V176.versionCode, appended: false,
     words: { 0x9445a0: [0x1a00003a, 0x1a000077], 0x938978: [0xe50b008c, 0xe1a00000], 0x9eb8bc: [0xe50b0064, 0xe1a00000], 0x9e5388: [0xe12fff33, 0xe1a00000] },
-    slots: [0xf91c00, 0xf96330] },
+    slots: [0xf91c00, 0xf96330],
+    audio: audioWords(0xb8b168, 0xb8b1e4, 0xb8c410, 0xb8b358, [0x921db8, 0x93a8bc, 0x932328], 0x92fc88, 0x1ad95972, 0xead958c6) },
 ];
 
 for (const s of SAMPLES) {
@@ -60,6 +82,11 @@ for (const s of SAMPLES) {
         expect(after.readU32(Number(addr))).toBe(now);
         const o = before.offsetOf(Number(addr), 4)!;
         allowed.push([o, o + 4]);
+      }
+      for (const [addr, words] of Object.entries(s.audio)) {
+        const o = before.offsetOf(Number(addr), words.length * 4)!;
+        words.forEach((w, i) => expect(after.readU32(Number(addr) + i * 4)).toBe(w));
+        allowed.push([o, o + words.length * 4]);
       }
       for (const slot of s.slots) {
         const o = before.offsetOf(slot, 8)!;

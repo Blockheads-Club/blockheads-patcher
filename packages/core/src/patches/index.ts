@@ -20,3 +20,7 @@ export { adaptiveIcon, ADAPTIVE_API } from './adaptive-icon';
 export { signEditorCentred, GRAVITY_ORIGINAL, GRAVITY_CENTRED } from './sign-editor-centred';
 export { lanMulticast, MULTICAST_CLASS, MULTICAST_PERMISSION } from './lan-multicast';
 export { tabletLayout, TABLET_CLASS, TABLET_MIN_DP, SPLASH_2X_PX } from './tablet-layout';
+export { musicResume } from './fix-music-resume';
+export { menuMusicLoop } from './menu-music-loop';
+export { worldSelectionKeep } from './world-selection-keep';
+export { AUDIO_SITES, type AudioSites } from './audio-native';

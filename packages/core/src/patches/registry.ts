@@ -15,6 +15,9 @@ import { adaptiveIcon } from './adaptive-icon';
 import { signEditorCentred } from './sign-editor-centred';
 import { lanMulticast } from './lan-multicast';
 import { tabletLayout } from './tablet-layout';
+import { musicResume } from './fix-music-resume';
+import { menuMusicLoop } from './menu-music-loop';
+import { worldSelectionKeep } from './world-selection-keep';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -38,4 +41,5 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   fixJoinLinks,
   adaptiveIcon,
   signEditorCentred, lanMulticast, tabletLayout,
+  musicResume, menuMusicLoop, worldSelectionKeep,
 ]);

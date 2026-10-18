@@ -187,6 +187,9 @@ describe('listPatches / applyPatches', () => {
       ['sign-editor-centred', 'incompatible'],
       ['lan-multicast', 'incompatible'],
       ['tablet-layout', 'incompatible'],
+      ['music-resume', 'incompatible'],
+      ['menu-music-loop', 'incompatible'],
+      ['world-selection-keep', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });
