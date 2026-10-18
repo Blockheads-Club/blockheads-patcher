@@ -35,6 +35,15 @@ async function loaded(report: unknown[], info: Record<string, unknown> = {}, eng
 }
 
 describe('ReviewScreen', () => {
+  test('opt-in patches start unselected and show their credit line', async () => {
+    const credited = row('raise-target-sdk', 'notApplied');
+    Object.assign(credited.patch, { optIn: true, credits: { source: 'JarlPenguin/blockheads-android-patches', url: 'https://example.invalid' } });
+    const { s, engine } = await loaded([row(W, 'notApplied'), credited]);
+    expect(s.selected).toEqual([W]);
+    render(ReviewScreen, { state: s, keys: keysFor(engine), info: s.loaded!.info, file: { name: 'game.apk', size: 1 }, onchangekey: vi.fn() });
+    expect(screen.getByText('Off by default')).toBeInTheDocument();
+    expect(screen.getByText('Bug list and ideas from JarlPenguin/blockheads-android-patches; implemented independently by Blockheads Club.')).toBeInTheDocument();
+  });
   test('lists applicable, applied and incompatible patches; toggling updates the selection', async () => {
     const { s, engine } = await loaded([row(W, 'notApplied'), row(I, 'incompatible', { reasonCode: { code: 'versionTooLow', params: { actual: 1, min: 2 } } })]);
     const keys = keysFor(engine);

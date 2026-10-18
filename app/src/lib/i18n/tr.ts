@@ -275,5 +275,21 @@ export const tr: Record<MessageKey, string> = {
     'Android 10 ve üzerinde (Android 14 ve oyun 1.7.4 ile doğrulandı) çok oyunculu sunucuya girerken "WELCOME TO <world>!" penceresinde oyun donar. Bu yama pencereyi yarı saydam yapar; böylece oyun durdurulmaz, yalnızca duraklatılır.',
   'patch.fix-iap-store-font-crash.name': 'Dünya yüklenirken oluşan çökmeyi düzelt (1.7.6)',
   'patch.fix-iap-store-font-crash.description':
-    'Oyun 1.7.6, mağaza ekranı sistem yazı tiplerini yükleyemediği için Android 10 ve üzerinde dünya yüklenirken çöker. Bu yama mağaza fiyat sorgularını devre dışı bırakır; fiyat etiketleri boş kalır. Yeniden imzalanmış sürümlerde satın alma zaten çalışmaz ve ücretli hiçbir içerik açılmaz. Yalnızca 1.7.6 sürümü için geçerlidir.'
+    'Oyun 1.7.6, mağaza ekranı sistem yazı tiplerini yükleyemediği için Android 10 ve üzerinde dünya yüklenirken çöker. Bu yama mağaza fiyat sorgularını devre dışı bırakır; fiyat etiketleri boş kalır. Yeniden imzalanmış sürümlerde satın alma zaten çalışmaz ve ücretli hiçbir içerik açılmaz. Yalnızca 1.7.6 sürümü için geçerlidir.',
+  'patch.enable-audio-capture.summary': 'Ekran kaydedicilerin oyun sesini kaydedebilmesini sağlar (Android 10 ve üzeri).',
+  'patch.keep-data-on-uninstall.summary': 'Oyunu kaldırırken Android dünyalarınızı ve ayarlarınızı saklamayı önerir (Android 10 ve üzeri).',
+  'patch.disable-multi-window.summary': 'Oyunun bölünmüş ekran veya yüzen pencerede sıkıştırılıp arayüzünün bozulmasını önler.',
+  'patch.raise-target-sdk.summary': 'Yeni telefonlardaki “Android’in eski bir sürümü için üretildi” uyarısını kaldırır. Varsayılan olarak kapalı: henüz bir cihazda denenmedi.',
+  'patch.enable-audio-capture.name': 'Oyun sesiyle ekran kaydına izin ver',
+  'patch.enable-audio-capture.description': 'Uygulama bildirimine "ses çalmayı yakalamaya izin ver" tercihini ekler. Android 10 ve üzerinde ekran kaydediciler ve yakalama arayüzünü kullanan diğer uygulamalar oyunun sesini kaydedebilir; eski Android sürümleri bunu yok sayar. Başka bir şey değişmez.',
+  'patch.keep-data-on-uninstall.name': 'Kaldırırken oyun verisini saklamayı öner',
+  'patch.keep-data-on-uninstall.description': 'Oyunun verisini değerli olarak işaretler (bildirimdeki "kırılgan kullanıcı verisi" bayrağı). Android 10 ve üzerinde oyunu kaldırırken verinin saklanıp saklanmayacağı sorulur; böylece dünyalar yanlışlıkla kaybolmaz. Eski Android sürümleri bunu yok sayar.',
+  'patch.disable-multi-window.name': 'Bölünmüş ekranı ve yüzen pencereleri kapat',
+  'patch.disable-multi-window.description': 'Oyun etkinliğini yeniden boyutlandırılamaz yapar; böylece Android oyunu, sabit arayüzünün bozulduğu bölünmüş ekran veya serbest pencerelere koymaz. Çok büyük ekranlarda Android yine de oyunu kenar boşluklarıyla gösterebilir.',
+  'patch.raise-target-sdk.name': '"Eski Android sürümü" uyarısını kaldır',
+  'patch.raise-target-sdk.description': 'Oyunu Android 8.1 (API 27) yerine Android 10 (API 29) için üretilmiş olarak bildirir; yeni Android sürümleri eskisini uyarıyla işaretler. Davranışın değişmemesi için düz http bağlantılarına (oyunun sunucuları kullanır) izin verir ve eski depolama erişim kurallarını korur. Fiziksel bir cihazda henüz doğrulanmadı, bu yüzden varsayılan olarak kapalıdır.',
+  'credit.line': 'Hata listesi ve fikirler: {source}; Blockheads Club tarafından bağımsız olarak uygulandı.',
+  'review.optIn': 'Varsayılan olarak kapalı',
+  'settings.credits': 'Teşekkürler',
+  'settings.creditsHint': 'Yama listesi, JarlPenguin/blockheads-android-patches projesinin herkese açık hata listesinden esinlenmiştir. Buradaki her düzeltme, o projenin kodu kullanılmadan bağımsız olarak yazılıp denenmiştir.'
 };

@@ -172,6 +172,10 @@ describe('listPatches / applyPatches', () => {
     expect(report.map((r) => [r.patch.id, r.status])).toEqual([
       ['fix-welcome-popup-deadlock', 'notApplied'],
       ['fix-iap-store-font-crash', 'incompatible'],
+      ['enable-audio-capture', 'notApplied'],
+      ['keep-data-on-uninstall', 'notApplied'],
+      ['disable-multi-window', 'incompatible'],
+      ['raise-target-sdk', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

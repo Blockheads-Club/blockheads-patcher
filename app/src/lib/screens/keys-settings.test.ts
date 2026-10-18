@@ -219,6 +219,8 @@ describe('SettingsScreen', () => {
     expect(prefs.showLog).toBe(false);
     expect(screen.getByTestId('app-version')).toHaveTextContent(/Version \d+\.\d+\.\d+ · Web app/);
     expect(screen.getByRole('link', { name: 'Open GitHub' })).toHaveAttribute('href', expect.stringContaining('github.com'));
+    expect(screen.getByRole('heading', { name: 'Credits' })).toBeInTheDocument();
+    expect(screen.getByText(/implemented independently by Blockheads Club/)).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: 'Read notice' }));
     expect(onlegal).toHaveBeenCalled();
     await fireEvent.click(screen.getByRole('button', { name: 'Back to patching' }));

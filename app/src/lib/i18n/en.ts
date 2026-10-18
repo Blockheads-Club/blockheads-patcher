@@ -274,6 +274,22 @@ export const en = {
     'On Android 10 and newer (verified on Android 14, game 1.7.4) the game freezes on the "WELCOME TO <world>!" popup when joining a multiplayer server. This makes the popup window translucent so the game is only paused, not stopped.',
   'patch.fix-iap-store-font-crash.name': 'Fix crash when loading a world (1.7.6)',
   'patch.fix-iap-store-font-crash.description':
-    'Game 1.7.6 crashes while loading a world on Android 10 and newer because the store screen cannot load system fonts. This disables store price lookups, so price labels stay empty. Purchases do not work on re-signed builds anyway, and no paid content is unlocked. Applies to version 1.7.6 only.'
+    'Game 1.7.6 crashes while loading a world on Android 10 and newer because the store screen cannot load system fonts. This disables store price lookups, so price labels stay empty. Purchases do not work on re-signed builds anyway, and no paid content is unlocked. Applies to version 1.7.6 only.',
+  'patch.enable-audio-capture.summary': 'Lets screen recorders capture the game’s sound (Android 10 and newer).',
+  'patch.keep-data-on-uninstall.summary': 'Android offers to keep your worlds and settings when you uninstall the game (Android 10 and newer).',
+  'patch.disable-multi-window.summary': 'Stops the game from being squeezed into split-screen or floating windows, which breaks its layout.',
+  'patch.raise-target-sdk.summary': 'Removes the “built for an older version of Android” warning on newer phones. Off by default: not yet tested on a device.',
+  'patch.enable-audio-capture.name': 'Allow screen recording with game sound',
+  'patch.enable-audio-capture.description': 'Adds the "allow audio playback capture" opt-in to the app manifest. On Android 10 and newer, screen recorders and other apps that use the capture API can then record the game’s audio; older Android versions ignore it. Nothing else changes.',
+  'patch.keep-data-on-uninstall.name': 'Offer to keep game data when uninstalling',
+  'patch.keep-data-on-uninstall.description': 'Marks the game’s data as valuable (the "fragile user data" manifest flag). On Android 10 and newer, uninstalling the game then asks whether to keep its data, so worlds are not lost by accident. Older Android versions ignore it.',
+  'patch.disable-multi-window.name': 'Disable split-screen and floating windows',
+  'patch.disable-multi-window.description': 'Sets the game activity to non-resizable, so Android no longer puts it into split-screen or freeform windows, where the game’s fixed layout breaks. On very large screens Android may still show it letterboxed.',
+  'patch.raise-target-sdk.name': 'Remove the "older Android version" warning',
+  'patch.raise-target-sdk.description': 'Declares the game as built for Android 10 (API 29) instead of Android 8.1 (API 27), which newer Android versions flag with a warning. To keep behaviour unchanged it also allows plain http connections (the game’s servers use them) and keeps the old storage access rules. Not yet verified on a physical device, so it is off by default.',
+  'credit.line': 'Bug list and ideas from {source}; implemented independently by Blockheads Club.',
+  'review.optIn': 'Off by default',
+  'settings.credits': 'Credits',
+  'settings.creditsHint': 'The patch list is inspired by the public bug list of JarlPenguin/blockheads-android-patches. Every fix here was written and tested independently, without using that project’s code.'
 } as const;
 export type MessageKey = keyof typeof en;

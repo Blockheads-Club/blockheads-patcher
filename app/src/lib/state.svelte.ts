@@ -95,7 +95,7 @@ export class PatcherState {
     this.fileSize = size;
     this.loaded = loaded;
     this.report = report;
-    this.selected = report.filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
+    this.selected = report.filter((r) => r.status === 'notApplied' && !r.patch.optIn).map((r) => r.patch.id);
     this.stage = 'loaded';
   }
 

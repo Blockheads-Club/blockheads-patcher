@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n';
   import { applyTheme, loadTheme, type ThemeMode } from '$lib/theme.svelte';
-  import { REPO_URL, WEBSITE } from '$lib/links';
+  import { REPO_URL, WEBSITE, CREDIT_SOURCE } from '$lib/links';
   import type { Prefs } from '$lib/prefs.svelte';
   import type { PlatformKind } from '$lib/platform/types';
   import Button from '$lib/ui/Button.svelte';
@@ -65,6 +65,14 @@
   <div class="row col">
     <p class="rt lh">{$t('settings.licences')}</p>
     {#each LICENCES as [name, licence] (name)}<div class="lic"><span>{name}</span><span class="hint">{licence}</span></div>{/each}
+  </div>
+</Card>
+
+<Card tag="section" class="grp" aria-labelledby="s-c">
+  <h2 id="s-c">{$t('settings.credits')}</h2>
+  <div class="row col">
+    <p class="hint">{$t('settings.creditsHint')}</p>
+    <p class="hint">{$t('credit.line', { source: CREDIT_SOURCE })}</p>
   </div>
 </Card>
 

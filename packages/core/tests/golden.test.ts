@@ -53,7 +53,8 @@ for (const apk of APKS) {
     it('detect: notApplied on input, applied on output', async () => {
       const a = listPatches(await loadApk(input));
       const iapIn = apk.iap ? 'notApplied' : 'incompatible';
-      expect(a.map((x) => [x.patch.id, x.status])).toEqual([['fix-welcome-popup-deadlock', 'notApplied'], ['fix-iap-store-font-crash', iapIn]]);
+      expect(a.slice(0, 2).map((x) => [x.patch.id, x.status])).toEqual([['fix-welcome-popup-deadlock', 'notApplied'], ['fix-iap-store-font-crash', iapIn]]);
+      expect(a.slice(2).map((x) => [x.patch.id, x.status])).toEqual(NEW_PATCHES.map((id) => [id, 'notApplied']));
       const b = listPatches(await loadApk(output));
       expect(b[0]!.status).toBe('applied');
       expect(b[1]!.status).toBe(apk.iap ? 'applied' : 'incompatible');
@@ -120,6 +121,8 @@ for (const apk of APKS) {
     }, 120_000);
   });
 }
+
+const NEW_PATCHES = ['enable-audio-capture', 'keep-data-on-uninstall', 'disable-multi-window', 'raise-target-sdk'];
 
 describe('registry', () => {
   it('default registry has both patches; duplicates rejected', () => {

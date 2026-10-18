@@ -24,12 +24,21 @@ export interface PatchContext {
   markManifestDirty(): void;
   log(msg: string): void;
 }
+/** Where the idea for a patch came from (shown in the UI). */
+export interface PatchCredits {
+  source: string;
+  url: string;
+}
 export interface Patch {
   id: string;
   version: number;
   nameKey: string;
   descriptionKey: string;
   appliesTo: PatchAppliesTo;
+  /** Idea/bug-list credit; the implementation is always our own. */
+  credits?: PatchCredits;
+  /** Not selected by default (changes behaviour more widely than a fix). */
+  optIn?: boolean;
   /** Pure: must not mutate the context. */
   detect(ctx: PatchContext): PatchStatus;
   /** Throws PatchError if detect() !== 'notApplied'. */

@@ -1,5 +1,9 @@
 import { fixWelcomePopupDeadlock } from './fix-welcome-popup-deadlock';
 import { fixIapStoreFontCrash } from './fix-iap-store-font-crash';
+import { enableAudioCapture } from './enable-audio-capture';
+import { keepDataOnUninstall } from './keep-data-on-uninstall';
+import { disableMultiWindow } from './disable-multi-window';
+import { raiseTargetSdk } from './raise-target-sdk';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -16,4 +20,6 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
   return reg;
 }
 
-export const defaultRegistry: PatchRegistry = createRegistry([fixWelcomePopupDeadlock, fixIapStoreFontCrash]);
+export const defaultRegistry: PatchRegistry = createRegistry([
+  fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
+]);

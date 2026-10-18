@@ -76,11 +76,13 @@
               <span class="ptitle">{$t(patch.nameKey)}</span>
               <Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>
               <Badge tone="ok" icon="check">{$t('badge.compatible')}</Badge>
+              {#if patch.optIn}<Badge tone="info">{$t('review.optIn')}</Badge>{/if}
             </div>
             <p id={`pd-${patch.id}`} class="muted desc">{$t(summary(patch.id))}</p>
             <details class="more">
               <summary><Icon name="chev-d" size={16} />{$t('review.whatChanges')}</summary>
               <p class="hint">{$t(patch.descriptionKey)}</p>
+              {#if patch.credits}<p class="hint">{$t('credit.line', { source: patch.credits.source })}</p>{/if}
             </details>
           </div>
         </Card>
