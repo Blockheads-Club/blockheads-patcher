@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Window background before the web view has painted, and the whole splash on Android < 12. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_bg" />
+    <item
+        android:drawable="@drawable/splash_legacy"
+        android:gravity="center" />
+</layer-list>
