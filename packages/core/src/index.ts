@@ -8,3 +8,4 @@ export * from './patches';
 export * from './pipeline';
 export * from './elf';
 export { sha256HexSync } from './elf/sha256';
+export * from './arsc';
