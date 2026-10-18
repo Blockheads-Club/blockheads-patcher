@@ -4,6 +4,8 @@ import { enableAudioCapture } from './enable-audio-capture';
 import { keepDataOnUninstall } from './keep-data-on-uninstall';
 import { disableMultiWindow } from './disable-multi-window';
 import { raiseTargetSdk } from './raise-target-sdk';
+import { fixWebviewCrash } from './fix-webview-crash';
+import { fixEmailShareLink } from './fix-email-share-link';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -22,4 +24,5 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
+  fixWebviewCrash, fixEmailShareLink,
 ]);

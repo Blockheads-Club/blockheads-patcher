@@ -8,3 +8,5 @@ export { enableAudioCapture } from './enable-audio-capture';
 export { keepDataOnUninstall } from './keep-data-on-uninstall';
 export { disableMultiWindow } from './disable-multi-window';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
+export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
+export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
