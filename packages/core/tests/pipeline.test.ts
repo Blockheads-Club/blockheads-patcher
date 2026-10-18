@@ -177,6 +177,7 @@ describe('listPatches / applyPatches', () => {
       ['disable-multi-window', 'incompatible'],
       ['raise-target-sdk', 'incompatible'],
       ['fix-join-links', 'incompatible'],
+      ['adaptive-icon', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

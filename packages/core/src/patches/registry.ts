@@ -5,6 +5,7 @@ import { keepDataOnUninstall } from './keep-data-on-uninstall';
 import { disableMultiWindow } from './disable-multi-window';
 import { raiseTargetSdk } from './raise-target-sdk';
 import { fixJoinLinks } from './fix-join-links';
+import { adaptiveIcon } from './adaptive-icon';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -24,4 +25,5 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
   fixJoinLinks,
+  adaptiveIcon,
 ]);
