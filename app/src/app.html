@@ -17,8 +17,9 @@
     <title>Blockheads Patcher</title>
     <style>
       html { background: #fbf8f4; }
-      @media (prefers-color-scheme: dark) { html:not([data-theme='light']) { background: #14110f; } }
-      html[data-theme='dark'] { background: #14110f; }
+      html.desk { background: transparent; }
+      @media (prefers-color-scheme: dark) { html:not([data-theme='light']):not(.desk) { background: #14110f; } }
+      html[data-theme='dark']:not(.desk) { background: #14110f; }
       html.bs-off #boot-splash { display: none; }
       #boot-splash { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px; background: inherit; transition: opacity 0.18s ease-out; font-family: 'Atkinson Hyperlegible Next Variable', 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
       #boot-splash.bs-fade { opacity: 0; pointer-events: none; }
@@ -49,7 +50,7 @@
           var l = localStorage.getItem('bhp.lang') || (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
           if (String(l).toLowerCase().slice(0, 2) === 'tr') d.setAttribute('data-bl', 'tr');
         } catch (e) {}
-        if (window.__TAURI_INTERNALS__) d.classList.add('bs-off');
+        if (window.__TAURI_INTERNALS__) { d.classList.add('bs-off'); if (!/android/i.test(navigator.userAgent)) d.classList.add('desk'); }
       })();
     </script>
     %sveltekit.head%

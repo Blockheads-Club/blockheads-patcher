@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { t } from '$lib/i18n';
   import type { PatcherState } from '$lib/state.svelte';
   import type { KeysState } from '$lib/keys.svelte';
@@ -16,6 +16,8 @@
   import KeysScreen from '$lib/screens/KeysScreen.svelte';
   import SettingsScreen from '$lib/screens/SettingsScreen.svelte';
   import FirstRunDialog from '$lib/screens/FirstRunDialog.svelte';
+  import TitleBar from '$lib/ui/TitleBar.svelte';
+  import { guessOs, win } from '$lib/winctl';
 
   let { state: s, keys, prefs }: { state: PatcherState; keys: KeysState; prefs: Prefs } = $props();
 
@@ -30,6 +32,26 @@
   const step = $derived(failed ? 3 : s.step);
   const info = $derived(s.loaded?.info);
   const count = $derived(s.selected.length);
+  /** Desktop shell: custom title bar, rounded frame, fixed-height window where only the content scrolls. */
+  const desktop = $derived(platform.kind === 'tauri-desktop');
+  const os = guessOs();
+  const ctx = $derived(
+    view === 'keys' ? $t('tb.keys') : view === 'settings' ? $t('tb.settings')
+    : failed ? $t('tb.failed') : s.step === 1 ? $t('tb.choose') : s.stage === 'patching' ? $t('tb.patching')
+    : s.stage === 'done' ? $t('tb.done') : $t('tb.review')
+  );
+  /** Maximized or fullscreen: the window fills the screen, so no rounded corners (macOS has native ones). */
+  let square = $state(false);
+  const round = $derived(desktop && os !== 'macos' && !square);
+  onMount(() => {
+    if (!desktop) return;
+    const sync = () => void Promise.all([win.isMaximized(), win.isFullscreen()]).then(([m, f]) => (square = m || f)).catch(() => {});
+    sync();
+    let off: (() => void) | undefined;
+    let gone = false;
+    win.onResized(sync).then((u) => (gone ? u() : (off = u))).catch(() => {});
+    return () => { gone = true; off?.(); };
+  });
   const modal = $derived(!consented || legalOpen);
 
   $effect(() => { keys.refresh().catch(() => {}); });
@@ -54,7 +76,9 @@
 
 <a class="skip-link" href="#main" onclick={(e) => { e.preventDefault(); main?.focus(); }}>{$t('a11y.skip')}</a>
 
-<div class="app" inert={modal}>
+<div class={['frame', round && 'round']}>
+<div class={['app', desktop && 'desk']} inert={modal}>
+  {#if desktop}<TitleBar {os} {ctx} />{/if}
   <AppBar {view} {step} {failed} install={!!platform.installApk} locked={s.stage === 'patching'} onnavigate={(v) => (view = v)} />
 
   <main id="main" class="body" bind:this={main} tabindex="-1">
@@ -91,6 +115,7 @@
 
   <AppFooter platformKind={platform.kind} activeKey={keys.active} />
 </div>
+</div>
 
 {#if !consented}
   <FirstRunDialog {quitHint} onaccept={accept} onquit={quit} />
@@ -99,6 +124,11 @@
 {/if}
 
 <style>
+  /* Native window is transparent on Windows/Linux; this frame draws the rounded window. clip-path also clips the fixed dialogs. */
+  .frame.round { clip-path: inset(0 round 12px); }
+  .frame.round::after { content: ''; position: fixed; inset: 0; border: 1px solid var(--line-strong); border-radius: 12px; pointer-events: none; z-index: 1000; }
+  .app.desk { height: 100dvh; min-height: 0; }
+  .app.desk .body { min-height: 0; overflow: auto; }
   .app { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
   .body { flex: 1; display: flex; justify-content: center; padding: 32px 24px; }
   .body:focus { outline: none; }
