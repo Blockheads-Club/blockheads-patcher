@@ -11,6 +11,11 @@ import { signsLowercase } from './signs-lowercase';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
+import { musicWithOtherApps } from './music-with-other-apps';
+import { fixAudioFocusStall } from './fix-audio-focus-stall';
+import { fixTextActivityFreeze } from './fix-text-activity-freeze';
+import { fixSurfaceDestroyFreeze } from './fix-surface-destroy-freeze';
+import { fixBackgroundWakeup } from './fix-background-wakeup';
 import { adaptiveIcon } from './adaptive-icon';
 import { signEditorCentred } from './sign-editor-centred';
 import { lanMulticast } from './lan-multicast';
@@ -39,6 +44,7 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
   fixWebviewCrash, fixEmailShareLink,
   fixJoinLinks,
+  musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixBackgroundWakeup,
   adaptiveIcon,
   signEditorCentred, lanMulticast, tabletLayout,
   musicResume, menuMusicLoop, worldSelectionKeep,
