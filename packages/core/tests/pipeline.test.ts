@@ -176,6 +176,7 @@ describe('listPatches / applyPatches', () => {
       ['keep-data-on-uninstall', 'notApplied'],
       ['disable-multi-window', 'incompatible'],
       ['raise-target-sdk', 'incompatible'],
+      ['fix-join-links', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });
