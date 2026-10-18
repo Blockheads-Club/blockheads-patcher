@@ -8,6 +8,10 @@ import { fixPrivacyDialog } from './fix-privacy-dialog';
 import { fixWelcomeMessageText } from './fix-welcome-message-text';
 import { fixInviteEmailTypo } from './fix-invite-email-typo';
 import { signsLowercase } from './signs-lowercase';
+import { fixWebviewCrash } from './fix-webview-crash';
+import { fixEmailShareLink } from './fix-email-share-link';
+import { fixJoinLinks } from './fix-join-links';
+import { adaptiveIcon } from './adaptive-icon';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -27,4 +31,7 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
   fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
+  fixWebviewCrash, fixEmailShareLink,
+  fixJoinLinks,
+  adaptiveIcon,
 ]);

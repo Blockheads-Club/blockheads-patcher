@@ -180,6 +180,10 @@ describe('listPatches / applyPatches', () => {
       ['fix-welcome-message-text', 'incompatible'],
       ['fix-invite-email-typo', 'incompatible'],
       ['signs-lowercase', 'incompatible'],
+      ['fix-webview-crash', 'incompatible'],
+      ['fix-email-share-link', 'incompatible'],
+      ['fix-join-links', 'incompatible'],
+      ['adaptive-icon', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

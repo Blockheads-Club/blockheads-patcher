@@ -56,7 +56,7 @@ Legend: fix location M = manifest/resources only, J = Java/dex, N = native `.so`
 | 6c | Crashes on rotation | J. Activity `configChanges` is broad (0x40000fff) so the crash is in game code (surface/context re-creation), not the manifest. | 4 | 4 | none | D (+ crash logs) | later |
 | 6d | Multi-window breaks UI | M. Game activity is resizable by default for modern targets; `android:resizeableActivity="false"` opts out. On very large screens the OS may still letterbox. | 1 | 1 | none | none | **implemented** (`disable-multi-window`) |
 | 6e | Native dialog orientation | J. Native dialogs are `com.apportable.ui.AlertView` / `Window.getKeyWindowDialog`; their orientation comes from the activity request. | 4 | 3 | related to 6b | D | later |
-| 7 | Join links (`blockheads://`, `theblockheads.net/join.php`) | M + J (+ maybe N). Our finding: the two VIEW intent filters on `VerdeActivity` are malformed (the scheme value is the string `theblockheads.net/join`, which is not a valid scheme; the http filter has no path restriction and contains a stray text node), so the OS never routes the links. The Java glue (`nativeHandleUri`) and native `openURL:` handling exist, and native code builds `join.php?id=..&name=..` URLs. Fix is to replace the filters with correct ones; whether native parsing accepts the resulting data string needs a device test. | 3 | 3 | none | A | next (first after the manifest wave) |
+| 7 | Join links (`blockheads://`, `theblockheads.net/join.php`) | M + J (+ maybe N). Our finding: the two VIEW intent filters on `VerdeActivity` are malformed (the scheme value is the string `theblockheads.net/join`, which is not a valid scheme; the http filter has no path restriction and contains a stray text node), so the OS never routes the links. The Java glue (`nativeHandleUri`) and native `openURL:` handling exist, and native code builds `join.php?id=..&name=..` URLs. Fix is to replace the filters with correct ones; whether native parsing accepts the resulting data string needs a device test. | 3 | 3 | none | A | **implemented** (`fix-join-links`; device test pending) |
 | 8 | LAN hosting / discovery disabled | N. Native `JoinWorldUI` has LAN world UI (`joinLanWorldButtonTapped`, `advancedLocalNetworkButton`); the gating is a native platform check. Per-version addresses. | 5 | 3 | none | E | later |
 | 9 | Join links cut off in e-mail, typo in body | J + N. E-mail goes through `VerdeActivity.sendEmail` -> chooser; the body is delivered as an HTML string converted with `Html.fromHtml` to a `Spanned` (link text/formatting is lost or cut in many mail apps). The typo is in a native string table. | 3 | 2 | none | D (body as plain/HTML-safe text), E (typo) | later |
 | 10 | Storage permission never shown on Android 7.1+ | N (not manifest). The Java helper `NoodlePermissionGranter` behaves correctly for API >= 23 (checks, rationale, request via fragment); it is invoked from native Objective-C code (`NoodlePermissionGranter ... asking for permission %i`), so the gating condition is native. Raising targetSdk does not change this. | 4 | 2 | none | E | later |
@@ -103,3 +103,17 @@ versions, verified on the real 1.7.4/1.7.5/1.7.6 APKs: aapt2 parses the output, 
 4. Per-version native patching (E): items 10, 11, 12, 15, 8, 13, 6a, with a hash-pinned patch table per version and the
    same safety checks as `makeNativeStubPatch` (library hash plus expected original bytes).
 5. Device-dependent items (4, 6b, 6c) need real-device logs; schedule them with a test device or emulator running the game.
+
+## Item 7 notes (`fix-join-links`)
+
+* Java side (own analysis of the dex): `VerdeActivity` passes `Intent.getDataString()` unchanged to the native
+  `nativeHandleUri(String)` on cold start (`onCreate` path) and from the `onNewIntent` path (launchMode `singleTask`). The
+  OS therefore only has to route the link; the game receives the full URI string (`blockheads://...` or
+  `http(s)://theblockheads.net/join.php?...`).
+* The patch replaces all VIEW filters that carry `<data>` with: (1) scheme `blockheads`; (2) schemes `http`+`https`, hosts
+  `theblockheads.net` + `blockheads.noodlecake.com` (the host the original third filter named), path `/join.php`; both with
+  DEFAULT+BROWSABLE. `autoVerify` is unset (no Digital Asset Links file we control, so links show the chooser rather than
+  opening the game silently). `android:exported="true"` is added to the activity.
+* Needs a device test: the native binary only contains `http://theblockheads.net/join.php?...` and a `blockheads://`
+  literal; we did not trace whether the native parser accepts `https` or a `blockheads://` URI exactly as delivered. If
+  https is rejected, drop it from `joinLinkFilters()` (one line).

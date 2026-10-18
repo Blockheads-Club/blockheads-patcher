@@ -552,6 +552,123 @@ export function addAttr(doc: AxmlDocument, el: AxmlElement, a: Omit<AxmlAttribut
 }
 
 // ---------------------------------------------------------------------------------------------
+// Element / namespace mutation
+
+/** Attribute description for {@link insertElement}. Strings are interned; platform attributes need their `resourceId`. */
+export interface AttrSpec {
+  name: string;
+  /** Namespace URI; must already be declared (see {@link declareNamespace}). Omit or null for none. */
+  nsUri?: string | null;
+  resourceId?: number | null;
+  /** String value (type String). Mutually exclusive with `valueType`/`data`. */
+  value?: string;
+  valueType?: ValueType;
+  data?: number;
+}
+/** Element description for {@link insertElement}. */
+export interface ElementSpec {
+  name: string;
+  nsUri?: string | null;
+  attributes?: AttrSpec[];
+  children?: ElementSpec[];
+}
+
+/** Declares `xmlns:prefix=uri` around the whole document unless the URI is already declared. Returns true when added. */
+export function declareNamespace(doc: AxmlDocument, prefix: string, uri: string): boolean {
+  const s = stateOf(doc);
+  const known = s.ns.some((n) => s.pool.entries[n.uri]?.str === uri);
+  if (known) return false;
+  const minIdx = s.resMap?.length ?? 0;
+  const prefixIdx = internString(s, prefix, minIdx);
+  const uriIdx = internString(s, uri, minIdx);
+  s.ns.push({ line: 1, comment: NONE, prefix: prefixIdx, uri: uriIdx, endLine: lastLine(doc) + 1, endComment: NONE });
+  return true;
+}
+
+function lastLine(doc: AxmlDocument): number {
+  let max = 0;
+  const walk = (e: AxmlElement): void => {
+    max = Math.max(max, e.lineNumber, elMeta.get(e)!.endLine);
+    e.children.forEach(walk);
+  };
+  walk(doc.root);
+  for (const n of stateOf(doc).ns) max = Math.max(max, n.line, n.endLine);
+  return max;
+}
+
+/**
+ * Inserts a new element (and its subtree) as child number `index` of `parent` (default: last). Strings and
+ * resource-id map entries are added to the pool, attributes are kept sorted by resource id, and new elements get fresh
+ * line numbers after the last existing one. Text nodes that sat before child `index` stay before the old child.
+ */
+export function insertElement(doc: AxmlDocument, parent: AxmlElement, spec: ElementSpec, index: number = parent.children.length): AxmlElement {
+  const s = stateOf(doc);
+  const pm = elMeta.get(parent);
+  if (!pm) throw new AxmlError('unknown element');
+  if (!Number.isInteger(index) || index < 0 || index > parent.children.length) throw new AxmlError(`child index ${index} out of range`);
+  const declared = (uri: string): boolean => s.ns.some((n) => s.pool.entries[n.uri]?.str === uri);
+  const check = (e: ElementSpec): void => {
+    if (e.nsUri && !declared(e.nsUri)) throw new AxmlError(`namespace not declared: ${e.nsUri}`);
+    for (const a of e.attributes ?? []) if (a.nsUri && !declared(a.nsUri)) throw new AxmlError(`namespace not declared: ${a.nsUri}`);
+    (e.children ?? []).forEach(check);
+  };
+  check(spec);
+  let line = lastLine(doc);
+  const build = (par: AxmlElement, sp: ElementSpec, at: number): void => {
+    const m = elMeta.get(par)!;
+    for (const c of m.cdata) if (c.pos !== undefined && c.pos >= at) c.pos++;
+    const minIdx = s.resMap?.length ?? 0;
+    const nameIdx = internString(s, sp.name, minIdx);
+    const nsIdx = sp.nsUri ? internString(s, sp.nsUri, minIdx) : NONE;
+    const el: AxmlElement = { name: sp.name, nsUri: sp.nsUri ?? null, attributes: [], children: [], lineNumber: ++line };
+    elMeta.set(el, {
+      nsIdx, nameIdx, comment: NONE, cdata: [], endLine: ++line, endComment: NONE, endNs: nsIdx, endName: nameIdx,
+      attrStart: 20, attrSize: 20, idIndex: 0, classIndex: 0, styleIndex: 0,
+    });
+    par.children.splice(at, 0, el);
+    for (const a of sp.attributes ?? []) {
+      const isStr = a.value !== undefined;
+      addAttr(doc, el, {
+        nsUri: a.nsUri ?? null, name: a.name, resourceId: a.resourceId ?? null, rawValue: isStr ? a.value! : null,
+        valueType: isStr ? ValueType.String : (a.valueType ?? ValueType.IntDec), data: a.data ?? 0,
+      });
+    }
+    (sp.children ?? []).forEach((c, i) => build(el, c, i));
+  };
+  build(parent, spec, index);
+  // the element's own end line must come after its subtree
+  const created = parent.children[index]!;
+  const fix = (e: AxmlElement): void => { e.children.forEach(fix); elMeta.get(e)!.endLine = ++line; };
+  fix(created);
+  return created;
+}
+
+/** Removes `child` (with its subtree and text nodes) from `parent`. Strings stay in the pool (harmless, keeps indices stable). */
+export function removeElement(doc: AxmlDocument, parent: AxmlElement, child: AxmlElement): void {
+  stateOf(doc);
+  const pm = elMeta.get(parent);
+  if (!pm) throw new AxmlError('unknown element');
+  const at = parent.children.indexOf(child);
+  if (at < 0) throw new AxmlError('element is not a child of the given parent');
+  parent.children.splice(at, 1);
+  for (const c of pm.cdata) if (c.pos !== undefined && c.pos > at) c.pos--;
+}
+
+/** Removes an attribute from its element (the string stays in the pool). */
+export function removeAttr(doc: AxmlDocument, el: AxmlElement, attr: AxmlAttribute): void {
+  stateOf(doc);
+  const m = elMeta.get(el);
+  if (!m) throw new AxmlError('unknown element');
+  const pos = el.attributes.indexOf(attr);
+  if (pos < 0) throw new AxmlError('attribute does not belong to the element');
+  el.attributes.splice(pos, 1);
+  for (const k of ['idIndex', 'classIndex', 'styleIndex'] as const) {
+    if (m[k] === pos + 1) m[k] = 0;
+    else if (m[k] > pos + 1) m[k]--;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
 // Manifest info
 
 export interface ManifestInfo {

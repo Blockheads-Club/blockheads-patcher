@@ -187,7 +187,7 @@ describe('code caves', () => {
       setEntry(zip, { name: LIB, data: d });
       return p.detect(c);
     };
-    expect(t((d) => { d[0x300] ^= 0xff; })).toBe('incompatible'); // cave code differs
+    expect(t((d) => { d[0x300] = 0xff; })).toBe('incompatible'); // cave code differs
     expect(t((_d, dv) => dv.setUint32(CODE, 0xe1a00005, true))).toBe('incompatible'); // not a branch
     expect(t((_d, dv) => dv.setUint32(CODE, 0xe12fff1e, true))).toBe('incompatible');
     expect(t((_d, dv) => dv.setUint32(CODE, 0xfa000000, true))).toBe('incompatible'); // Thumb target
