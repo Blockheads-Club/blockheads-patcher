@@ -179,6 +179,11 @@ describe('listPatches / applyPatches', () => {
       ['fix-webview-crash', 'incompatible'],
       ['fix-email-share-link', 'incompatible'],
       ['fix-join-links', 'incompatible'],
+      ['music-with-other-apps', 'incompatible'],
+      ['fix-audio-focus-stall', 'incompatible'],
+      ['fix-text-activity-freeze', 'incompatible'],
+      ['fix-surface-destroy-freeze', 'incompatible'],
+      ['fix-background-wakeup', 'incompatible'],
       ['adaptive-icon', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);

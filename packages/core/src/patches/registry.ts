@@ -7,6 +7,11 @@ import { raiseTargetSdk } from './raise-target-sdk';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
+import { musicWithOtherApps } from './music-with-other-apps';
+import { fixAudioFocusStall } from './fix-audio-focus-stall';
+import { fixTextActivityFreeze } from './fix-text-activity-freeze';
+import { fixSurfaceDestroyFreeze } from './fix-surface-destroy-freeze';
+import { fixBackgroundWakeup } from './fix-background-wakeup';
 import { adaptiveIcon } from './adaptive-icon';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
@@ -28,5 +33,6 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
   fixWebviewCrash, fixEmailShareLink,
   fixJoinLinks,
+  musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixBackgroundWakeup,
   adaptiveIcon,
 ]);
