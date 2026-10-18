@@ -5,8 +5,18 @@ export interface ElfSegment {
   vaddr: number;
   filesz: number;
   memsz: number;
+  /** p_flags (1 = X, 2 = W, 4 = R). */
+  flags: number;
+  align: number;
+  /** File offset of this program header entry. */
+  phOffset: number;
 }
 export const PT_LOAD = 1;
+export const PT_DYNAMIC = 2;
+export const PT_NOTE = 4;
+export const PF_X = 1;
+export const PF_W = 2;
+export const PF_R = 4;
 
 export function parseElfSegments(data: Uint8Array): ElfSegment[] {
   if (data.length < 52 || data[0] !== 0x7f || data[1] !== 0x45 || data[2] !== 0x4c || data[3] !== 0x46) throw new Error('not an ELF file');
@@ -24,11 +34,13 @@ export function parseElfSegments(data: Uint8Array): ElfSegment[] {
       out.push({
         type: dv.getUint32(p, true), offset: Number(dv.getBigUint64(p + 8, true)), vaddr: Number(dv.getBigUint64(p + 16, true)),
         filesz: Number(dv.getBigUint64(p + 32, true)), memsz: Number(dv.getBigUint64(p + 40, true)),
+        flags: dv.getUint32(p + 4, true), align: Number(dv.getBigUint64(p + 48, true)), phOffset: p,
       });
     else
       out.push({
         type: dv.getUint32(p, true), offset: dv.getUint32(p + 4, true), vaddr: dv.getUint32(p + 8, true),
         filesz: dv.getUint32(p + 16, true), memsz: dv.getUint32(p + 20, true),
+        flags: dv.getUint32(p + 24, true), align: dv.getUint32(p + 28, true), phOffset: p,
       });
   }
   return out;
