@@ -4,6 +4,10 @@ import { enableAudioCapture } from './enable-audio-capture';
 import { keepDataOnUninstall } from './keep-data-on-uninstall';
 import { disableMultiWindow } from './disable-multi-window';
 import { raiseTargetSdk } from './raise-target-sdk';
+import { fixPrivacyDialog } from './fix-privacy-dialog';
+import { fixWelcomeMessageText } from './fix-welcome-message-text';
+import { fixInviteEmailTypo } from './fix-invite-email-typo';
+import { signsLowercase } from './signs-lowercase';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
@@ -29,6 +33,7 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk,
+  fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
   fixWebviewCrash, fixEmailShareLink,
   fixJoinLinks,
   adaptiveIcon,

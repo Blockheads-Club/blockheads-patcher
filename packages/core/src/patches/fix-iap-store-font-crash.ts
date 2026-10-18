@@ -1,7 +1,5 @@
-import { parseElfSegments, vaddrToFileOffset } from '../elf';
-import { sha256HexSync } from '../elf/sha256';
-import { getEntry, setEntry } from '../zip';
-import { PatchError, type Patch, type PatchContext, type PatchStatus } from './types';
+import { makeNativePatch } from '../native';
+import type { Patch } from './types';
 
 export const BX_LR = 0xe12fff1e;
 
@@ -20,46 +18,13 @@ export interface NativeStubSpec {
 
 /** Builds a patch that turns the given ARM functions into immediate returns after verifying lib hash and original words. */
 export function makeNativeStubPatch(spec: NativeStubSpec): Patch {
-  const locate = (ctx: PatchContext): { data: Uint8Array; offsets: number[] } | undefined => {
-    const e = getEntry(ctx.zip, spec.libPath);
-    if (!e) return undefined;
-    try {
-      const segs = parseElfSegments(e.data);
-      const offsets = spec.addresses.map((a) => vaddrToFileOffset(segs, a, 4));
-      if (offsets.some((o) => o === undefined || o + 4 > e.data.length)) return undefined;
-      return { data: e.data, offsets: offsets as number[] };
-    } catch {
-      return undefined;
-    }
-  };
-  const word = (d: Uint8Array, o: number): number => new DataView(d.buffer, d.byteOffset, d.byteLength).getUint32(o, true);
-  const detect = (ctx: PatchContext): PatchStatus => {
-    if (ctx.info.versionCode !== spec.versionCode) return 'incompatible';
-    const loc = locate(ctx);
-    if (!loc) return 'incompatible';
-    const words = loc.offsets.map((o) => word(loc.data, o));
-    if (words.every((w) => w === BX_LR)) return 'applied';
-    if (words.every((w) => w === spec.original) && sha256HexSync(loc.data) === spec.libSha256) return 'notApplied';
-    return 'incompatible';
-  };
-  return {
-    id: spec.id,
-    version: 1,
-    nameKey: `patch.${spec.id}.name`,
-    descriptionKey: `patch.${spec.id}.description`,
-    appliesTo: { packageName: spec.packageName, versionCode: { min: spec.versionCode, max: spec.versionCode }, versionNames: [spec.versionName] },
-    detect,
-    apply(ctx) {
-      const status = detect(ctx);
-      if (status !== 'notApplied') throw new PatchError(`${spec.id} cannot be applied (status: ${status})`, 'cannotApply', { status });
-      const loc = locate(ctx)!;
-      const out = loc.data.slice();
-      const dv = new DataView(out.buffer);
-      for (const o of loc.offsets) dv.setUint32(o, BX_LR, true);
-      setEntry(ctx.zip, { name: spec.libPath, data: out });
-      ctx.log(`${spec.id}: stubbed ${spec.addresses.length} functions in ${spec.libPath}`);
-    },
-  };
+  return makeNativePatch({
+    id: spec.id, packageName: spec.packageName, libPath: spec.libPath,
+    versions: [{
+      versionCode: spec.versionCode, versionName: spec.versionName, libSha256: spec.libSha256,
+      edits: spec.addresses.map((vaddr) => ({ kind: 'arm' as const, vaddr, original: [spec.original], replacement: [BX_LR] })),
+    }],
+  });
 }
 
 /**
