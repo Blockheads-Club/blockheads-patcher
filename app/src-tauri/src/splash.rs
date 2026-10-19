@@ -41,10 +41,20 @@ pub fn splash_hold(var: Option<OsString>) -> Duration {
         .unwrap_or(SPLASH_MIN)
 }
 
+/// The splash page has drawn (its first `splash_get`): the minimum splash time counts from then, not from the
+/// app start, so the splash is seen for all of it.
+fn splash_shown(started: &Mutex<Instant>, shown: &AtomicBool) {
+    if !shown.swap(true, Ordering::SeqCst) {
+        *started.lock().unwrap_or_else(|e| e.into_inner()) = Instant::now();
+    }
+}
+
 /// Shared state of the splash hand-over.
 pub struct Splash {
     state: Mutex<Option<SplashState>>,
-    started: Instant,
+    /// When the splash page first drew (app start until then), see [`splash_shown`].
+    started: Mutex<Instant>,
+    shown: AtomicBool,
     hold: Duration,
     /// The main window is on screen: closing the splash is no longer a request to quit.
     revealed: AtomicBool,
@@ -54,7 +64,8 @@ impl Splash {
     pub fn new(hold: Duration) -> Self {
         Splash {
             state: Mutex::default(),
-            started: Instant::now(),
+            started: Mutex::new(Instant::now()),
+            shown: AtomicBool::new(false),
             hold,
             revealed: AtomicBool::new(false),
         }
@@ -83,6 +94,7 @@ pub fn splash_set<R: Runtime>(app: AppHandle<R>, splash: State<'_, Splash>, stat
 /// The state so far; before the main window has said anything, a plain "loading" with the app's version.
 #[tauri::command]
 pub fn splash_get<R: Runtime>(app: AppHandle<R>, splash: State<'_, Splash>) -> SplashState {
+    splash_shown(&splash.started, &splash.shown);
     splash.state().clone().unwrap_or_else(|| SplashState {
         boot: "loading".into(),
         version: app.package_info().version.to_string(),
@@ -98,7 +110,13 @@ pub fn splash_retry<R: Runtime>(app: AppHandle<R>) {
 
 /// The boot work is done: after the minimum splash time show the main window and close the splash.
 pub async fn reveal<R: Runtime>(app: AppHandle<R>, splash: &Splash) -> tauri::Result<()> {
-    let wait = splash.hold.saturating_sub(splash.started.elapsed());
+    let wait = splash.hold.saturating_sub(
+        splash
+            .started
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .elapsed(),
+    );
     if !wait.is_zero() {
         // The sleeping task cannot fail, so there is no join error to report.
         let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(wait)).await;
@@ -250,6 +268,22 @@ pub fn quits_on_close(label: &str, revealed: &AtomicBool) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn the_splash_time_counts_from_the_first_draw() {
+        let (started, shown) = (Mutex::new(Instant::now()), AtomicBool::new(false));
+        std::thread::sleep(Duration::from_millis(30));
+        splash_shown(&started, &shown);
+        let first = *started.lock().unwrap();
+        assert!(first.elapsed() < Duration::from_millis(30));
+        std::thread::sleep(Duration::from_millis(5));
+        splash_shown(&started, &shown);
+        assert_eq!(
+            *started.lock().unwrap(),
+            first,
+            "later calls keep the first draw"
+        );
+    }
     use super::*;
     use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
     use tauri::WebviewWindow;
