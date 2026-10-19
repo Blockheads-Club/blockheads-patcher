@@ -276,7 +276,6 @@ export const tr: Record<MessageKey, string> = {
   'legal.notice': 'Majic Jungle veya Noodlecake ile bağlantılı değildir. Oyun dosyaları dağıtılmaz; APK dosyasını kendiniz sağlarsınız. Yalnızca yasal olarak sahip olduğunuz yazılımı yamalayın.',
   'patch.fix-welcome-popup-deadlock.summary': 'Modern Android’de oyunun ilk pencerede takılı kalmasını önler; böylece dünyalarınıza ulaşabilirsiniz.',
   'patch.fix-system-font-crash.summary': 'Yeni Android sürümlerinde oyun bir sistem yazı tipi bulamadığı için mağazada ve dünyalarda oluşan çökmeleri önler.',
-  'patch.fix-iap-store-font-crash.summary': '1.7.6 sürümünde kayıtlı bir dünyayı açarken oyunun kapanmasını önler.',
   'lang.label': 'Dil',
   'theme.label': 'Tema',
   'theme.system': 'Sistem',
@@ -322,9 +321,6 @@ export const tr: Record<MessageKey, string> = {
   'patch.fix-system-font-crash.name': 'Eksik sistem yazı tiplerinden kaynaklanan çökmeleri düzelt',
   'patch.fix-system-font-crash.description':
     'Oyun Android\'in yazı tipi listesini eski bir biçimde okur ve yeni Android sürümlerinde (Android 14\'te görüldü) kullanılabilir bir sistem yazı tipi bulamaz; bu yüzden metin çizerken çöker: mağazada ve bir dünya açıldıktan birkaç saniye sonra. Bu yama oyuna ücretsiz Noto Sans yazı tipini (SIL Open Font License) normal, kalın ve italik olarak ekler (yaklaşık 600 KB) ve oyunun onu yüklemesini sağlar. Sistem yazı tiplerinin hâlâ önce bulunduğu eski Android sürümlerinde de güvenlidir. 1.7.6 ile denendi.',
-  'patch.fix-iap-store-font-crash.name': 'Dünya yüklenirken oluşan çökmeyi düzelt (1.7.6)',
-  'patch.fix-iap-store-font-crash.description':
-    'Oyun 1.7.6, mağaza ekranı sistem yazı tiplerini yükleyemediği için Android 10 ve üzerinde dünya yüklenirken çöker. Bu yama mağaza fiyat sorgularını devre dışı bırakır; fiyat etiketleri boş kalır. Yeniden imzalanmış sürümlerde satın alma zaten çalışmaz ve ücretli hiçbir içerik açılmaz. Yalnızca 1.7.6 sürümü için geçerlidir.',
   'patch.enable-audio-capture.summary': 'Ekran kaydedicilerin oyun sesini kaydedebilmesini sağlar (Android 10 ve üzeri).',
   'patch.keep-data-on-uninstall.summary': 'Oyunu kaldırırken Android dünyalarınızı ve ayarlarınızı saklamayı önerir (Android 10 ve üzeri).',
   'patch.allow-resizing.summary': 'Bu uygulamanın eski bir sürümüyle yamalanan oyunun katlanabilir telefonlarda (dış ekran) her açılışta kapanmasını düzeltir.',

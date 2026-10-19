@@ -166,12 +166,11 @@ describe('listPatches / applyPatches', () => {
     expect(listPatches(apk, reg)[0]!.status).toBe('notApplied');
   });
 
-  it('lists the default registry (welcome fix applicable, IAP fix not for 1.7.4)', async () => {
+  it('lists the default registry (welcome fix applicable)', async () => {
     const apk = await loadApk(makeApk());
     const report = listPatches(apk);
     expect(report.map((r) => [r.patch.id, r.status])).toEqual([
       ['fix-welcome-popup-deadlock', 'notApplied'],
-      ['fix-iap-store-font-crash', 'incompatible'],
       ['fix-system-font-crash', 'incompatible'],
       ['enable-audio-capture', 'notApplied'],
       ['keep-data-on-uninstall', 'notApplied'],

@@ -27,17 +27,3 @@ export function makeNativeStubPatch(spec: NativeStubSpec): Patch {
   });
 }
 
-/**
- * Blockheads 1.7.6 only: the Play billing product list reaches the 4 IAP response handlers, which load a system
- * font through an Apportable path that crashes on Android 10+ (SIGSEGV in CGFontCopyName). The handlers become no-ops.
- */
-export const fixIapStoreFontCrash: Patch = makeNativeStubPatch({
-  id: 'fix-iap-store-font-crash',
-  packageName: 'com.noodlecake.blockheads',
-  versionCode: 1564553369,
-  versionName: '1.7.6',
-  libPath: 'lib/armeabi-v7a/libApplication.so',
-  libSha256: '733d821027d69de329d0ba171df2e6013d612edf5a4d327badd001acc30b94c7',
-  addresses: [0xb79ee0, 0xb0f5cc, 0xb5d558, 0xd33974],
-  original: 0xe92d4df0,
-});

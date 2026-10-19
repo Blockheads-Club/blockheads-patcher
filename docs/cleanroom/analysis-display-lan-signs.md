@@ -240,7 +240,7 @@ with a NOP, so `r0` keeps the already-computed wrapped string (`mov r0,lr` right
 
 Preconditions to check before writing: library sha256 above, plus the 5 words at site-12..site+4 equal
 `E1A0000E E58D100C E1A0100C E12FFF33 E50B003C` (verified identical in the three versions; the pattern is unique inside the function).
-Layer: native fixed-word patch (the same framework as `fix-iap-store-font-crash`). Risk: low-medium: the string passed on is an autoreleased
+Layer: native fixed-word patch (the same framework as the former `fix-iap-store-font-crash`, `makeNativeStubPatch`). Risk: low-medium: the string passed on is an autoreleased
 `NSString` just like the `uppercaseString` result; the subsequent code only retains/releases through messaging. Also check: the keyboard type set
 for the editor is 1 (ASCII capable), no automatic capital forcing was found in Java (`TextView$EditText` has no `AllCaps`), and `textView:shouldChangeTextInRange:` accepts everything.
 Verify on device: type `Hello`, see it live in the field and on the placed sign (client + a second client), reload the world, and check that

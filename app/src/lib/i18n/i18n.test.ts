@@ -15,7 +15,7 @@ test('placeholders match between en and tr', () => {
 test('required keys exist', () => {
   for (const k of ['app.title', 'legal.notice', 'drop.browse', 'installed.use', 'review.patchesFor', 'badge.applied',
     'result.save', 'swap.s1Button', 'swap.s2Button', 'keys.title', 'keys.export', 'keys.import', 'keys.generate', 'error.generic',
-    'patch.fix-welcome-popup-deadlock.name', 'patch.fix-welcome-popup-deadlock.summary', 'patch.fix-iap-store-font-crash.summary'])
+    'patch.fix-welcome-popup-deadlock.name', 'patch.fix-welcome-popup-deadlock.summary', 'patch.fix-system-font-crash.summary'])
     expect(k in en, k).toBe(true);
 });
 test('interpolation, language switch and persistence', () => {

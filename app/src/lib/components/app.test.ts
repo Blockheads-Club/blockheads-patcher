@@ -105,7 +105,7 @@ describe('patch flow', () => {
     await screen.findByRole('heading', { name: 'Choose your game' });
   });
   test('many fixes label, key change shortcut from review', async () => {
-    const two = [...rows(), { ...rows()[0] as object, patch: { ...(rows()[0] as { patch: object }).patch, id: 'fix-iap-store-font-crash', nameKey: 'patch.fix-iap-store-font-crash.name', descriptionKey: 'patch.fix-iap-store-font-crash.description' } }] as never;
+    const two = [...rows(), { ...rows()[0] as object, patch: { ...(rows()[0] as { patch: object }).patch, id: 'fix-system-font-crash', nameKey: 'patch.fix-system-font-crash.name', descriptionKey: 'patch.fix-system-font-crash.description' } }] as never;
     mount({ listPatches: vi.fn(() => two) as never });
     await choose();
     expect(screen.getByRole('button', { name: 'Patch game (2 fixes)' })).toBeInTheDocument();

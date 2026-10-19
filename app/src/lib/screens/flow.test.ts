@@ -19,7 +19,7 @@ beforeEach(() => {
 const row = (id: string, status: string, extra = {}) => ({
   patch: { id, version: 1, nameKey: `patch.${id}.name`, descriptionKey: `patch.${id}.description`, appliesTo: {}, detect: () => status, apply: () => {} }, status, ...extra
 });
-const W = 'fix-welcome-popup-deadlock', I = 'fix-iap-store-font-crash';
+const W = 'fix-welcome-popup-deadlock', I = 'fix-system-font-crash';
 const picked = () => ({ name: 'game.apk', bytes: new Uint8Array(2), source: 'file' as const });
 const keysFor = (engine = mockEngine()) => new KeysState(engine, new MemoryKeyLibrary());
 

@@ -23,10 +23,11 @@ are references to our own findings, not copied code.
 * Three dex files (`classes.dex` holds `com.apportable.activity.VerdeActivity` and the audio / lifecycle glue,
   `classes2.dex` ad SDKs, `classes3.dex` UI, web view and permission helper classes). No android `Application` hooks to patch
   other than `VerdeApplication`. All game logic is Objective-C compiled to `libApplication.so` (ARMv7, differs between all
-  three versions; hash-pinned native patches are needed per version, as for fix-iap-store-font-crash).
+  three versions; hash-pinned native patches are needed per version, as for the former fix-iap-store-font-crash).
 * Resources: `drawable/icon` has PNG-only density variants; no `mipmap`, no `anydpi` configuration.
 * Existing patches: `fix-welcome-popup-deadlock` (manifest theme of the web-view activity), `fix-iap-store-font-crash`
-  (native, 1.7.6 only).
+  (native, 1.7.6 only; since retired: it left the store's price buttons dead, and `fix-system-font-crash` fixes the
+  same font crash at the root, see docs/device-tests/2026-10-19-fold4.md).
 
 ## New core capabilities, in the order they unlock the most items
 
