@@ -2,7 +2,8 @@ import { throwIfCancelled } from './abort';
 import { parseAxml, manifestInfo, serializeAxml, type AxmlDocument } from './axml';
 import { getOrCreateIdentity, signZip, type Keystore } from './signing';
 import { defaultRegistry, PatchError, type ApkInfo, type Patch, type PatchContext, type PatchReason, type PatchRegistry, type PatchStatus } from './patches';
-import { getEntry, readZip, removeSignatureFiles, setEntry, type ZipArchive } from './zip';
+import { DexCache } from './patches/dex-support';
+import { getEntry, readZip, removeSignatureFiles, setEntry, sourceSha256, type ZipArchive } from './zip';
 
 export interface LoadedApk {
   zip: ZipArchive;
@@ -37,6 +38,7 @@ export async function loadApk(bytes: Uint8Array): Promise<LoadedApk> {
     throw new PatchError(`no manifest: ${(e as Error).message}`, 'noManifest', { message: (e as Error).message });
   }
   const info: ApkInfo = { packageName: mi.package, sha256: await sha256Hex(bytes) };
+  sourceSha256.set(zip, info.sha256);
   if (mi.versionName !== undefined) info.versionName = mi.versionName;
   if (mi.versionCode !== undefined) info.versionCode = mi.versionCode;
   return { zip, manifest, info };
@@ -69,11 +71,13 @@ function incompatibility(p: Patch, info: ApkInfo): { message: string; reasonCode
 }
 
 export function listPatches(apk: LoadedApk, registry: PatchRegistry = defaultRegistry): ApplicableReport {
-  const ctx = makeContext(apk);
+  const ctx = { ...makeContext(apk), dexCache: new DexCache() };
   return registry.list().map((patch) => {
     const bad = incompatibility(patch, apk.info);
     if (bad) return { patch, status: 'incompatible' as const, reason: bad.message, reasonCode: bad.reasonCode };
-    return { patch, status: patch.detect(ctx) };
+    const status = patch.detect(ctx);
+    ctx.dexCache.check();
+    return { patch, status };
   });
 }
 

@@ -1,3 +1,4 @@
+import type { DexCache } from './dex-support';
 import type { AxmlDocument } from '../axml';
 import type { ZipArchive } from '../zip';
 
@@ -23,6 +24,8 @@ export interface PatchContext {
   info: ApkInfo;
   markManifestDirty(): void;
   log(msg: string): void;
+  /** Detect-only contexts (listPatches) share parsed dex files between patches; see DexCache. */
+  dexCache?: DexCache;
 }
 /** Where the idea for a patch came from (shown in the UI). */
 export interface PatchCredits {

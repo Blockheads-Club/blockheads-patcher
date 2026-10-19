@@ -2,7 +2,8 @@ import { der } from './asn1';
 import { SigningError } from './errors';
 import { parseCertificate, toBase64, type SigningIdentity } from './identity';
 import { throwIfCancelled } from '../abort';
-import { locateEocd, peekData, getEntry, readZip, removeSignatureFiles, setEntry, writeZip, type ZipArchive } from '../zip';
+import { locateEocd, peekData, getEntry, readZip, removeSignatureFiles, setEntry, sourceSha256, writeZip, type ZipArchive } from '../zip';
+import { lazyData, sourceOffsets } from '../zip/types';
 import { manifestInfo, parseAxml } from '../axml';
 
 export interface SignOptions {
@@ -102,6 +103,44 @@ function pkcs7Detached(identity: SigningIdentity, signature: Uint8Array, sha1Dig
   return der.seq(der.oid('1.2.840.113549.1.7.2'), der.ctx(0, signedData));
 }
 
+// ------------------------------------------------------------------ v1 digest memo
+
+/** Digests (base64) of untouched entries per source APK: `${apkSha256}:${algorithm}` -> local header offset -> digest. */
+const digestMemo = new Map<string, Map<number, string>>();
+/** Source APKs whose digests are kept (most recently used last). */
+const MEMO_APKS = 4;
+
+function memoFor(apkSha256: string, label: string): Map<number, string> {
+  const key = `${apkSha256}:${label}`;
+  const m = digestMemo.get(key) ?? new Map<number, string>();
+  digestMemo.delete(key);
+  digestMemo.set(key, m);
+  while (digestMemo.size > MEMO_APKS) digestMemo.delete(digestMemo.keys().next().value!);
+  return m;
+}
+
+/**
+ * Seeds the JAR digests of the entries of an APK identified by its SHA-256, keyed by local header offset (for apps
+ * that keep them between sessions, and for tests). Wrong values make the signature fail verification, nothing more.
+ */
+export function rememberEntryDigests(apkSha256: string, algorithm: 'SHA-256' | 'SHA1', digests: Iterable<[number, string]>): void {
+  const m = memoFor(apkSha256, algorithm);
+  for (const [off, d] of digests) m.set(off, d);
+}
+
+/**
+ * Digest of an entry's uncompressed data. Entries that are still untouched since loadApk read them are the same bytes
+ * whenever the same APK is patched again, so their digests are remembered per APK (re-patching skips inflating them).
+ */
+async function entryDigest(e: ZipArchive['entries'][number], memo: Map<number, string> | undefined, hash: (d: Uint8Array) => Promise<Uint8Array>): Promise<string> {
+  const off = memo && lazyData.has(e) ? sourceOffsets.get(e) : undefined;
+  const known = off === undefined ? undefined : memo!.get(off);
+  if (known !== undefined) return known;
+  const digest = toBase64(await hash(peekData(e)));
+  if (off !== undefined) memo!.set(off, digest);
+  return digest;
+}
+
 export async function v1Files(
   zip: ZipArchive,
   opts: SignOptions,
@@ -114,12 +153,14 @@ export async function v1Files(
 
   const mainManifest = header(['Manifest-Version: 1.0', `Created-By: ${createdBy}`]);
   const sections: { name: string; bytes: Uint8Array }[] = [];
+  const sha = sourceSha256.get(zip);
+  const memo = sha === undefined ? undefined : memoFor(sha, label);
   let done = 0;
   for (const e of zip.entries) {
     throwIfCancelled(opts.signal);
     opts.onProgress?.(0.9 * (done++ / zip.entries.length));
     if (e.name.endsWith('/') || isSignatureFile(e.name)) continue;
-    const digest = toBase64(await hash(peekData(e)));
+    const digest = await entryDigest(e, memo, hash);
     sections.push({ name: e.name, bytes: header([`Name: ${e.name}`, `${label}-Digest: ${digest}`]) });
   }
   const manifest = cat(mainManifest, ...sections.map((s) => s.bytes));

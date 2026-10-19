@@ -5,5 +5,5 @@ export {
   type SigningIdentity, type IdentityBundle, type EncryptedIdentityBundle,
 } from './identity';
 export { MemoryKeystore, IndexedDbKeystore, getOrCreateIdentity, type Keystore } from './keystore';
-export { signApk, signZip, detectMinSdk, v1Files, buildV2Block, type SignOptions } from './sign';
+export { signApk, signZip, detectMinSdk, v1Files, buildV2Block, rememberEntryDigests, type SignOptions } from './sign';
 export { SigningError } from './errors';

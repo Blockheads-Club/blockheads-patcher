@@ -1,4 +1,4 @@
-export { ZipError, peekData } from './types';
+export { ZipError, peekData, sourceSha256 } from './types';
 export type { ZipEntry, ZipArchive, WriteZipOptions } from './types';
 export { crc32 } from './crc32';
 export { readZip, locateEocd } from './reader';

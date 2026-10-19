@@ -3,6 +3,10 @@ import { PatchError, type PatchContext } from './types';
 
 /** Opens the APK's dex files; undefined when there are none or one is malformed (the patch is then incompatible). */
 export function openDexSet(ctx: PatchContext): DexSet | undefined {
+  return ctx.dexCache ? ctx.dexCache.open(ctx.zip) : parseDexSet(ctx);
+}
+
+function parseDexSet(ctx: Pick<PatchContext, 'zip'>): DexSet | undefined {
   try {
     const set = new DexSet(ctx.zip);
     if (!set.names.length) return undefined;
@@ -11,6 +15,35 @@ export function openDexSet(ctx: PatchContext): DexSet | undefined {
   } catch (e) {
     if (e instanceof DexError) return undefined;
     throw e;
+  }
+}
+
+/** Pool sizes and edit flag of every parsed dex: equal signatures mean the files still match a fresh parse. */
+function signature(set: DexSet | undefined): string {
+  return set ? set.names.map((n) => { const d = set.get(n); return [d.dirty, d.strings.length, d.types.length, d.protos.length, d.fields.length, d.methods.length, d.classDefs.length].join(); }).join(';') : '';
+}
+
+/**
+ * Parsed dex files shared by the `detect` calls of one listPatches run, so the (large) dex files are parsed once instead
+ * of once per patch. A detect may assemble code with the dex's own pool, which adds entries: `check()` after each detect
+ * drops the parse when that happened, so every detect sees the same state as a fresh parse. Never used for `apply`.
+ */
+export class DexCache {
+  private opened = false;
+  private set: DexSet | undefined;
+  private sig = '';
+
+  open(zip: PatchContext['zip']): DexSet | undefined {
+    if (!this.opened) {
+      this.set = parseDexSet({ zip });
+      this.sig = signature(this.set);
+      this.opened = true;
+    }
+    return this.set;
+  }
+
+  check(): void {
+    if (this.opened && signature(this.set) !== this.sig) this.opened = false;
   }
 }
 

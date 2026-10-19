@@ -1,6 +1,6 @@
 import { inflateSync } from 'fflate';
 import { crc32 } from './crc32';
-import { ZipError, lazyData, rawMethods, type ZipArchive, type ZipEntry } from './types';
+import { ZipError, lazyData, rawMethods, sourceOffsets, type ZipArchive, type ZipEntry } from './types';
 
 const SIG_EOCD = 0x06054b50;
 const SIG_CEN = 0x02014b50;
@@ -101,6 +101,7 @@ export function readZip(bytes: Uint8Array): ZipArchive {
     });
     lazyData.set(entry, load);
     rawMethods.set(entry, method);
+    sourceOffsets.set(entry, localOff);
     entries.push(entry);
   }
   const zipComment = commentLen ? bytes.slice(eocdOffset + 22, eocdOffset + 22 + commentLen) : undefined;

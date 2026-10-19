@@ -46,6 +46,12 @@ export const rawMethods = new WeakMap<object, number>();
  */
 export const lazyData = new WeakMap<object, () => Uint8Array>();
 
+/** Internal: offset of an entry's local header in the zip it was read from (identifies the entry within that file). */
+export const sourceOffsets = new WeakMap<object, number>();
+
+/** Internal: SHA-256 (hex) of the bytes an archive was read from, when the caller computed it (see loadApk). */
+export const sourceSha256 = new WeakMap<object, string>();
+
 /** Uncompressed bytes of an entry without retaining them on the entry (keeps untouched entries lazy). */
 export function peekData(e: ZipEntry): Uint8Array {
   const load = lazyData.get(e);
