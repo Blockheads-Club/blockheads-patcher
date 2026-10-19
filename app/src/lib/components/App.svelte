@@ -150,7 +150,10 @@
   .app.fixed { height: 100dvh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .app.fixed :global(.appbar) { position: sticky; top: 0; z-index: 6; }
   .app { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
-  .body { flex: 1; display: flex; justify-content: center; padding: 32px 24px 48px; }
+  /* align-items: flex-start: the column takes its content's height. Stretched to the scroll area (desktop) it kept
+     that height and the content overflowed it, so the bottom padding ended up above the overflow and the last card
+     touched the footer. */
+  .body { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 32px 24px 48px; }
   .body:focus { outline: none; }
   .col { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 22px; }
   .col.s2 { max-width: 1040px; }
