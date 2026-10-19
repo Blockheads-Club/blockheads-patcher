@@ -151,6 +151,26 @@ Patch options:
    `addView/setContentView` calls to the main looper. Needs device debugging; do not attempt blind.
 3. Do not declare orientation as handled for the problem classes, so Android relaunches instead (the game would need to survive `onCreate` twice; not tested).
 
+Implemented (option 4, DEX, recommended): `fix-config-change-crash` (`packages/core/src/patches/fix-config-change-crash.ts`).
+It does not move the window; it keeps the Android main looper alive past exactly this exception:
+
+* New class `com.blockheadsclub.patch.LoopGuard implements Runnable`, added to the dex that holds `VerdeActivity`
+  (`classes.dex` in 1.7.4/1.7.5/1.7.6). `install()` (static; a static `installed` flag makes it once per process, so an
+  activity re-creation does not nest a second guard; the body is inside a `Throwable` handler so it can never break
+  `onCreate`) posts `new LoopGuard()` to `new Handler(Looper.getMainLooper())`. `run()` is
+  `for (;;) { try { Looper.loop(); return; } catch (Throwable t) { if (t.getClass().getName().equals("android.view.ViewRootImpl$CalledFromWrongThreadException")) Log.w("BlockheadsPatcher", "ignored a configuration change on the wrong thread", t); else throw t; } }`.
+  The hidden exception class is matched by name; any other exception (also a wrapper around this one) still crashes as before.
+* Hook: `invoke-static {}, LoopGuard.install()V` prepended to `VerdeActivity.onCreate(Landroid/os/Bundle;)V` (before
+  `super.onCreate`). Activity lifecycle callbacks always run on the Android UI thread, and `onCreate` is the first game code
+  there (it also builds `rootOfAllEvil` and starts the library loader). The posted guard runs right after the launch message;
+  from then on every main-thread message is dispatched from the nested `Looper.loop()`.
+* Detect: `applied` when the class exists and `onCreate` calls it; `notApplied` when `VerdeActivity.onCreate(Bundle)` has
+  code; `incompatible` otherwise. A partial state (class or hook missing) is completed.
+* Known side effects (reasoned, not device-tested): the client transaction item that threw stops right after
+  `ViewRootImpl.updateConfiguration` (`Activity.onConfigurationChanged` has already run), and later items of the same
+  `ClientTransaction` are skipped (newer Android versions may batch several items). Recent Android versions log one `Looper`
+  warning ("Loop again would have the queued messages be executed before this one completed") per (re-)entry.
+
 Verify: get the exact exception from logcat on a crashing device first (stack must show `ViewRootImpl.checkThread` or another cause), then test rotation x
 fold/unfold x split-screen x font/density change. Risk: high. Layers: manifest (option 1) and DEX (option 2).
 

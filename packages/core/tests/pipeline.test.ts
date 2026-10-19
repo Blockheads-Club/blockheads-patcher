@@ -181,6 +181,7 @@ describe('listPatches / applyPatches', () => {
       ['fix-invite-email-typo', 'incompatible'],
       ['signs-lowercase', 'incompatible'],
       ['fix-webview-crash', 'incompatible'],
+      ['fix-config-change-crash', 'incompatible'],
       ['fix-email-share-link', 'incompatible'],
       ['fix-join-links', 'incompatible'],
       ['music-with-other-apps', 'incompatible'],

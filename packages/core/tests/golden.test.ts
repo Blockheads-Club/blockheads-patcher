@@ -122,7 +122,40 @@ for (const apk of APKS) {
   });
 }
 
-const NEW_PATCHES = ['enable-audio-capture', 'keep-data-on-uninstall', 'allow-resizing', 'raise-target-sdk', 'fix-join-links', 'adaptive-icon'];
+const GUARD_APK = APKS[2]!;
+describe.skipIf(!haveApk(GUARD_APK.path) || !tools)('golden: 1.7.6 with fix-welcome-popup-deadlock + fix-config-change-crash', () => {
+  const ids = ['fix-welcome-popup-deadlock', 'fix-config-change-crash'];
+  const outPath = join(resolve(__dirname, '../../../.local-out'), 'guard-1.7.6.apk');
+  let output: Uint8Array;
+
+  beforeAll(async () => {
+    const res = await patchApk(new Uint8Array(readFileSync(GUARD_APK.path)), { patchIds: ids, keystore: new MemoryKeystore() });
+    expect(res.applied).toEqual(ids);
+    output = res.bytes;
+    mkdirSync(resolve(outPath, '..'), { recursive: true });
+    rmSync(outPath, { force: true });
+    writeFileSync(outPath, output);
+  }, 180_000);
+
+  it('both patches report applied and the APK verifies (v1 + v2, zipalign)', async () => {
+    const st = listPatches(await loadApk(output));
+    expect(ids.map((id) => st.find((x) => x.patch.id === id)!.status)).toEqual(['applied', 'applied']);
+    const r = run(join(BT, 'apksigner'), ['verify', '--verbose', outPath]);
+    expect(r.out).toContain('v1 scheme (JAR signing): true');
+    expect(r.out).toContain('v2 scheme (APK Signature Scheme v2): true');
+    expect(r.code).toBe(0);
+    expect(run(join(BT, 'zipalign'), ['-c', '-p', '4', outPath]).code).toBe(0);
+  }, 120_000);
+
+  it('only the manifest and classes.dex change', () => {
+    const a = readZip(new Uint8Array(readFileSync(GUARD_APK.path))), b = readZip(output);
+    const isSig = (n: string) => /^META-INF\/(MANIFEST\.MF|[^/]+\.(SF|RSA|DSA|EC)|SIG-.*)$/i.test(n);
+    const changed = b.entries.filter((e) => !isSig(e.name) && Buffer.compare(e.data, getEntry(a, e.name)!.data) !== 0).map((e) => e.name);
+    expect(changed.sort()).toEqual(['AndroidManifest.xml', 'classes.dex']);
+  });
+});
+
+const NEW_PATCHES = ['enable-audio-capture', 'keep-data-on-uninstall', 'allow-resizing', 'raise-target-sdk', 'fix-join-links', 'adaptive-icon', 'fix-config-change-crash'];
 
 describe('registry', () => {
   it('default registry has both patches; duplicates rejected', () => {

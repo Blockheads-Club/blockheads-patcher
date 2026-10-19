@@ -14,6 +14,7 @@ export { fixInviteEmailTypo } from './fix-invite-email-typo';
 export { GAME_LIB_PATH, GAME_V174, GAME_V175, GAME_V176 } from './game-versions';
 export { signsLowercase } from './signs-lowercase';
 export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
+export { fixConfigChangeCrash, LOOP_GUARD_CLASS, WRONG_THREAD_EXCEPTION } from './fix-config-change-crash';
 export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
 export { fixJoinLinks, joinLinkFilters, JOIN_SCHEME, JOIN_HOSTS, JOIN_PATH } from './fix-join-links';
 export { adaptiveIcon, ADAPTIVE_API } from './adaptive-icon';
