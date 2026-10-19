@@ -18,6 +18,7 @@
   import FirstRunDialog from '$lib/screens/FirstRunDialog.svelte';
   import TitleBar from '$lib/ui/TitleBar.svelte';
   import { guessOs, win } from '$lib/winctl';
+  import { splashIpc } from '$lib/splash';
 
   let { state: s, keys, prefs }: { state: PatcherState; keys: KeysState; prefs: Prefs } = $props();
 
@@ -43,6 +44,10 @@
   /** Maximized or fullscreen: the window fills the screen, so no rounded corners (macOS has native ones). */
   let square = $state(false);
   const round = $derived(desktop && os !== 'macos' && !square);
+  // Transparent page behind the rounded frame, so the window's corners show through (app.css, app.html).
+  $effect(() => {
+    document.documentElement.classList.toggle('desk', desktop);
+  });
   onMount(() => {
     if (!desktop) return;
     const sync = () => void Promise.all([win.isMaximized(), win.isFullscreen()]).then(([m, f]) => (square = m || f)).catch(() => {});
@@ -70,7 +75,12 @@
   });
 
   function accept() { giveConsent(); consented = true; }
-  function quit() { window.close(); quitHint = true; }
+  /** Desktop: leave the app. The web can only try to close the tab (allowed only for script-opened tabs), so it
+   *  also explains how to leave. */
+  function quit() {
+    if (desktop) { splashIpc.quit().catch(() => {}); return; }
+    window.close(); quitHint = true;
+  }
   const openKeys = () => { view = 'keys'; };
 </script>
 

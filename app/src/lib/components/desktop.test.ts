@@ -19,6 +19,8 @@ vi.mock('$lib/winctl', () => ({
     onFocus: async () => () => {}
   }
 }));
+const ipc = vi.hoisted(() => ({ quit: vi.fn(async () => {}) }));
+vi.mock('$lib/splash', () => ({ splashIpc: ipc }));
 import App from './App.svelte';
 
 beforeEach(() => { setLanguage('en'); localStorage.clear(); w.os = 'linux'; w.max = false; w.full = false; w.fail = false; });
@@ -32,6 +34,15 @@ function mount(kind = 'tauri-desktop', over = {}) {
 }
 
 describe('desktop shell', () => {
+  test('the page is transparent behind the rounded frame; first-run Quit leaves the app', async () => {
+    const engine = mockEngine({});
+    const state = new PatcherState(mockPlatform({ kind: 'tauri-desktop' } as never), engine);
+    render(App, { state, keys: new KeysState(engine, new MemoryKeyLibrary()), prefs: new Prefs() });
+    await waitFor(() => expect(document.documentElement.classList.contains('desk')).toBe(true));
+    await fireEvent.click(screen.getByRole('button', { name: 'Quit' }));
+    expect(ipc.quit).toHaveBeenCalled();
+    expect(screen.queryByRole('status', { name: /close/i })).toBeNull();
+  });
   test('title bar with per-screen context, rounded frame, fixed-height app', async () => {
     const { container } = mount();
     expect(container.querySelector('.frame.round')).toBeTruthy();

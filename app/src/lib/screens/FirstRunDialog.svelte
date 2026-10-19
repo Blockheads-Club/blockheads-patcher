@@ -19,9 +19,9 @@
   ] as const;
 </script>
 
-<Dialog labelledby="fr-t" describedby="fr-d" onclose={review ? onclose : undefined}>
+<Dialog labelledby="fr-t" describedby="fr-d" wide onclose={review ? onclose : undefined}>
   <div class="top">
-    <img src={logo} alt="" width="56" height="56" />
+    <img src={logo} alt="" width="44" height="44" />
     <LanguageSelect id="fr-lang" iconLeft />
   </div>
   <div class="intro"><h1 id="fr-t">{$t('firstrun.title')}</h1><p id="fr-d" class="muted">{$t('firstrun.lead')}</p></div>
@@ -52,26 +52,26 @@
 </Dialog>
 
 <style>
-  .top { padding: 24px 28px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .top img { border-radius: 13px; transform: rotate(-6deg); box-shadow: 0 4px 0 var(--logo-edge); }
-  .intro { padding: 16px 28px 8px; display: flex; flex-direction: column; gap: 8px; }
-  h1 { font-size: 30px; }
-  .intro p { font-size: 16.5px; }
-  .pts { padding: 0 28px; }
-  .pt { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .pt:last-child { border-bottom: 0; }
-  .pi { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .top { padding: 20px 28px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .top img { border-radius: 11px; transform: rotate(-6deg); box-shadow: 0 3px 0 var(--logo-edge); }
+  .intro { padding: 12px 28px 4px; display: flex; flex-direction: column; gap: 6px; }
+  h1 { font-size: 26px; }
+  .intro p { font-size: 16px; }
+  /* Two columns where there is room, so the whole notice fits a 700 px window without scrolling. */
+  .pts { padding: 4px 28px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); column-gap: 24px; }
+  .pt { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; }
+  .pi { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
   .pi.sun { background: var(--sun); color: var(--on-sun); }
   .pi.primary { background: var(--primary-soft); color: var(--primary-ink); }
   .pi.info { background: var(--info-soft); color: var(--info); }
   .pi.warn { background: var(--warn-soft); color: var(--warn); }
   .ptt { font-weight: 700; }
-  .ptb { font-size: 15px; }
-  .agree { margin: 8px 28px 0; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
+  .ptb { font-size: 14.5px; line-height: 1.45; }
+  .agree { margin: 8px 28px 0; padding: 12px 16px; border-radius: 12px; background: var(--surface-2); }
   .agree label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; font-weight: 700; font-size: 15.5px; }
   .chk { width: 22px; height: 22px; accent-color: var(--primary); margin: 1px 0 0; flex: none; }
-  .foot { padding: 20px 28px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .foot { padding: 16px 28px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .full { font-weight: 700; font-size: 15px; }
   .btns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .why { padding: 0 28px 20px; margin-top: -10px; }
+  .why { padding: 0 28px 16px; margin-top: -8px; }
 </style>

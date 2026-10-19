@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  let { labelledby, describedby, onclose, children }: { labelledby: string; describedby?: string; onclose?: () => void; children: Snippet } = $props();
+  let { labelledby, describedby, wide = false, onclose, children }: { labelledby: string; describedby?: string; wide?: boolean; onclose?: () => void; children: Snippet } = $props();
 
   let root: HTMLElement | undefined = $state();
   const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -26,7 +26,7 @@
 </script>
 
 <div class="scrim">
-  <div bind:this={root} class="dlg" role="dialog" aria-modal="true" aria-labelledby={labelledby} aria-describedby={describedby} tabindex="-1" {onkeydown}>
+  <div bind:this={root} class={['dlg', wide && 'wide']} role="dialog" aria-modal="true" aria-labelledby={labelledby} aria-describedby={describedby} tabindex="-1" {onkeydown}>
     {@render children()}
   </div>
 </div>
@@ -34,6 +34,10 @@
 <style>
   .scrim { position: fixed; inset: 0; z-index: 50; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 24px; }
   .dlg { background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--r-xl); box-shadow: var(--lift); width: 100%; max-width: 600px; max-height: calc(100dvh - 48px); overflow: auto; display: flex; flex-direction: column; animation: land var(--dur-move) var(--ease-block); }
+  .dlg.wide { max-width: 760px; }
+  /* Desktop: the title bar stays usable above the scrim (window buttons, drag). */
+  :global(html.desk) .scrim { top: var(--titlebar-h); }
+  :global(html.desk) .dlg { max-height: calc(100dvh - var(--titlebar-h) - 48px); }
   .dlg:focus { outline: none; }
   @keyframes land { from { transform: translateY(12px) scale(0.98); opacity: 0; } }
   @media (max-width: 600px) { .scrim { padding: 12px; align-items: flex-end; } .dlg { max-height: calc(100dvh - 24px); } }
