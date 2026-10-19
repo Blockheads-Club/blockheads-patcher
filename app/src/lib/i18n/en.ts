@@ -299,7 +299,7 @@ export const en = {
     'On Android 10 and newer (verified on Android 14, game 1.7.4) the game freezes on the "WELCOME TO <world>!" popup when joining a multiplayer server. This makes the popup window translucent so the game is only paused, not stopped.',
   'patch.fix-system-font-crash.name': 'Fix crashes from missing system fonts',
   'patch.fix-system-font-crash.description':
-    'The game reads Android\'s font list in an old format and finds no usable system font on recent Android versions (seen on Android 14), so it crashes when it draws text with one: in the store and a few seconds after a world opens. This adds the free Noto Sans font (SIL Open Font License) in regular, bold and italic to the game, about 600 KB, and makes the game load it. Works with every game version and makes the 1.7.6 store fix unnecessary.',
+    'The game reads Android\'s font list in an old format and finds no usable system font on recent Android versions (seen on Android 14), so it crashes when it draws text with one: in the store and a few seconds after a world opens. This adds the free Noto Sans font (SIL Open Font License) in regular, bold and italic to the game, about 600 KB, and makes the game load it. Safe on older Android, where the system fonts are still found first. Tested on 1.7.6.',
   'patch.fix-iap-store-font-crash.name': 'Fix crash when loading a world (1.7.6)',
   'patch.fix-iap-store-font-crash.description':
     'Game 1.7.6 crashes while loading a world on Android 10 and newer because the store screen cannot load system fonts. This disables store price lookups, so price labels stay empty. Purchases do not work on re-signed builds anyway, and no paid content is unlocked. Applies to version 1.7.6 only.',

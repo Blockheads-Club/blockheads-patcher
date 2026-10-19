@@ -44,8 +44,8 @@ function detect(ctx: PatchContext): PatchStatus {
  *
  * The name substitutions CoreGraphics computes when nothing matched point at `NotoSans-Regular`, `-Bold` and `-Italic`,
  * and the last-resort lookup is `NotoSans-Bold`. This patch ships those three faces (static Noto Sans, SIL OFL 1.1) in
- * `assets/` and lists them under `UIAppFonts` in the game's `Info.plist`, which registers them at start-up. Works for any
- * game version and on old Android too, where the system's own fonts still win.
+ * `assets/` and lists them under `UIAppFonts` in the game's `Info.plist`, which registers them at start-up. Harmless on old
+ * Android, where the system's own fonts still win. Verified on 1.7.6 (Android 14, Galaxy Z Fold4).
  */
 export const fixSystemFontCrash: Patch = {
   id: 'fix-system-font-crash',
