@@ -1,38 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:width="240dp" android:height="240dp" android:viewportWidth="240" android:viewportHeight="240">
-  <path android:fillColor="#FFFFD27A" android:pathData="M120,36A84,84 0 1,0 120,204A84,84 0 1,0 120,36Z"/>
-  <group android:translateX="61" android:translateY="61" android:scaleX="0.230469" android:scaleY="0.230469">
-  <clip-path android:pathData="M96,0H416Q512,0 512,96V416Q512,512 416,512H96Q0,512 0,416V96Q0,0 96,0Z"/>
-  <path android:pathData="M0,0H512V512H0Z"><aapt:attr name="android:fillColor"><gradient android:type="radial" android:centerX="256" android:centerY="128" android:gradientRadius="435"><item android:offset="0" android:color="#FFFFD27A"/><item android:offset="1" android:color="#FFE2553A"/></gradient></aapt:attr></path>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L1156,256L1147.16,381.81Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L1066.87,646.5L1004.32,756.01Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L817.14,959.65L713.27,1031.18Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L456.27,1133.44L331.65,1152.82Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L55.73,1133.44L-64.96,1096.82Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L-305.14,959.65L-397.99,874.3Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L-554.87,646.5L-601.5,529.31Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L-644,256L-635.16,130.19Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L-554.87,-134.5L-492.32,-244.01Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L-305.14,-447.65L-201.27,-519.18Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L55.73,-621.44L180.35,-640.82Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L456.27,-621.44L576.96,-584.82Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L817.14,-447.65L909.99,-362.3Z"/>
-  <path android:fillColor="#FFFFF2C0" android:fillAlpha="0.15" android:pathData="M256,256L1066.87,-134.5L1113.5,-17.31Z"/>
-  <group android:translateX="370" android:translateY="250" android:rotation="35">
-  <path android:fillColor="#FF8B5A2B" android:pathData="M-3,-150H3Q12,-150 12,-141V141Q12,150 3,150H-3Q-12,150 -12,141V-141Q-12,-150 -3,-150Z"/>
-  <path android:fillColor="#FFC3CCD4" android:pathData="M-135,-114Q0,-186 135,-114L114,-90Q0,-144 -114,-90Z"/>
-  </group>
-  <group android:translateX="240" android:translateY="280" android:rotation="-6">
-  <path android:fillColor="#FFF6C79C" android:pathData="M-138,-150H138Q150,-150 150,-138V138Q150,150 138,150H-138Q-150,150 -150,138V-138Q-150,-150 -138,-150Z"/>
-  <path android:fillColor="#FFE3A97A" android:fillAlpha="0.6" android:pathData="M129,-150H150V150H129Z"/>
-  <path android:fillColor="#FF1F1A17" android:pathData="M-150,-150H150V-60Q144,-90 108,-90H-84Q-135,-90 -150,-48Z"/>
-  <path android:fillColor="#FFFFFFFF" android:pathData="M-82.08,-43.5H-49.92Q-28.5,-43.5 -28.5,-22.08V-13.92Q-28.5,7.5 -49.92,7.5H-82.08Q-103.5,7.5 -103.5,-13.92V-22.08Q-103.5,-43.5 -82.08,-43.5Z"/>
-  <path android:fillColor="#FFFFFFFF" android:pathData="M43.92,-43.5H76.08Q97.5,-43.5 97.5,-22.08V-13.92Q97.5,7.5 76.08,7.5H43.92Q22.5,7.5 22.5,-13.92V-22.08Q22.5,-43.5 43.92,-43.5Z"/>
-  <path android:fillColor="#FF111111" android:pathData="M-66,-40.5H-66Q-54.75,-40.5 -54.75,-29.25V-6.75Q-54.75,4.5 -66,4.5H-66Q-77.25,4.5 -77.25,-6.75V-29.25Q-77.25,-40.5 -66,-40.5Z"/>
-  <path android:fillColor="#FF111111" android:pathData="M60,-40.5H60Q71.25,-40.5 71.25,-29.25V-6.75Q71.25,4.5 60,4.5H60Q48.75,4.5 48.75,-6.75V-29.25Q48.75,-40.5 60,-40.5Z"/>
-  <path android:fillColor="#FFF0A35C" android:pathData="M-16.5,9H16.5Q30,9 30,22.5V22.5Q30,36 16.5,36H-16.5Q-30,36 -30,22.5V22.5Q-30,9 -16.5,9Z"/>
-  <path android:fillColor="#FF8A2D0C" android:pathData="M-48,60Q0,114 48,60Z"/>
-  <path android:fillColor="#FFFFFFFF" android:pathData="M-30,61.5H30V73.5H-30Z"/>
-  </group>
-  </group>
-</vector>
+<!-- Splash art for Android < 12: the app icon on the sun disc. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:width="168dp" android:height="168dp" android:gravity="center">
+        <shape android:shape="oval"><solid android:color="@color/splash_sun" /></shape>
+    </item>
+    <item android:width="118dp" android:height="118dp" android:gravity="center" android:drawable="@drawable/splash_legacy_icon" />
+</layer-list>
