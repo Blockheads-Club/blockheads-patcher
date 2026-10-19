@@ -35,6 +35,8 @@
   const count = $derived(s.selected.length);
   /** Desktop shell: custom title bar, rounded frame, fixed-height window where only the content scrolls. */
   const desktop = $derived(platform.kind === 'tauri-desktop');
+  /** Android app: a fixed-height shell like a native app, only the screen content scrolls (see the style). */
+  const android = $derived(platform.kind === 'tauri-android');
   const os = guessOs();
   const ctx = $derived(
     view === 'keys' ? $t('tb.keys') : view === 'settings' ? $t('tb.settings')
@@ -47,6 +49,7 @@
   // Transparent page behind the rounded frame, so the window's corners show through (app.css, app.html).
   $effect(() => {
     document.documentElement.classList.toggle('desk', desktop);
+    document.documentElement.classList.toggle('fixed', android);
   });
   onMount(() => {
     if (!desktop) return;
@@ -87,8 +90,10 @@
 <a class="skip-link" href="#main" onclick={(e) => { e.preventDefault(); main?.focus(); }}>{$t('a11y.skip')}</a>
 
 <div class={['frame', round && 'round']}>
-<div class={['app', desktop && 'desk']} inert={modal}>
+<div class={['app', desktop && 'desk', android && 'fixed']}>
   {#if desktop}<TitleBar {os} {ctx} />{/if}
+  <!-- A modal blocks the app but not the title bar: the window can still be moved, resized and closed. -->
+  <div class="under" inert={modal}>
   <AppBar {view} {step} {failed} install={!!platform.installApk} locked={s.stage === 'patching'} onnavigate={(v) => (view = v)} />
 
   <main id="main" class="body" bind:this={main} tabindex="-1">
@@ -124,6 +129,7 @@
   {/if}
 
   <AppFooter platformKind={platform.kind} activeKey={keys.active} />
+  </div>
 </div>
 </div>
 
@@ -134,11 +140,14 @@
 {/if}
 
 <style>
+  .under { display: contents; }
   /* Native window is transparent on Windows/Linux; this frame draws the rounded window. clip-path also clips the fixed dialogs. */
   .frame.round { clip-path: inset(0 round 12px); }
   .frame.round::after { content: ''; position: fixed; inset: 0; border: 1px solid var(--line-strong); border-radius: 12px; pointer-events: none; z-index: 1000; }
   .app.desk { height: 100dvh; min-height: 0; }
   .app.desk .body { min-height: 0; overflow: auto; }
+  .app.fixed { height: 100dvh; min-height: 0; overflow: hidden; }
+  .app.fixed .body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .app { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
   .body { flex: 1; display: flex; justify-content: center; padding: 32px 24px; }
   .body:focus { outline: none; }

@@ -88,6 +88,8 @@ code, .mono { font-family: var(--f-mono); font-size: 0.92em; }
 
 /* Desktop Tauri shell: transparent window, the app's frame draws the rounded edge and scrolls inside. */
 html.desk, html.desk body { background: transparent; height: 100%; overflow: hidden; }
+/* Android app: the shell scrolls inside, the page never does (no rubber-banding of the whole page). */
+html.fixed, html.fixed body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 :root { --titlebar-h: 40px; }
 
 /* Text selection: off for the app chrome, on where people copy things (fields, logs, paths, addresses, versions,

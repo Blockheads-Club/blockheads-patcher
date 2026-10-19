@@ -31,12 +31,12 @@ describe('first run and legal', () => {
   test('consent gate: blocks the app until accepted, remembered afterwards', async () => {
     const { container } = mount({}, {}, false);
     expect(screen.getByRole('dialog', { name: 'Before you start' })).toBeInTheDocument();
-    expect((container.querySelector('.app') as HTMLElement & { inert: boolean }).inert).toBe(true);
+    expect((container.querySelector('.under') as HTMLElement & { inert: boolean }).inert).toBe(true);
     await fireEvent.click(screen.getByRole('checkbox'));
     await fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(hasConsent()).toBe(true);
-    expect((container.querySelector('.app') as HTMLElement & { inert: boolean }).inert).toBe(false);
+    expect((container.querySelector('.under') as HTMLElement & { inert: boolean }).inert).toBe(false);
   });
   test('quit tries to close the window and explains how to leave', async () => {
     const close = vi.spyOn(window, 'close').mockImplementation(() => {});
