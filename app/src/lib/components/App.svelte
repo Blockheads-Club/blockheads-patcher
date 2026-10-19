@@ -146,15 +146,16 @@
   .frame.round::after { content: ''; position: fixed; inset: 0; border: 1px solid var(--line-strong); border-radius: 12px; pointer-events: none; z-index: 1000; }
   .app.desk { height: 100dvh; min-height: 0; }
   .app.desk .body { min-height: 0; overflow: auto; }
-  .app.fixed { height: 100dvh; min-height: 0; overflow: hidden; }
-  .app.fixed .body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  /* Android: the app itself scrolls (contained, no page bounce); the top bar stays, the footer follows the content. */
+  .app.fixed { height: 100dvh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .app.fixed :global(.appbar) { position: sticky; top: 0; z-index: 6; }
   .app { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); }
-  .body { flex: 1; display: flex; justify-content: center; padding: 32px 24px; }
+  .body { flex: 1; display: flex; justify-content: center; padding: 32px 24px 48px; }
   .body:focus { outline: none; }
   .col { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 22px; }
   .col.s2 { max-width: 1040px; }
   .col.s3, .col.s4 { max-width: 760px; }
   .col.keys { max-width: 1000px; }
   .col.settings { max-width: 820px; }
-  @media (max-width: 600px) { .body { padding: 18px 16px; } }
+  @media (max-width: 600px) { .body { padding: 18px 16px 36px; } }
 </style>

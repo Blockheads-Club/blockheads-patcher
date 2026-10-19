@@ -23,6 +23,7 @@
     <span class="hint locked" role="status">{$t('nav.locked')}</span>
   {:else}
     <nav class="tools" aria-label={$t('app.title')}>
+      <Button variant="ghost" size="sm" icon="patch" current={view === 'patch'} class="tool" onclick={() => onnavigate('patch')}>{$t('nav.patcher')}</Button>
       <Button variant="ghost" size="sm" icon="key" current={view === 'keys'} class="tool" onclick={() => onnavigate(view === 'keys' ? 'patch' : 'keys')}>{$t('nav.keys')}</Button>
       <Button variant="ghost" size="sm" icon="sliders" current={view === 'settings'} class="tool" onclick={() => onnavigate(view === 'settings' ? 'patch' : 'settings')}>{$t('nav.settings')}</Button>
     </nav>
@@ -37,6 +38,15 @@
   small { font: 700 12px var(--f-body); color: var(--text-3); }
   b { font: 800 19px var(--f-display); letter-spacing: -0.01em; }
   .tools { display: flex; gap: 6px; }
+  /* Brand and the Patcher / Keys / Settings tabs share the top row; the stepper sits between them when there is
+     room, else on its own row below (never pushing the tabs down). */
+  .brand { order: 1; }
+  .tools, .locked { order: 2; }
+  .appbar > :global(.stepper) { order: 3; flex-basis: 100%; display: flex; justify-content: center; }
+  @media (min-width: 1100px) {
+    .appbar > :global(.stepper) { order: 2; flex-basis: auto; }
+    .tools, .locked { order: 3; }
+  }
   .locked { min-width: 120px; text-align: end; }
   @media (max-width: 600px) {
     .appbar { padding-inline: 12px; gap: 8px 6px; }

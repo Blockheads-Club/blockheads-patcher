@@ -26,6 +26,7 @@ export const en = {
   'tb.failed': 'Patch failed',
   'tb.keys': 'Signing keys',
   'tb.settings': 'Settings',
+  'nav.patcher': 'Patcher',
   'nav.keys': 'Keys',
   'nav.settings': 'Settings',
   'nav.back': 'Back to patching',

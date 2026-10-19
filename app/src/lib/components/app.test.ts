@@ -158,6 +158,18 @@ describe('patch flow', () => {
     await tick();
     expect(screen.getByRole('heading', { name: 'Choose your game' })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Blockheads Patcher' });
-    expect(within(nav).getAllByRole('button')).toHaveLength(2);
+    expect(within(nav).getAllByRole('button')).toHaveLength(3);
+  });
+  test('the Patcher tab leads back from Keys and Settings', async () => {
+    const engine = mockEngine({});
+    giveConsent();
+    render(App, { state: new PatcherState(mockPlatform(), engine), keys: new KeysState(engine, new MemoryKeyLibrary()), prefs: new Prefs() });
+    const nav = screen.getByRole('navigation', { name: 'Blockheads Patcher' });
+    for (const tab of ['Keys', 'Settings']) {
+      await fireEvent.click(within(nav).getByRole('button', { name: tab }));
+      expect(screen.queryByRole('heading', { name: 'Choose your game' })).toBeNull();
+      await fireEvent.click(within(nav).getByRole('button', { name: 'Patcher' }));
+      expect(await screen.findByRole('heading', { name: 'Choose your game' })).toBeInTheDocument();
+    }
   });
 });

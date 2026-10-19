@@ -27,6 +27,7 @@ export const tr: Record<MessageKey, string> = {
   'tb.failed': 'Yamalama başarısız',
   'tb.keys': 'İmza anahtarları',
   'tb.settings': 'Ayarlar',
+  'nav.patcher': 'Patcher',
   'nav.keys': 'Anahtarlar',
   'nav.settings': 'Ayarlar',
   'nav.back': 'Yamalamaya dön',
