@@ -1,4 +1,4 @@
-import { haveFile } from './helpers';
+import { haveApk, haveFile } from './helpers';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
@@ -170,7 +170,7 @@ describe.skipIf(!haveSigner)('apksigner verification (synthetic)', () => {
   }, 60000);
 });
 
-describe.skipIf(!haveSigner || !haveFile(REAL_APK))('apksigner verification (real APK)', () => {
+describe.skipIf(!haveSigner || !haveApk(REAL_APK))('apksigner verification (real APK)', () => {
   it('signs the real APK', async () => {
     const id = await generateIdentity();
     const out = await signApk(new Uint8Array(readFileSync(REAL_APK)), { identity: id });

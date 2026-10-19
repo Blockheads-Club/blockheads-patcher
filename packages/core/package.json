@@ -11,7 +11,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "vitest run --coverage --passWithNoTests",
-    "test:cov": "vitest run --coverage --passWithNoTests"
+    "test:cov": "vitest run --coverage --passWithNoTests",
+    "test:fast": "BH_REAL_VERSIONS=1.7.6 vitest run --passWithNoTests"
   },
   "dependencies": {
     "fflate": "0.8.2"

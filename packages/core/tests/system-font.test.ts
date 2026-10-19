@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import {
   loadApk, applyPatches, createRegistry, defaultRegistry, PatchError, fixSystemFontCrash, FALLBACK_FONTS, INFO_PLIST,
@@ -7,7 +6,7 @@ import {
 } from '../src';
 import { getEntry, readZip, writeZip } from '../src/zip';
 import { makeApk } from './synthetic-apk';
-import { haveApk } from './helpers';
+import { haveApk, sameContent } from './helpers';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -112,8 +111,7 @@ for (const path of REAL) {
       expect(fixSystemFontCrash.detect(ctx)).toBe('notApplied');
       fixSystemFontCrash.apply(ctx);
       const before = readZip(original), after = readZip(writeZip(ctx.zip));
-      const sha = (d: Uint8Array) => createHash('sha256').update(d).digest('hex');
-      const changed = after.entries.filter((e) => sha(e.data) !== sha(getEntry(before, e.name)?.data ?? new Uint8Array())).map((e) => e.name);
+      const changed = after.entries.filter((e) => { const b = getEntry(before, e.name); return !b || !sameContent(e, b); }).map((e) => e.name);
       expect(changed.sort()).toEqual([INFO_PLIST, ...FALLBACK_FONTS.map((f) => `assets/${f.file}`)].sort());
       expect(dec.decode(getEntry(after, INFO_PLIST)!.data)).toMatch(/<string>NotoSans-Italic\.ttf<\/string>\s*<string>BlockheadsFont-Regular\.otf<\/string>/);
     });

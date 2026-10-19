@@ -1,4 +1,4 @@
-import { haveFile } from './helpers';
+import { haveApk } from './helpers';
 import { describe, it, expect, onTestFinished } from 'vitest';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -12,7 +12,7 @@ import {
 
 const APK = '/home/kahverengi/Downloads/The Blockheads_1.7.4_APKPure.apk';
 const AAPT2 = join(homedir(), 'Android/Sdk/build-tools/35.0.0/aapt2');
-const have = haveFile(APK);
+const have = haveApk(APK);
 const ACTIVITY = 'com.noodlecake.noodlewebview.BlockheadsWebView';
 
 function loadManifest(): Uint8Array {

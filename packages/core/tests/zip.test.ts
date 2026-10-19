@@ -1,4 +1,4 @@
-import { haveFile } from './helpers';
+import { haveApk, haveFile } from './helpers';
 import { describe, expect, test, onTestFinished } from 'vitest';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -117,8 +117,8 @@ describe('zip synthetic', () => {
   });
 });
 
-describe.skipIf(!haveFile(APK))('zip on real APK', () => {
-  const input = haveFile(APK) ? new Uint8Array(readFileSync(APK)) : new Uint8Array(0);
+describe.skipIf(!haveApk(APK))('zip on real APK', () => {
+  const input = haveApk(APK) ? new Uint8Array(readFileSync(APK)) : new Uint8Array(0);
 
   test('every entry survives read -> write -> read identically', () => {
     const a = readZip(input);

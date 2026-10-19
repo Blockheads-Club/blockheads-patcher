@@ -55,7 +55,9 @@ const SAMPLES: Sample[] = [
     audio: audioWords(0xb8b168, 0xb8b1e4, 0xb8c410, 0xb8b358, [0x921db8, 0x93a8bc, 0x932328], 0x92fc88, 0x1ad95972, 0xead958c6) },
 ];
 
-for (const s of SAMPLES) {
+/** The suite for one game version; each version has its own test file so the versions run in parallel. */
+export function goldenNativeSuite(version: string): void {
+  const s = SAMPLES.find((x) => x.name === version)!;
   describe.skipIf(!haveApk(s.path))(`golden native patches: ${s.name}`, () => {
     let input: Uint8Array;
     let output: Uint8Array;
