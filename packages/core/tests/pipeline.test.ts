@@ -197,6 +197,7 @@ describe('listPatches / applyPatches', () => {
       ['music-resume', 'incompatible'],
       ['menu-music-loop', 'incompatible'],
       ['world-selection-keep', 'incompatible'],
+      ['gamepad-controls', 'incompatible'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });

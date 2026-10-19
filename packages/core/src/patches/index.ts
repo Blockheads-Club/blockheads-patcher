@@ -32,4 +32,5 @@ export { tabletLayout, TABLET_CLASS, TABLET_MIN_DP, SPLASH_2X_PX } from './table
 export { musicResume } from './fix-music-resume';
 export { menuMusicLoop } from './menu-music-loop';
 export { worldSelectionKeep } from './world-selection-keep';
+export { gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, GAMEPAD_DEADZONE, CURSOR_HIDE_MS } from './gamepad-controls';
 export { AUDIO_SITES, type AudioSites } from './audio-native';

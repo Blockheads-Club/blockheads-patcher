@@ -5,7 +5,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DexFile, validateDex } from '../../src/dex';
 import {
-  fixConfigChangeCrash, fixEmailShareLink, fixWebviewCrash, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
+  fixConfigChangeCrash, fixEmailShareLink, gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, fixWebviewCrash, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
   type PatchContext,
 } from '../../src';
 import { findElementsByName } from '../../src/axml';
@@ -103,6 +103,43 @@ describe.each(APKS)('real game %s', (version, file) => {
             const g = LOOP_GUARD_CLASS.slice(1, -1);
             expect(text).toMatch(new RegExp(`VerdeActivity\\.onCreate:\\(Landroid/os/Bundle;\\)V\\n\\S+: \\S+ \\S+ \\S+ +\\|0000: invoke-static \\{\\}, L${g};\\.install:\\(\\)V`));
             expect(text).toMatch(/\|0000: invoke-static \{\}, Landroid\/os\/Looper;\.loop:\(\)V[\s\S]*?\|001d: throw v0\n\s+catches\s+: 1\n\s+0x0000 - 0x0003\n\s+Ljava\/lang\/Throwable; -> 0x0004/);
+          }
+        }
+        if (d8) {
+          const f = join(dir, name), o = join(dir, `o-${name}`);
+          writeFileSync(f, out);
+          execFileSync('mkdir', ['-p', o]);
+          execFileSync(d8, ['--release', '--min-api', '21', '--lib', androidJar!, '--output', o, f], { env: { ...process.env, JAVA_HOME: jdk, PATH: `${jdk}/bin:${process.env.PATH}` }, stdio: 'pipe' });
+        }
+      }
+      expect(holders).toEqual(['classes.dex']);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  it.skipIf(!run)('applies gamepad-controls; output validates, dexdump shows both hooks, d8 accepts it', async () => {
+    const ctx = await ctxOf();
+    expect(gamepadControls.detect(ctx)).toBe('notApplied');
+    gamepadControls.apply(ctx);
+    expect(gamepadControls.detect(ctx)).toBe('applied');
+    const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
+    try {
+      const holders: string[] = [];
+      for (const name of dexNames(ctx.zip)) {
+        const out = getEntry(ctx.zip, name)!.data;
+        expect(validateDex(out), `${version} ${name}`).toEqual([]);
+        const dex = DexFile.parse(out);
+        if (dex.findClass(GAMEPAD_CLASS)) {
+          holders.push(name);
+          expect(dex.findClass(WINDOW_DIALOG_CLASS), `${version} Gamepad next to the dialog`).toBeDefined();
+          if (dexdump) {
+            const text = dump(out, dir);
+            const g = GAMEPAD_CLASS.slice(1, -1);
+            for (const [m, p, e] of [['dispatchKeyEvent', 'Landroid/view/KeyEvent;', 'onKey'], ['onGenericMotionEvent', 'Landroid/view/MotionEvent;', 'onMotion']] as const) {
+              const head = `Window\\$WindowDialog\\.${m}:\\(${p.replace(/[/$]/g, '\\$&')}\\)Z\\n\\S+: \\S+ \\S+ \\S+ +\\|0000: invoke-static \\{v\\d+, v\\d+\\}, L${g};\\.${e}:`;
+              expect(text).toMatch(new RegExp(head));
+            }
+            expect(text).toContain(`L${g};.send:(IIFFF)V`);
           }
         }
         if (d8) {
