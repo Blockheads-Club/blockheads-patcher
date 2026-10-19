@@ -5,12 +5,13 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DexFile, validateDex } from '../../src/dex';
 import {
-  fixConfigChangeCrash, fixEmailShareLink, gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, fixWebviewCrash, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
+  applyPatches, defaultRegistry, fixConfigChangeCrash, fixEmailShareLink, gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, fixWebviewCrash, IMMERSIVE_CLASS, listPatches, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
   type PatchContext,
 } from '../../src';
 import { findElementsByName } from '../../src/axml';
 import { dexNames } from '../../src/dex';
 import { getEntry } from '../../src/zip';
+import { calleeOf, insnsOf } from '../../src/patches/dex-support';
 import { haveApk } from '../helpers';
 
 const dl = join(homedir(), 'Downloads');
@@ -178,6 +179,49 @@ describe.each(APKS)('real game %s', (version, file) => {
       if (dexdump) {
         expect(text).toMatch(/const\/16 v1, #int 49 \/\/ #31\s+\S+: \S+ \S+ \S+\s+\|\w+: invoke-virtual \{v0, v1\}, Lcom\/apportable\/ui\/TextView\$EditText;\.setGravity/);
         for (const needle of [`${MULTICAST_CLASS.slice(1, -1)};.acquire`, `${MULTICAST_CLASS.slice(1, -1)};.release`, `${TABLET_CLASS.slice(1, -1)};.init`, `${TABLET_CLASS.slice(1, -1)};.splash`]) expect(text).toContain(needle);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  // one version is enough for the composition check (the hooks are identical in 1.7.4-1.7.6) and keeps the suite fast
+  it.skipIf(!run || version !== '1.7.6')('applies every patch together (VerdeActivity and WindowDialog hooks compose); output validates and d8 accepts it', async () => {
+    const apk = await loadApk(new Uint8Array(readFileSync(path)));
+    const ids = listPatches(apk).filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
+    expect(ids).toEqual(expect.arrayContaining(['immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash']));
+    const { applied, skipped } = applyPatches(apk, ids);
+    expect(skipped).toEqual([]);
+    expect(applied).toEqual(ids);
+    const after = listPatches(apk);
+    for (const id of ids) expect(after.find((r) => r.patch.id === id)!.status, `${version} ${id}`).toBe('applied');
+    const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
+    try {
+      for (const name of dexNames(apk.zip)) {
+        const out = getEntry(apk.zip, name)!.data;
+        expect(validateDex(out), `${version} ${name}`).toEqual([]);
+        const dex = DexFile.parse(out);
+        const act = dex.findClass('Lcom/apportable/activity/VerdeActivity;');
+        if (act) {
+          const calls = (name: string, params: string[], helper: string): boolean =>
+            insnsOf(act, act.findMethod(name, params, 'V')!).some((i) => calleeOf(dex, i)?.cls === helper);
+          expect(calls('onCreate', ['Landroid/os/Bundle;'], LOOP_GUARD_CLASS)).toBe(true);
+          expect(calls('onResume', [], MULTICAST_CLASS)).toBe(true);
+          expect(calls('hideSystemUI', [], IMMERSIVE_CLASS)).toBe(true);
+          expect(calls('onConfigurationChanged', ['Landroid/content/res/Configuration;'], IMMERSIVE_CLASS)).toBe(true);
+        }
+        const dialog = dex.findClass(WINDOW_DIALOG_CLASS);
+        if (dialog) {
+          const first = (name: string, param: string): string | undefined =>
+            calleeOf(dex, insnsOf(dialog, dialog.findMethod(name, [param], 'Z')!)[0]!)?.cls;
+          expect(first('dispatchKeyEvent', 'Landroid/view/KeyEvent;')).toBe(GAMEPAD_CLASS);
+          expect(first('onGenericMotionEvent', 'Landroid/view/MotionEvent;')).toBe(GAMEPAD_CLASS);
+        }
+        if (d8) {
+          const f = join(dir, name), o = join(dir, `o-${name}`);
+          writeFileSync(f, out);
+          execFileSync('mkdir', ['-p', o]);
+          execFileSync(d8, ['--release', '--min-api', '21', '--lib', androidJar!, '--output', o, f], { env: { ...process.env, JAVA_HOME: jdk, PATH: `${jdk}/bin:${process.env.PATH}` }, stdio: 'pipe' });
+        }
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });

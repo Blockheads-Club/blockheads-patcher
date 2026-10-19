@@ -11,6 +11,7 @@ import { fixInviteEmailTypo } from './fix-invite-email-typo';
 import { signsLowercase } from './signs-lowercase';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixConfigChangeCrash } from './fix-config-change-crash';
+import { immersiveFullscreen } from './immersive-fullscreen';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
 import { musicWithOtherApps } from './music-with-other-apps';
@@ -45,7 +46,7 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 export const defaultRegistry: PatchRegistry = createRegistry([
   fixWelcomePopupDeadlock, fixIapStoreFontCrash, fixSystemFontCrash, enableAudioCapture, keepDataOnUninstall, allowResizing, raiseTargetSdk,
   fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
-  fixWebviewCrash, fixConfigChangeCrash, fixEmailShareLink,
+  fixWebviewCrash, fixConfigChangeCrash, immersiveFullscreen, fixEmailShareLink,
   fixJoinLinks,
   musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixBackgroundWakeup,
   adaptiveIcon,

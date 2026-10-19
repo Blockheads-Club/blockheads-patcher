@@ -183,6 +183,7 @@ describe('listPatches / applyPatches', () => {
       ['signs-lowercase', 'incompatible'],
       ['fix-webview-crash', 'incompatible'],
       ['fix-config-change-crash', 'incompatible'],
+      ['immersive-fullscreen', 'incompatible'],
       ['fix-email-share-link', 'incompatible'],
       ['fix-join-links', 'incompatible'],
       ['music-with-other-apps', 'incompatible'],
