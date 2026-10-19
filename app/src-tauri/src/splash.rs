@@ -31,11 +31,14 @@ pub struct SplashState {
     pub lang: String,
 }
 
-/// Minimum splash time from `BHP_SPLASH_HOLD_MS` (milliseconds; unset, empty or invalid means none).
+/// The splash stays up at least this long, so it is seen rather than flashed.
+pub const SPLASH_MIN: Duration = Duration::from_millis(700);
+
+/// Minimum splash time: `BHP_SPLASH_HOLD_MS` in milliseconds (0 = none), else [`SPLASH_MIN`].
 pub fn splash_hold(var: Option<OsString>) -> Duration {
     var.and_then(|v| v.to_str().and_then(|s| s.trim().parse::<u64>().ok()))
         .map(Duration::from_millis)
-        .unwrap_or_default()
+        .unwrap_or(SPLASH_MIN)
 }
 
 /// Shared state of the splash hand-over.
@@ -285,9 +288,10 @@ mod tests {
 
     #[test]
     fn splash_hold_parses_milliseconds() {
-        assert_eq!(splash_hold(None), Duration::ZERO);
-        assert_eq!(splash_hold(Some("".into())), Duration::ZERO);
-        assert_eq!(splash_hold(Some("soon".into())), Duration::ZERO);
+        assert_eq!(splash_hold(None), SPLASH_MIN);
+        assert_eq!(splash_hold(Some("".into())), SPLASH_MIN);
+        assert_eq!(splash_hold(Some("soon".into())), SPLASH_MIN);
+        assert_eq!(splash_hold(Some("0".into())), Duration::ZERO);
         assert_eq!(
             splash_hold(Some(" 2500 ".into())),
             Duration::from_millis(2500)
