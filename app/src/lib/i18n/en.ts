@@ -253,6 +253,7 @@ export const en = {
   'firstrun.quitHint': 'You can close this window to leave.',
   'legal.notice': 'Not affiliated with Majic Jungle or Noodlecake. No game files are distributed; you supply your own APK. Only patch software you legally own.',
   'patch.fix-welcome-popup-deadlock.summary': 'Stops the game from hanging on the first popup on modern Android, so you can reach your worlds.',
+  'patch.fix-system-font-crash.summary': 'Stops crashes in the store and in worlds on newer Android, where the game cannot find a system font.',
   'patch.fix-iap-store-font-crash.summary': 'Stops the game from closing when you open a saved world on version 1.7.6.',
   'lang.label': 'Language',
   'theme.label': 'Theme',
@@ -296,6 +297,9 @@ export const en = {
   'patch.fix-welcome-popup-deadlock.name': 'Fix freeze on the welcome popup',
   'patch.fix-welcome-popup-deadlock.description':
     'On Android 10 and newer (verified on Android 14, game 1.7.4) the game freezes on the "WELCOME TO <world>!" popup when joining a multiplayer server. This makes the popup window translucent so the game is only paused, not stopped.',
+  'patch.fix-system-font-crash.name': 'Fix crashes from missing system fonts',
+  'patch.fix-system-font-crash.description':
+    'The game reads Android\'s font list in an old format and finds no usable system font on recent Android versions (seen on Android 14), so it crashes when it draws text with one: in the store and a few seconds after a world opens. This adds the free Noto Sans font (SIL Open Font License) in regular, bold and italic to the game, about 600 KB, and makes the game load it. Works with every game version and makes the 1.7.6 store fix unnecessary.',
   'patch.fix-iap-store-font-crash.name': 'Fix crash when loading a world (1.7.6)',
   'patch.fix-iap-store-font-crash.description':
     'Game 1.7.6 crashes while loading a world on Android 10 and newer because the store screen cannot load system fonts. This disables store price lookups, so price labels stay empty. Purchases do not work on re-signed builds anyway, and no paid content is unlocked. Applies to version 1.7.6 only.',

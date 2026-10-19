@@ -254,6 +254,7 @@ export const tr: Record<MessageKey, string> = {
   'firstrun.quitHint': 'Çıkmak için bu pencereyi kapatabilirsiniz.',
   'legal.notice': 'Majic Jungle veya Noodlecake ile bağlantılı değildir. Oyun dosyaları dağıtılmaz; APK dosyasını kendiniz sağlarsınız. Yalnızca yasal olarak sahip olduğunuz yazılımı yamalayın.',
   'patch.fix-welcome-popup-deadlock.summary': 'Modern Android’de oyunun ilk pencerede takılı kalmasını önler; böylece dünyalarınıza ulaşabilirsiniz.',
+  'patch.fix-system-font-crash.summary': 'Yeni Android sürümlerinde oyun bir sistem yazı tipi bulamadığı için mağazada ve dünyalarda oluşan çökmeleri önler.',
   'patch.fix-iap-store-font-crash.summary': '1.7.6 sürümünde kayıtlı bir dünyayı açarken oyunun kapanmasını önler.',
   'lang.label': 'Dil',
   'theme.label': 'Tema',
@@ -297,6 +298,9 @@ export const tr: Record<MessageKey, string> = {
   'patch.fix-welcome-popup-deadlock.name': 'Karşılama penceresindeki donmayı düzelt',
   'patch.fix-welcome-popup-deadlock.description':
     'Android 10 ve üzerinde (Android 14 ve oyun 1.7.4 ile doğrulandı) çok oyunculu sunucuya girerken "WELCOME TO <world>!" penceresinde oyun donar. Bu yama pencereyi yarı saydam yapar; böylece oyun durdurulmaz, yalnızca duraklatılır.',
+  'patch.fix-system-font-crash.name': 'Eksik sistem yazı tiplerinden kaynaklanan çökmeleri düzelt',
+  'patch.fix-system-font-crash.description':
+    'Oyun Android\'in yazı tipi listesini eski bir biçimde okur ve yeni Android sürümlerinde (Android 14\'te görüldü) kullanılabilir bir sistem yazı tipi bulamaz; bu yüzden metin çizerken çöker: mağazada ve bir dünya açıldıktan birkaç saniye sonra. Bu yama oyuna ücretsiz Noto Sans yazı tipini (SIL Open Font License) normal, kalın ve italik olarak ekler (yaklaşık 600 KB) ve oyunun onu yüklemesini sağlar. Tüm oyun sürümlerinde çalışır ve 1.7.6 mağaza düzeltmesini gereksiz kılar.',
   'patch.fix-iap-store-font-crash.name': 'Dünya yüklenirken oluşan çökmeyi düzelt (1.7.6)',
   'patch.fix-iap-store-font-crash.description':
     'Oyun 1.7.6, mağaza ekranı sistem yazı tiplerini yükleyemediği için Android 10 ve üzerinde dünya yüklenirken çöker. Bu yama mağaza fiyat sorgularını devre dışı bırakır; fiyat etiketleri boş kalır. Yeniden imzalanmış sürümlerde satın alma zaten çalışmaz ve ücretli hiçbir içerik açılmaz. Yalnızca 1.7.6 sürümü için geçerlidir.',

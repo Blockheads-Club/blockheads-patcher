@@ -113,3 +113,7 @@ Desktop bundles are unsigned/not notarized unless you add signing secrets. Every
 ## License
 
 GPL-3.0-only. See `LICENSE`.
+
+Third-party font: the `fix-system-font-crash` patch embeds subsets of Noto Sans Regular, Bold and Italic (Copyright 2022
+The Noto Project Authors), licensed under the SIL Open Font License 1.1 (`packages/core/src/patches/fonts/OFL.txt`). They
+are free fonts from the Noto Project, not game files; `scripts/fonts/noto-sans-subset.py` regenerates them.

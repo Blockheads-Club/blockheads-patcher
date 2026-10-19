@@ -1,6 +1,7 @@
 export * from './types';
 export * from './registry';
 export { fixWelcomePopupDeadlock, ANDROID_THEME_ATTR_ID, THEME_TRANSLUCENT_NO_TITLE_BAR_FULLSCREEN } from './fix-welcome-popup-deadlock';
+export { fixSystemFontCrash, FALLBACK_FONTS, INFO_PLIST } from './fix-system-font-crash';
 export { fixIapStoreFontCrash, makeNativeStubPatch, BX_LR, type NativeStubSpec } from './fix-iap-store-font-crash';
 export { makeBooleanFlagPatch, ATTR, BLOCKHEADS_PACKAGE, MAIN_ACTIVITY, type BooleanFlagSpec } from './manifest-flags';
 export { JARLPENGUIN_CREDITS } from './credits';

@@ -1,5 +1,6 @@
 import { fixWelcomePopupDeadlock } from './fix-welcome-popup-deadlock';
 import { fixIapStoreFontCrash } from './fix-iap-store-font-crash';
+import { fixSystemFontCrash } from './fix-system-font-crash';
 import { enableAudioCapture } from './enable-audio-capture';
 import { keepDataOnUninstall } from './keep-data-on-uninstall';
 import { allowResizing } from './allow-resizing';
@@ -41,7 +42,7 @@ export function createRegistry(patches: Patch[] = []): PatchRegistry {
 }
 
 export const defaultRegistry: PatchRegistry = createRegistry([
-  fixWelcomePopupDeadlock, fixIapStoreFontCrash, enableAudioCapture, keepDataOnUninstall, allowResizing, raiseTargetSdk,
+  fixWelcomePopupDeadlock, fixIapStoreFontCrash, fixSystemFontCrash, enableAudioCapture, keepDataOnUninstall, allowResizing, raiseTargetSdk,
   fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
   fixWebviewCrash, fixConfigChangeCrash, fixEmailShareLink,
   fixJoinLinks,
