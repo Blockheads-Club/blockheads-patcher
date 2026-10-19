@@ -53,7 +53,7 @@
 <Card tag="section" class="grp" aria-labelledby="s-a">
   <h2 id="s-a">{$t('settings.about')}</h2>
   <div class="row">
-    <div class="rl app"><img src={logo} alt="" width="48" height="48" /><div><p class="rt">{$t('app.title')}</p><p class="hint" data-testid="app-version">{$t('settings.version', { version: __APP_VERSION__, platform: platformName })}</p></div></div>
+    <div class="rl app"><img src={logo} alt="" width="48" height="48" /><div><p class="rt">{$t('app.title')}</p><p class="hint selectable" data-testid="app-version">{$t('settings.version', { version: __APP_VERSION__, platform: platformName })}</p></div></div>
   </div>
   <div class="row"><div class="rl"><p class="rt">{$t('settings.source')}</p><p class="hint">{$t('settings.sourceHint')}</p></div><Button size="sm" icon="code" href={REPO_URL} external>{$t('settings.github')}</Button></div>
   <div class="row"><div class="rl"><p class="rt">{$t('settings.website')}</p></div><Button size="sm" icon="globe" href={WEBSITE} external>{$t('settings.openWebsite')}</Button></div>
@@ -72,7 +72,7 @@
   <h2 id="s-c">{$t('settings.credits')}</h2>
   <div class="row col">
     <p class="hint">{$t('settings.creditsHint')}</p>
-    <p class="hint">{$t('credit.line', { source: CREDIT_SOURCE })}</p>
+    <p class="hint selectable">{$t('credit.line', { source: CREDIT_SOURCE })}</p>
   </div>
 </Card>
 

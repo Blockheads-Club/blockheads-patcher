@@ -47,8 +47,8 @@
     </Card>
   {:else if mode === 'error' && error}
     <Blob icon="alert" tone="bad" />
-    <h2>{error.title}</h2>
-    <p class="muted body">{error.body}</p>
+    <h2 class="selectable">{error.title}</h2>
+    <p class="muted body selectable">{error.body}</p>
     <div class="actions">
       <Button variant="primary" icon="folder" onclick={onbrowse}>{$t('drop.another')}</Button>
       {#if error.helpLabel}<Button variant="ghost" href={GUIDES_URL} external>{error.helpLabel}</Button>{/if}
