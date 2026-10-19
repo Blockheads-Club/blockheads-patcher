@@ -49,7 +49,16 @@ Prerequisites: [bun](https://bun.sh), Rust stable (rustup). `bun install` at the
 ```sh
 bun run check      # type checks (all workspaces)
 bun run test       # unit tests (all workspaces)
+bun run test:fast  # quick loop: unit tests + the 1.7.6 real-APK tests, no coverage (NOT a gate)
+bun run test:cov   # the gate: every test, all three game versions, 100 % coverage thresholds
 ```
+
+Real-APK tests run against your own game APKs (see `packages/core/tests/helpers.ts`) and are skipped when they are
+absent. `BH_REAL_VERSIONS=1.7.6` (comma separated) limits them to some versions, `BH_SKIP_REAL=1` skips them all.
+Each APK is opened once per run: a vitest globalSetup (`packages/core/tests/setup/`) computes the JAR digests of its
+entries with Node's zlib/crypto, caches them in `~/.cache/bh-patcher` (`BH_PATCHER_CACHE`) keyed by the APK's SHA-256
+and seeds every test worker, so the many patch-and-sign tests do not each inflate ~150 MB again. The slow suites are
+split into one file per game version so the versions run in parallel.
 
 ### Web (static)
 ```sh
