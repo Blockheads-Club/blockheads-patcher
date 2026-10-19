@@ -85,7 +85,14 @@ Raising `targetSdkVersion` changes platform behaviour for the app. What we check
   foreground service, requests no location/camera permissions and starts nothing from the background.
 * `sharedUserId` is still honoured at these levels.
 
-Not verified on a physical device (none was available), hence **opt-in** (off by default, badge in the UI). A device
+**Update 2026-10-19 (Galaxy Z Fold4, Android 14): the target is now 28.** At 29 the game aborts at start: the hidden-API
+list `max-target-p` is blocked from 29, and Apportable's native `com.apportable.ui.View.nativeSetFrame` looks up the hidden
+`View.setFrame(IIII)Z` over JNI (`NoSuchMethodError`, then a JNI abort). Android 14's warning threshold is
+`ro.build.version.min_supported_target_sdk` = 28, so 28 removes the warning and keeps the lookup working; the menu and a
+world loaded fine on the device. `requestLegacyExternalStorage` is no longer written (it only matters from 29). The notes
+on 29 above are kept for the record.
+
+Originally not verified on a physical device (none was available), hence **opt-in** (off by default, badge in the UI). A device
 test of start-up, world loading, store screen, in-game browser/web pages and shared storage is required before making it
 the default. The warning threshold of newer Android releases could not be confirmed from the documentation; if a release
 requires a higher target the patch value is one constant (`TARGET_SDK`).

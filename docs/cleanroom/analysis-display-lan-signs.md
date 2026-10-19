@@ -206,7 +206,7 @@ So the stack is present but was evidently built for a desktop-style filesystem a
    are never received: browsing finds nothing although publishing may "work".
 2. **Daemon bring-up / IPC fails in the Android sandbox** (`/var/run`, `/etc/mdnsd.conf`, `nobody`, client-to-daemon channel). Then `publish` fails with
    `netService:didNotPublish:` (the game logs `netService:didNotPublish:%@`), which is a visible symptom in logcat.
-3. Interface enumeration (getifaddrs/netlink) quirks; not an issue below targetSdk 30, which is why `raise-target-sdk` must stay at 29.
+3. Interface enumeration (getifaddrs/netlink) quirks; not an issue below targetSdk 30, which is one reason `raise-target-sdk` stays below 30 (it now uses 28, see its source).
 
 Patch plan:
 

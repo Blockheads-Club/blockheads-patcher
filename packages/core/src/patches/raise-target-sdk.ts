@@ -3,7 +3,7 @@ import { JARLPENGUIN_CREDITS } from './credits';
 import { ATTR, BLOCKHEADS_PACKAGE, findApplication, readBool, writeBool } from './manifest-flags';
 import { PatchError, type Patch, type PatchContext, type PatchStatus } from './types';
 
-export const TARGET_SDK = 29;
+export const TARGET_SDK = 28;
 const ID_TARGET_SDK = 0x01010270;
 
 const targetAttr = (ctx: PatchContext) => {
@@ -21,14 +21,16 @@ function detect(ctx: PatchContext): PatchStatus {
 }
 
 /**
- * Raises targetSdkVersion to 29 (Android 10). The game was built for 27. Behaviour changes that matter for it, and how
- * they are neutralised: cleartext HTTP is blocked from 28 (the game talks to http:// endpoints) -> usesCleartextTraffic;
- * scoped storage starts at 29 -> requestLegacyExternalStorage keeps the old file access. Version 30+ is avoided on purpose
- * (package visibility, scoped storage cannot be opted out of).
+ * Raises targetSdkVersion to 28 (Android 9). The game was built for 27. Android 14 shows its "built for an older version of
+ * Android" dialog below `ro.build.version.min_supported_target_sdk`, which is 28. 28 is also the highest target that
+ * works: from 29 the hidden-API list `max-target-p` is blocked, and Apportable's native `com.apportable.ui.View.nativeSetFrame`
+ * looks up the hidden `View.setFrame(IIII)Z` via JNI and aborts the game at start when the lookup fails (device-tested on
+ * Android 14). The one behaviour change at 28 that matters, cleartext HTTP being blocked (the game talks to http://
+ * endpoints), is neutralised with usesCleartextTraffic.
  */
 export const raiseTargetSdk: Patch = {
   id: 'raise-target-sdk',
-  version: 1,
+  version: 2,
   nameKey: 'patch.raise-target-sdk.name',
   descriptionKey: 'patch.raise-target-sdk.description',
   appliesTo: { packageName: BLOCKHEADS_PACKAGE, versionNames: ['1.7.4', '1.7.5', '1.7.6'] },
@@ -42,8 +44,7 @@ export const raiseTargetSdk: Patch = {
     if (a.data < TARGET_SDK) setAttrValue(ctx.manifest, a, ValueType.IntDec, TARGET_SDK);
     const app = findApplication(ctx)!;
     writeBool(ctx, app, 'usesCleartextTraffic', ATTR.usesCleartextTraffic, true);
-    writeBool(ctx, app, 'requestLegacyExternalStorage', ATTR.requestLegacyExternalStorage, true);
     ctx.markManifestDirty();
-    ctx.log(`targetSdkVersion=${TARGET_SDK}, usesCleartextTraffic and requestLegacyExternalStorage enabled`);
+    ctx.log(`targetSdkVersion=${TARGET_SDK}, usesCleartextTraffic enabled`);
   },
 };

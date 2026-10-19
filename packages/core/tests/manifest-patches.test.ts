@@ -103,7 +103,7 @@ describe('allow-resizing', () => {
 });
 
 describe('raise-target-sdk', () => {
-  it('raises 27 to 29 and enables cleartext and legacy storage', () => {
+  it('raises 27 to 28 and enables cleartext traffic', () => {
     const t = ctxOf(tree());
     expect(raiseTargetSdk.detect(t.ctx)).toBe('notApplied');
     raiseTargetSdk.apply(t.ctx);
@@ -111,7 +111,8 @@ describe('raise-target-sdk', () => {
     const sdk = findElements(t.doc, (e) => e.name === 'uses-sdk')[0]!;
     expect(getAttr(sdk, 'targetSdkVersion', ANDROID_NS, 0x01010270)!.data).toBe(TARGET_SDK);
     expect(attr(app(t.doc), 'usesCleartextTraffic', ATTR.usesCleartextTraffic)!.data).toBe(0xffffffff);
-    expect(attr(app(t.doc), 'requestLegacyExternalStorage', ATTR.requestLegacyExternalStorage)!.data).toBe(0xffffffff);
+    expect(TARGET_SDK).toBe(28);
+    expect(attr(app(t.doc), 'requestLegacyExternalStorage', ATTR.requestLegacyExternalStorage)).toBeUndefined();
     expect(raiseTargetSdk.optIn).toBe(true);
     expect(raiseTargetSdk.credits).toBe(JARLPENGUIN_CREDITS);
     expect(() => raiseTargetSdk.apply(t.ctx)).toThrow(/status: applied/);
