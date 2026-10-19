@@ -5,3 +5,5 @@ export {
   makeNativePatch, toOp, type NativeEdit, type NativePatchSpec, type NativePatchVersion, type BytesEdit, type ArmEdit, type ThumbEdit,
   type CaveEdit, type StringEdit, type StringPointer,
 } from './spec';
+export { baselineSha } from './spec';
+export { findObjcMethod } from './objc';

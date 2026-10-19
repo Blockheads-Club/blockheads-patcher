@@ -29,6 +29,20 @@ export interface PatchCredits {
   source: string;
   url: string;
 }
+/** Display texts carried by the patch itself (patch packs), by language code; `en` is always present. */
+export interface PatchTexts {
+  name: string;
+  summary: string;
+  description: string;
+}
+/** Where a patch comes from when it is not built in. */
+export interface PatchSource {
+  kind: 'pack';
+  packId: string;
+  /** English name of the pack. */
+  packName: string;
+  packVersion: string;
+}
 export interface Patch {
   id: string;
   version: number;
@@ -39,6 +53,10 @@ export interface Patch {
   credits?: PatchCredits;
   /** Not selected by default (changes behaviour more widely than a fix). */
   optIn?: boolean;
+  /** Texts by language for patches whose strings are not in the app dictionaries (`nameKey` etc. are then unused keys). */
+  texts?: Record<string, PatchTexts>;
+  /** Set for patches imported from a patch pack. */
+  source?: PatchSource;
   /** Pure: must not mutate the context. */
   detect(ctx: PatchContext): PatchStatus;
   /** Throws PatchError if detect() !== 'notApplied'. */

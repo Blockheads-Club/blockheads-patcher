@@ -1,0 +1,722 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Blockheads-Club/blockheads-patcher/blob/dev/docs/pack.schema.json",
+  "title": "Blockheads Patcher patch pack (pack.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "name",
+    "appliesTo",
+    "patches"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,46}[a-z0-9])?$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})$"
+    },
+    "name": {
+      "type": "object",
+      "required": [
+        "en"
+      ],
+      "minProperties": 1,
+      "maxProperties": 32,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      }
+    },
+    "description": {
+      "type": "object",
+      "required": [
+        "en"
+      ],
+      "minProperties": 1,
+      "maxProperties": 32,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      }
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "minPatcherVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})$"
+    },
+    "appliesTo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageName"
+      ],
+      "properties": {
+        "packageName": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+$",
+          "maxLength": 200
+        },
+        "versionNames": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "versionCodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          }
+        },
+        "sha256": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "patches": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "description",
+          "ops"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,46}[a-z0-9])?$"
+          },
+          "name": {
+            "type": "object",
+            "required": [
+              "en"
+            ],
+            "minProperties": 1,
+            "maxProperties": 32,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "en"
+            ],
+            "minProperties": 1,
+            "maxProperties": 32,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 400
+            }
+          },
+          "description": {
+            "type": "object",
+            "required": [
+              "en"
+            ],
+            "minProperties": 1,
+            "maxProperties": 32,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "appliesTo": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "packageName"
+            ],
+            "properties": {
+              "packageName": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+$",
+                "maxLength": 200
+              },
+              "versionNames": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              },
+              "versionCodes": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                }
+              },
+              "sha256": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            }
+          },
+          "ops": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "$ref": "#/$defs/op"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "op": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Sets an allow-listed android: attribute on <application> or one top-level <activity>.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "target",
+            "attr",
+            "value"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "manifest.set"
+            },
+            "target": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "application"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "activity"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "activity": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*(?:\\.[A-Za-z_$][A-Za-z0-9_$]*)+$",
+                      "maxLength": 200
+                    }
+                  }
+                }
+              ]
+            },
+            "attr": {
+              "type": "string",
+              "enum": [
+                "label",
+                "theme",
+                "launchMode",
+                "screenOrientation",
+                "configChanges",
+                "windowSoftInputMode",
+                "allowBackup",
+                "immersive",
+                "hardwareAccelerated",
+                "largeHeap",
+                "usesCleartextTraffic",
+                "resizeableActivity",
+                "hasFragileUserData",
+                "allowAudioPlaybackCapture",
+                "requestLegacyExternalStorage"
+              ]
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer",
+                  "minimum": -2147483648,
+                  "maximum": 4294967295
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Removes an allow-listed android: attribute.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "target",
+            "attr"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "manifest.remove"
+            },
+            "target": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "application"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "activity"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "activity": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*(?:\\.[A-Za-z_$][A-Za-z0-9_$]*)+$",
+                      "maxLength": 200
+                    }
+                  }
+                }
+              ]
+            },
+            "attr": {
+              "type": "string",
+              "enum": [
+                "label",
+                "theme",
+                "launchMode",
+                "screenOrientation",
+                "configChanges",
+                "windowSoftInputMode",
+                "allowBackup",
+                "immersive",
+                "hardwareAccelerated",
+                "largeHeap",
+                "usesCleartextTraffic",
+                "resizeableActivity",
+                "hasFragileUserData",
+                "allowAudioPlaybackCapture",
+                "requestLegacyExternalStorage"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Adds a new file under assets/ or res/raw/ (refused when one already exists with other content).",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "path",
+            "from"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "file.add"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?:assets|res/raw)/(?:[A-Za-z0-9_][A-Za-z0-9 ._+-]*/)*[A-Za-z0-9_][A-Za-z0-9 ._+-]*$"
+            },
+            "from": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?!pack\\.json$)(?:[A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Replaces an existing file under assets/ or res/raw/, optionally only when its current SHA-256 matches.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "path",
+            "from"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "file.replace"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?:assets|res/raw)/(?:[A-Za-z0-9_][A-Za-z0-9 ._+-]*/)*[A-Za-z0-9_][A-Za-z0-9 ._+-]*$"
+            },
+            "from": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?!pack\\.json$)(?:[A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*$"
+            },
+            "expectSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Sets a top-level key of an XML property list to a string, boolean or integer.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "path",
+            "key",
+            "value"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "plist.set"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?:assets|res/raw)/(?:[A-Za-z0-9_][A-Za-z0-9 ._+-]*/)*[A-Za-z0-9_][A-Za-z0-9 ._+-]*$"
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer",
+                  "minimum": -2147483648,
+                  "maximum": 4294967295
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Appends a string to the top-level array under `key` of an XML property list (once).",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "path",
+            "key",
+            "value"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "plist.arrayInsert"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?:assets|res/raw)/(?:[A-Za-z0-9_][A-Za-z0-9 ._+-]*/)*[A-Za-z0-9_][A-Za-z0-9 ._+-]*$"
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "value": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Replaces the single occurrence of `find` in a UTF-8 text file.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "path",
+            "find",
+            "replace"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "text.replace"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?:assets|res/raw)/(?:[A-Za-z0-9_][A-Za-z0-9 ._+-]*/)*[A-Za-z0-9_][A-Za-z0-9 ._+-]*$"
+            },
+            "find": {
+              "type": "string",
+              "maxLength": 65536,
+              "minLength": 1
+            },
+            "replace": {
+              "type": "string",
+              "maxLength": 65536
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Replaces bytes in a native library at a symbol, an Objective-C method, a virtual address or a file offset; the current bytes must equal `expect`.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "lib",
+            "locate",
+            "expect",
+            "replace"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "native.patch"
+            },
+            "lib": {
+              "type": "string",
+              "pattern": "^lib/(?:armeabi-v7a|armeabi|arm64-v8a|x86|x86_64)/[A-Za-z0-9_.+-]+\\.so$",
+              "maxLength": 200
+            },
+            "locate": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "symbol"
+                  ],
+                  "properties": {
+                    "symbol": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_$.@]{1,512}$"
+                    },
+                    "add": {
+                      "type": "integer",
+                      "minimum": -65536,
+                      "maximum": 65536
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "objcMethod"
+                  ],
+                  "properties": {
+                    "objcMethod": {
+                      "type": "string",
+                      "pattern": "^[+-]\\[[A-Za-z_$][A-Za-z0-9_$]* [A-Za-z_$:][A-Za-z0-9_$:]*\\]$",
+                      "maxLength": 512
+                    },
+                    "add": {
+                      "type": "integer",
+                      "minimum": -65536,
+                      "maximum": 65536
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "vaddr"
+                  ],
+                  "properties": {
+                    "vaddr": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "fileOffset"
+                  ],
+                  "properties": {
+                    "fileOffset": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  }
+                }
+              ]
+            },
+            "expect": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 12288,
+              "pattern": "^[0-9A-Fa-f]{2}(?: ?[0-9A-Fa-f]{2})*$"
+            },
+            "replace": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 12288,
+              "pattern": "^[0-9A-Fa-f]{2}(?: ?[0-9A-Fa-f]{2})*$"
+            },
+            "libSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Adds a prebuilt .dex from the pack as the next classesN.dex.",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "from"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "dex.add"
+            },
+            "from": {
+              "type": "string",
+              "maxLength": 240,
+              "pattern": "^(?!pack\\.json$)(?:[A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Calls a static method of a class added by dex.add at the start of an existing method: no arguments, or the instance (`this`).",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "class",
+            "method",
+            "call"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "dex.hook"
+            },
+            "class": {
+              "type": "string",
+              "pattern": "^L[A-Za-z_$][A-Za-z0-9_$]*(?:/[A-Za-z_$][A-Za-z0-9_$]*)*;$",
+              "maxLength": 300
+            },
+            "method": {
+              "type": "string",
+              "pattern": "^(?:<init>|[A-Za-z_$][A-Za-z0-9_$]*)$",
+              "maxLength": 200
+            },
+            "params": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "string",
+                "pattern": "^\\[*(?:[ZBSCIJFD]|L[A-Za-z_$][A-Za-z0-9_$]*(?:/[A-Za-z_$][A-Za-z0-9_$]*)*;)$",
+                "maxLength": 300
+              }
+            },
+            "returns": {
+              "type": "string",
+              "pattern": "^(?:V|\\[*(?:[ZBSCIJFD]|L[A-Za-z_$][A-Za-z0-9_$]*(?:/[A-Za-z_$][A-Za-z0-9_$]*)*;))$",
+              "maxLength": 300
+            },
+            "at": {
+              "type": "string",
+              "const": "start"
+            },
+            "call": {
+              "type": "string",
+              "pattern": "^L[A-Za-z_$][A-Za-z0-9_$]*(?:/[A-Za-z_$][A-Za-z0-9_$]*)*;->[A-Za-z_$][A-Za-z0-9_$]*\\((?:L[A-Za-z_$][A-Za-z0-9_$]*(?:/[A-Za-z_$][A-Za-z0-9_$]*)*;)?\\)V$",
+              "maxLength": 600
+            }
+          }
+        }
+      ]
+    }
+  }
+}

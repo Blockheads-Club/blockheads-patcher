@@ -209,11 +209,11 @@ export function toOp(e: NativeEdit): Op {
 }
 
 /**
- * First-seen SHA-256 of each library per archive. The pipeline applies patches one after another to the same archive, and
+ * First-seen SHA-256 of each library (or other entry) per archive. The pipeline applies patches one after another to the same archive, and
  * every applied native patch changes the library hash; the hash pin therefore refers to the library as first seen.
  */
 const baseline = new WeakMap<ZipArchive, Map<string, string>>();
-function baselineSha(zip: ZipArchive, path: string, data: Uint8Array): string {
+export function baselineSha(zip: ZipArchive, path: string, data: Uint8Array): string {
   let m = baseline.get(zip);
   if (!m) baseline.set(zip, (m = new Map()));
   let sha = m.get(path);

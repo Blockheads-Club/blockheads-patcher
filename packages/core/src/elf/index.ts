@@ -52,3 +52,4 @@ export function vaddrToFileOffset(segments: ElfSegment[], vaddr: number, length 
     if (s.type === PT_LOAD && vaddr >= s.vaddr && vaddr + length <= s.vaddr + s.filesz) return s.offset + (vaddr - s.vaddr);
   return undefined;
 }
+export * from './symbols';

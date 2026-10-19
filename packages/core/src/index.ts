@@ -1,5 +1,5 @@
 // Public API of @bh-patcher/core. See docs/ARCHITECTURE.md for contracts.
-export const CORE_VERSION = '0.1.0';
+export { CORE_VERSION } from './version';
 export * from './abort';
 export * from './zip';
 export * from './axml';
@@ -12,3 +12,4 @@ export * from './dex';
 export { sha256HexSync } from './elf/sha256';
 export * from './arsc';
 export * from './image';
+export * from './packs';
