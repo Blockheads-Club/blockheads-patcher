@@ -174,7 +174,7 @@ describe('listPatches / applyPatches', () => {
       ['fix-iap-store-font-crash', 'incompatible'],
       ['enable-audio-capture', 'notApplied'],
       ['keep-data-on-uninstall', 'notApplied'],
-      ['disable-multi-window', 'incompatible'],
+      ['allow-resizing', 'incompatible'],
       ['raise-target-sdk', 'incompatible'],
       ['fix-privacy-setting-dialog', 'incompatible'],
       ['fix-welcome-message-text', 'incompatible'],

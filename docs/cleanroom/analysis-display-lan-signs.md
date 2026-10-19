@@ -145,7 +145,7 @@ depends on which configuration fields change (density, layout direction, colour 
 
 Patch options:
 
-1. Manifest (cheap, partial): add the missing `configChanges` bits (density, layoutDirection, colorMode), add `maxAspectRatio`/`resizeableActivity=false` (already done). Reduces relaunch/size-compat triggers but does not remove the thread check for handled changes.
+1. Manifest (cheap, partial): add the missing `configChanges` bits (density, layoutDirection, colorMode), (`resizeableActivity=false` was tried and made it worse: letterboxed on a Fold4 cover screen, the game crashed at every start; reverted by `allow-resizing`). Reduces relaunch/size-compat triggers but does not remove the thread check for handled changes.
 2. DEX (real fix, hard): create the activity window/root view on the UI thread, or intercept `onConfigurationChanged` earlier. The window is created from
    `VerdeActivity$1` (the `FrameLayout` handed to `SplashScreen.show`) and the later `setContentView`/`rootOfAllEvil` code under `MainThread`; a proper fix needs moving those
    `addView/setContentView` calls to the main looper. Needs device debugging; do not attempt blind.
@@ -163,7 +163,7 @@ No separate patch site was identified; fix 6b first, then retest dialogs. Verify
 
 ### Already handled: multi-window
 
-`android:resizeableActivity="false"` is implemented (`disable-multi-window`); nothing to do.
+`android:resizeableActivity="false"` was implemented as `disable-multi-window` and reverted: on a Fold4 cover screen it letterboxed the game, hiding the status bar then changed the window and the configuration change crashed the game at every start (6c). `allow-resizing` writes `true` and repairs games patched with it.
 
 ## 2. Item 8 - LAN hosting / joining
 

@@ -122,7 +122,7 @@ for (const apk of APKS) {
   });
 }
 
-const NEW_PATCHES = ['enable-audio-capture', 'keep-data-on-uninstall', 'disable-multi-window', 'raise-target-sdk', 'fix-join-links', 'adaptive-icon'];
+const NEW_PATCHES = ['enable-audio-capture', 'keep-data-on-uninstall', 'allow-resizing', 'raise-target-sdk', 'fix-join-links', 'adaptive-icon'];
 
 describe('registry', () => {
   it('default registry has both patches; duplicates rejected', () => {

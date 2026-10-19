@@ -6,7 +6,7 @@ export { makeBooleanFlagPatch, ATTR, BLOCKHEADS_PACKAGE, MAIN_ACTIVITY, type Boo
 export { JARLPENGUIN_CREDITS } from './credits';
 export { enableAudioCapture } from './enable-audio-capture';
 export { keepDataOnUninstall } from './keep-data-on-uninstall';
-export { disableMultiWindow } from './disable-multi-window';
+export { allowResizing } from './allow-resizing';
 export { raiseTargetSdk, TARGET_SDK } from './raise-target-sdk';
 export { fixPrivacyDialog } from './fix-privacy-dialog';
 export { fixWelcomeMessageText } from './fix-welcome-message-text';

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseAxml, getAttr, findElements, ANDROID_NS, ValueType, PatchError, createRegistry, defaultRegistry, JARLPENGUIN_CREDITS,
-  enableAudioCapture, keepDataOnUninstall, disableMultiWindow, raiseTargetSdk, makeBooleanFlagPatch, ATTR, MAIN_ACTIVITY, BLOCKHEADS_PACKAGE,
+  enableAudioCapture, keepDataOnUninstall, allowResizing, raiseTargetSdk, makeBooleanFlagPatch, ATTR, MAIN_ACTIVITY, BLOCKHEADS_PACKAGE,
   TARGET_SDK, listPatches, loadApk, type Patch, type PatchContext,
 } from '../src';
 import { build, type BEl } from './axml-builder';
@@ -72,21 +72,30 @@ describe.each(applicationCases)('application flag patch %#', (patch, name, id) =
   });
 });
 
-describe('disable-multi-window', () => {
-  it('sets resizeableActivity=false on the game activity only', () => {
+describe('allow-resizing', () => {
+  it('sets resizeableActivity=true on the game activity only', () => {
     const t = ctxOf(tree());
-    expect(disableMultiWindow.detect(t.ctx)).toBe('notApplied');
-    disableMultiWindow.apply(t.ctx);
-    expect(disableMultiWindow.detect(t.ctx)).toBe('applied');
+    expect(allowResizing.detect(t.ctx)).toBe('notApplied');
+    allowResizing.apply(t.ctx);
+    expect(allowResizing.detect(t.ctx)).toBe('applied');
     const a = attr(act(t.doc), 'resizeableActivity', ATTR.resizeableActivity)!;
-    expect([a.valueType, a.data]).toEqual([ValueType.IntBoolean, 0]);
+    expect([a.valueType, a.data]).toEqual([ValueType.IntBoolean, 0xffffffff]);
     expect(attr(findElements(t.doc, (e) => e.name === 'activity')[0]!, 'resizeableActivity', ATTR.resizeableActivity)).toBeUndefined();
   });
-  it('treats resizeableActivity=true as not applied and resolves relative names', () => {
-    const t = ctxOf(tree({ actAttrs: [bool('resizeableActivity', ATTR.resizeableActivity, true)] }));
-    expect(disableMultiWindow.detect(t.ctx)).toBe('notApplied');
+  it('the flag helper also writes false', () => {
+    const off = makeBooleanFlagPatch({ id: 'off', target: { activity: MAIN_ACTIVITY }, attrName: 'resizeableActivity', attrId: ATTR.resizeableActivity, value: false });
+    const t = ctxOf(tree());
+    off.apply(t.ctx);
+    expect(attr(act(t.doc), 'resizeableActivity', ATTR.resizeableActivity)!.data).toBe(0);
+    expect(off.detect(t.ctx)).toBe('applied');
+  });
+  it('repairs resizeableActivity=false (earlier patch) and resolves relative names', () => {
+    const t = ctxOf(tree({ actAttrs: [bool('resizeableActivity', ATTR.resizeableActivity, false)] }));
+    expect(allowResizing.detect(t.ctx)).toBe('notApplied');
+    allowResizing.apply(t.ctx);
+    expect(allowResizing.detect(t.ctx)).toBe('applied');
     const rel = ctxOf(tree({ actName: '.nothing' }));
-    expect(disableMultiWindow.detect(rel.ctx)).toBe('incompatible');
+    expect(allowResizing.detect(rel.ctx)).toBe('incompatible');
     const relOk = makeBooleanFlagPatch({ id: 'x', target: { activity: `${BLOCKHEADS_PACKAGE}.Rel` }, attrName: 'a', attrId: 1, value: true });
     expect(relOk.detect(ctxOf(tree({ actName: '.Rel' })).ctx)).toBe('notApplied');
     expect(relOk.detect(ctxOf(tree({ actName: null })).ctx)).toBe('incompatible');
@@ -133,7 +142,7 @@ describe('makeBooleanFlagPatch', () => {
 describe('registration', () => {
   it('registers every manifest patch with unique ids and credits', async () => {
     const ids = defaultRegistry.list().map((p) => p.id);
-    expect(ids).toEqual(expect.arrayContaining(['enable-audio-capture', 'keep-data-on-uninstall', 'disable-multi-window', 'raise-target-sdk']));
+    expect(ids).toEqual(expect.arrayContaining(['enable-audio-capture', 'keep-data-on-uninstall', 'allow-resizing', 'raise-target-sdk']));
     expect(() => createRegistry(defaultRegistry.list())).not.toThrow();
     const apk = await loadApk(makeApk());
     expect(listPatches(apk).find((r) => r.patch.id === 'enable-audio-capture')?.status).toBe('notApplied');
