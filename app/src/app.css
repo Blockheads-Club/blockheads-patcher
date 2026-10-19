@@ -96,3 +96,6 @@ html.fixed, html.fixed body { height: 100%; overflow: hidden; overscroll-behavio
    errors, fingerprints, legal text). `.selectable` opts any other element in. */
 body { -webkit-user-select: none; user-select: none; }
 input, textarea, [contenteditable], .selectable, pre, [role='log'], .mono, .fp, .fps, .msg, .detail, .lic, .callout, .pts, dd { -webkit-user-select: text; user-select: text; }
+/* Mobile app: no scroll bars, as in native apps (content still scrolls by touch). */
+html.fixed * { scrollbar-width: none; }
+html.fixed *::-webkit-scrollbar { display: none; }

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash art for Android < 12: the app icon on the sun disc. -->
+<!-- Splash art for Android < 12, as the Android 12+ system splash draws it (design: Patcher-Splash): the adaptive
+     icon in a circle, on its dark-orange drop edge. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:width="168dp" android:height="168dp" android:gravity="center">
-        <shape android:shape="oval"><solid android:color="@color/splash_sun" /></shape>
+    <item android:width="160dp" android:height="160dp" android:gravity="center" android:top="6dp">
+        <shape android:shape="oval"><solid android:color="#FF7A2A08" /></shape>
     </item>
-    <item android:width="118dp" android:height="118dp" android:gravity="center" android:drawable="@drawable/splash_legacy_icon" />
+    <item android:width="160dp" android:height="160dp" android:gravity="center" android:bottom="6dp" android:drawable="@drawable/splash_legacy_icon" />
 </layer-list>

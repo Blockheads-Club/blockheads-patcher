@@ -1,5 +1,6 @@
 <script lang="ts">
   import logo from '$lib/assets/patcher-icon.svg';
+  import adaptive from '$lib/assets/patcher-icon-adaptive.svg';
   import { t } from '$lib/i18n';
   import type { BootPhase } from '$lib/splash';
 
@@ -27,7 +28,7 @@
 
 {#if variant === 'phone'}
   <section class="ph bg" role="status" aria-live="polite" aria-label={$t('splash.label')}>
-    <div class="disc ic"><img src={logo} alt="" width="118" height="118" /></div>
+    <img class="disc ic" src={adaptive} alt="" width="168" height="168" />
     {#if phase === 'error'}
       <div class="perr" role="alert">
         <p>{$t('splash.errorShort')}</p>
@@ -90,8 +91,8 @@
   .btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
   .ph { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
-  .disc { width: 168px; height: 168px; border-radius: 50%; background: #ffd27a; display: grid; place-items: center; box-shadow: 0 6px 0 #7a2a08; }
-  .disc img { width: 118px; height: 118px; border-radius: 26px; }
+  /* Phone (design: Android 12+ system splash): the adaptive icon in a circle, as the system splash before it. */
+  .disc { width: 168px; height: 168px; border-radius: 50%; box-shadow: 0 6px 0 #7a2a08; }
   .perr { position: absolute; left: 20px; right: 20px; bottom: 110px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
   .perr p { font-weight: 700; font-size: 15px; }
   .pwm { position: absolute; bottom: calc(40px + env(safe-area-inset-bottom)); left: 0; right: 0; display: flex; justify-content: center; }
