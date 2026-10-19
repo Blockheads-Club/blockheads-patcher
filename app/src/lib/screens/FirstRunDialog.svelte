@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '$lib/i18n';
   import { LEGAL_URL } from '$lib/links';
-  import logo from '$lib/assets/logo.svg';
+  import logo from '$lib/assets/patcher-icon-macos.svg';
   import Button from '$lib/ui/Button.svelte';
   import Dialog from '$lib/ui/Dialog.svelte';
   import Icon from '$lib/ui/Icon.svelte';

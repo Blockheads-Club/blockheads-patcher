@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import logo from '$lib/assets/logo.svg';
+  import logo from '$lib/assets/patcher-icon-small.svg';
   import { t } from '$lib/i18n';
   import { win, type Os } from '$lib/winctl';
 

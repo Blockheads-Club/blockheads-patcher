@@ -1,5 +1,5 @@
 <script lang="ts">
-  import logo from '$lib/assets/logo.svg';
+  import logo from '$lib/assets/patcher-icon.svg';
   import { t } from '$lib/i18n';
   import type { BootPhase } from '$lib/splash';
 

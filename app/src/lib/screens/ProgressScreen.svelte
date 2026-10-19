@@ -1,5 +1,5 @@
 <script lang="ts">
-  import logo from '$lib/assets/logo.svg';
+  import logo from '$lib/assets/patcher-icon.svg';
   import { t, lang } from '$lib/i18n';
   import { completedRows, overallPercent, ROWS } from '$lib/progress';
   import { formatClock } from '$lib/format';

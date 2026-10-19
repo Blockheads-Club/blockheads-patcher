@@ -10,7 +10,7 @@
   import LanguageSelect from '$lib/ui/LanguageSelect.svelte';
   import Segmented from '$lib/ui/Segmented.svelte';
   import Switch from '$lib/ui/Switch.svelte';
-  import logo from '$lib/assets/logo.svg';
+  import logo from '$lib/assets/patcher-icon-macos.svg';
 
   let { prefs, platformKind, onback, onlegal }: { prefs: Prefs; platformKind: PlatformKind; onback: () => void; onlegal: () => void } = $props();
 
