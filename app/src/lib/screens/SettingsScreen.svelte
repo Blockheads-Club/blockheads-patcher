@@ -3,7 +3,9 @@
   import { applyTheme, loadTheme, type ThemeMode } from '$lib/theme.svelte';
   import { REPO_URL, WEBSITE, CREDIT_SOURCE } from '$lib/links';
   import type { Prefs } from '$lib/prefs.svelte';
-  import type { PlatformKind } from '$lib/platform/types';
+  import type { PlatformAdapter, PlatformKind } from '$lib/platform/types';
+  import type { PacksState } from '$lib/packs.svelte';
+  import PacksSection from './PacksSection.svelte';
   import Button from '$lib/ui/Button.svelte';
   import Card from '$lib/ui/Card.svelte';
   import Icon from '$lib/ui/Icon.svelte';
@@ -12,7 +14,9 @@
   import Switch from '$lib/ui/Switch.svelte';
   import logo from '$lib/assets/patcher-icon-macos.svg';
 
-  let { prefs, platformKind, onback, onlegal }: { prefs: Prefs; platformKind: PlatformKind; onback: () => void; onlegal: () => void } = $props();
+  let { prefs, platformKind, packs, platform, onback, onlegal }: {
+    prefs: Prefs; platformKind: PlatformKind; packs?: PacksState; platform?: PlatformAdapter; onback: () => void; onlegal: () => void;
+  } = $props();
 
   let theme = $state<ThemeMode>(loadTheme());
   $effect(() => { applyTheme(theme); });
@@ -49,6 +53,8 @@
   <h2 id="s-p">{$t('settings.patching')}</h2>
   <div class="row"><Switch id="sw-log" bind:checked={() => prefs.showLog, (v) => prefs.setShowLog(v)} label={$t('settings.log')} hint={$t('settings.logHint')} /></div>
 </Card>
+
+{#if packs && platform}<PacksSection {packs} {platform} />{/if}
 
 <Card tag="section" class="grp" aria-labelledby="s-a">
   <h2 id="s-a">{$t('settings.about')}</h2>

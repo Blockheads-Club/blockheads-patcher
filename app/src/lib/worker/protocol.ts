@@ -14,11 +14,14 @@ export type Request =
   | { t: 'patch'; id: number; handle: number; patchIds: string[]; identity: SigningIdentity }
   | { t: 'reload'; id: number; handle: number }
   | { t: 'cancel'; id: number }
+  /** Replaces the imported packs (raw .bhpack files, validated again here); answered with `packs`. */
+  | { t: 'packs'; id: number; packs: Uint8Array[] }
   | { t: 'release'; handle: number };
 
 export type Response =
   | { t: 'loaded'; id: number; handle: number; info: ApkInfo; rows: ReportRow[] }
   | { t: 'reloaded'; id: number; rows: ReportRow[] }
+  | { t: 'packs'; id: number }
   | { t: 'progress'; id: number; stage: ProgressStage; fraction: number }
   | { t: 'patched'; id: number; bytes: Uint8Array; applied: string[]; skipped: { id: string; status: PatchStatus }[]; info: ApkInfo; certSha256: string; suggestedFileName: string }
   | { t: 'error'; id: number; error: WireError };

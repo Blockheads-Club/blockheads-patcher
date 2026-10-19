@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Core capabilities. File access is limited to the app cache work directory and user-picked paths (added to the scope by the dialog plugin).",
+  "description": "Core capabilities. File access is limited to the app cache work directory, the imported patch packs directory and user-picked paths (added to the scope by the dialog plugin).",
   "windows": [
     "main"
   ],
@@ -20,6 +20,7 @@
     "fs:allow-open",
     "fs:allow-write",
     "fs:allow-exists",
+    "fs:allow-read-dir",
     {
       "identifier": "fs:allow-mkdir",
       "allow": [
@@ -28,6 +29,9 @@
         },
         {
           "path": "$APPCACHE/bhp/**"
+        },
+        {
+          "path": "$APPDATA/packs"
         }
       ]
     },
@@ -36,6 +40,9 @@
       "allow": [
         {
           "path": "$APPCACHE/bhp/**"
+        },
+        {
+          "path": "$APPDATA/packs/**"
         }
       ]
     },
@@ -47,6 +54,12 @@
         },
         {
           "path": "$APPCACHE/bhp/**"
+        },
+        {
+          "path": "$APPDATA/packs"
+        },
+        {
+          "path": "$APPDATA/packs/**"
         }
       ]
     }

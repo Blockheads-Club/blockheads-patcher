@@ -3,6 +3,7 @@
   import { t } from '$lib/i18n';
   import type { PatcherState } from '$lib/state.svelte';
   import type { KeysState } from '$lib/keys.svelte';
+  import type { PacksState } from '$lib/packs.svelte';
   import { giveConsent, hasConsent, type Prefs } from '$lib/prefs.svelte';
   import AppBar, { type View } from '$lib/ui/AppBar.svelte';
   import AppFooter from '$lib/ui/AppFooter.svelte';
@@ -20,7 +21,7 @@
   import { guessOs, win } from '$lib/winctl';
   import { splashIpc } from '$lib/splash';
 
-  let { state: s, keys, prefs }: { state: PatcherState; keys: KeysState; prefs: Prefs } = $props();
+  let { state: s, keys, prefs, packs }: { state: PatcherState; keys: KeysState; prefs: Prefs; packs?: PacksState } = $props();
 
   let view = $state<View>('patch');
   let consented = $state(hasConsent());
@@ -101,7 +102,7 @@
       {#if view === 'keys'}
         <KeysScreen {keys} {platform} onback={() => (view = 'patch')} />
       {:else if view === 'settings'}
-        <SettingsScreen {prefs} platformKind={platform.kind} onback={() => (view = 'patch')} onlegal={() => (legalOpen = true)} />
+        <SettingsScreen {prefs} platformKind={platform.kind} {packs} {platform} onback={() => (view = 'patch')} onlegal={() => (legalOpen = true)} />
       {:else if failed}
         <FailureScreen state={s} onopenkeys={openKeys} />
       {:else if s.step === 1}

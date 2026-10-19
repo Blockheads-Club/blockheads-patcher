@@ -113,7 +113,8 @@ export class PatcherState {
       await tick();
       // Reuse the already parsed archive (no second read/inflate); it is mutated, so drop it afterwards.
       this.result = await this.engine.patchLoaded(loaded, {
-        patchIds: [...this.selected],
+        // registry order, whatever order the patches were ticked in: the same selection always patches the same way
+        patchIds: this.report.map((r) => r.patch.id).filter((id) => this.selected.includes(id)),
         signal: abort.signal,
         onProgress: (stage, fraction) => {
           this.progress = { stage, fraction };
@@ -140,6 +141,17 @@ export class PatcherState {
     } finally {
       this.abort = null;
     }
+  }
+
+  /** Lists the patches of the loaded APK again (the imported packs changed); the selection keeps what still applies. */
+  async refresh(): Promise<void> {
+    const loaded = this.loaded;
+    if (!loaded || this.stage !== 'loaded') return;
+    if (this.engine.reload) await this.engine.reload(loaded);
+    if (this.loaded !== loaded) return;
+    this.report = this.engine.listPatches(loaded);
+    const open = new Set(this.report.filter((r) => r.status === 'notApplied').map((r) => r.patch.id));
+    this.selected = this.selected.filter((id) => open.has(id));
   }
 
   /** Cancels a running patch; the loaded APK stays available. */

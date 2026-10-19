@@ -1,11 +1,12 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { open as openFile, readFile, writeFile } from '@tauri-apps/plugin-fs';
-import type { PickedApk } from './types';
+import type { PickedApk, PickedFile } from './types';
 
 export const GAME_PACKAGE = 'com.noodlecake.blockheads';
 
 const APK_FILTER = [{ name: 'Android package', extensions: ['apk'] }];
 const JSON_FILTER = [{ name: 'JSON', extensions: ['json'] }];
+const PACK_FILTER = [{ name: 'Patch pack', extensions: ['bhpack', 'zip'] }];
 
 /** Save-dialog filter derived from the file name's extension. */
 export function filterFor(name: string): { name: string; extensions: string[] }[] {
@@ -67,4 +68,12 @@ export async function saveWithDialog(name: string, bytes: Uint8Array): Promise<{
   if (!target) return {};
   await writeFileChunked(target, bytes);
   return { location: target };
+}
+
+/** `filter: false` shows every file (Android's picker filters by MIME type, which .bhpack does not have). */
+export async function pickPackWithDialog(filter = true): Promise<PickedFile | null> {
+  const selected = await open({ multiple: false, directory: false, ...(filter ? { filters: PACK_FILTER } : {}) });
+  if (!selected) return null;
+  const path = Array.isArray(selected) ? selected[0] : selected;
+  return { name: baseName(path), bytes: await readFile(path) };
 }

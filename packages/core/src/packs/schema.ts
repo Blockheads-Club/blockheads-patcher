@@ -124,6 +124,7 @@ export const PACK_SCHEMA: Schema = {
   type: 'object', additionalProperties: false,
   required: ['schemaVersion', 'id', 'version', 'name', 'appliesTo', 'patches'],
   properties: {
+    $schema: { type: 'string', maxLength: 300, description: 'Optional, for editors; ignored.' },
     schemaVersion: { type: 'integer', const: PACK_SCHEMA_VERSION },
     id: ident(48),
     version: semver,

@@ -13,6 +13,11 @@
     "patches"
   ],
   "properties": {
+    "$schema": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "Optional, for editors; ignored."
+    },
     "schemaVersion": {
       "type": "integer",
       "const": 1

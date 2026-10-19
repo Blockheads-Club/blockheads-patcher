@@ -1,5 +1,6 @@
 // Test helpers: mock engine and platform (no dependency on the real core pipeline).
 import { vi } from 'vitest';
+import { buildPackArchive } from '@bh-patcher/core';
 import type { Engine } from './engine';
 import type { PlatformAdapter } from './platform/types';
 
@@ -28,6 +29,7 @@ export function mockEngine(over: Partial<Engine> = {}): Engine {
       opts.onProgress?.('sign', 0.5);
       return { bytes: new Uint8Array([1, 2, 3]), applied: [...opts.patchIds], skipped: [], info: {}, certSha256: 'cc'.repeat(32), suggestedFileName: 'blockheads-1.7.4-patched.apk' };
     }) as never,
+    setPacks: vi.fn(async () => {}),
     getOrCreateIdentity: vi.fn(async () => {
       if (!id) id = { certificateDer: new Uint8Array([9, 9]) };
       return id as never;
@@ -50,3 +52,16 @@ export function mockPlatform(over: Partial<PlatformAdapter> = {}): PlatformAdapt
 }
 
 export const apkFile = (name = 'game.apk') => new File([new Uint8Array([80, 75, 3, 4])], name);
+
+/** A valid .bhpack with `patches` harmless patches (ids `pack:<id>/p0`, ...). */
+export function packBytes(id = 'demo', patches = 1, over: Record<string, unknown> = {}): Uint8Array {
+  const json = {
+    schemaVersion: 1, id, version: '1.0.0', name: { en: `Pack ${id}`, tr: `Paket ${id}` }, appliesTo: { packageName: 'com.noodlecake.blockheads' },
+    patches: Array.from({ length: patches }, (_, i) => ({
+      id: `p${i}`, name: { en: `Patch ${i}`, tr: `Yama ${i}` }, description: { en: `Does ${i}` },
+      ops: [{ op: 'manifest.set', target: 'application', attr: 'label', value: `L${i}` }]
+    })),
+    ...over
+  };
+  return buildPackArchive({ 'pack.json': new TextEncoder().encode(JSON.stringify(json)) });
+}

@@ -11,6 +11,13 @@ test('bootWork loads the patch list and the signing key', async () => {
   expect(refresh).toHaveBeenCalled();
 });
 
+test('bootWork loads the imported packs and tolerates a broken pack store', async () => {
+  const init = vi.fn(async () => {});
+  await bootWork({ refresh: async () => {} }, { init });
+  expect(init).toHaveBeenCalled();
+  await expect(bootWork({ refresh: async () => {} }, { init: async () => { throw new Error('fs'); } })).resolves.toBeUndefined();
+});
+
 test('bootWork tolerates an unreadable key store but not a missing patch list', async () => {
   await expect(bootWork({ refresh: async () => { throw new Error('idb'); } })).resolves.toBeUndefined();
   vi.spyOn(defaultRegistry, 'list').mockReturnValue([]);

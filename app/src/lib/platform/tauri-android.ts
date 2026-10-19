@@ -2,7 +2,8 @@ import { appCacheDir, join } from '@tauri-apps/api/path';
 import { mkdir, readFile, remove } from '@tauri-apps/plugin-fs';
 import * as apk from '@bh-patcher/tauri-plugin-apk-tools-api';
 import type { InstalledGameInfo, PickedApk, PlatformAdapter } from './types';
-import { GAME_PACKAGE, pickApkWithDialog, safeFileName, saveWithDialog, writeFileChunked } from './tauri-common';
+import { createFsPackStore } from './packs-fs';
+import { GAME_PACKAGE, pickApkWithDialog, pickPackWithDialog, safeFileName, saveWithDialog, writeFileChunked } from './tauri-common';
 
 /** Directory inside the app cache that the Kotlin plugin is allowed to touch. */
 async function workDir(): Promise<string> {
@@ -21,6 +22,8 @@ export function createTauriAndroidAdapter(): PlatformAdapter {
   return {
     kind: 'tauri-android',
     pickApk: pickApkWithDialog,
+    packStore: createFsPackStore(),
+    pickPack: () => pickPackWithDialog(false),
 
     async saveOutput(name, bytes) {
       try {

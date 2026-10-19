@@ -1,6 +1,7 @@
 // Worker-side request handler. Kept free of `self` so it can be driven directly in tests.
 import {
-  loadApk, listPatches, patchLoadedApk, MemoryKeystore, PatchError, type LoadedApk
+  loadApk, listPatches, patchLoadedApk, MemoryKeystore, PatchError, defaultRegistry, loadPack, registryWithPacks,
+  type LoadedApk, type PatchRegistry
 } from '@bh-patcher/core';
 import type { ReportRow, Request, Response, WireError } from './protocol';
 
@@ -12,8 +13,8 @@ function toWire(e: unknown): WireError {
   return { name: 'Error', message: String(e) };
 }
 
-const rowsOf = (apk: LoadedApk): ReportRow[] =>
-  listPatches(apk).map((r) => {
+const rowsOf = (apk: LoadedApk, registry: PatchRegistry): ReportRow[] =>
+  listPatches(apk, registry).map((r) => {
     const row: ReportRow = { id: r.patch.id, status: r.status };
     if (r.reason !== undefined) row.reason = r.reason;
     if (r.reasonCode !== undefined) row.reasonCode = r.reasonCode;
@@ -25,12 +26,24 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
   const held = new Map<number, Held>();
   const jobs = new Map<number, AbortController>();
   let nextHandle = 1;
+  let registry: PatchRegistry = defaultRegistry;
+
+  /** Synchronous, so requests posted after it (load, patch) always see the new registry. */
+  function setPacks(req: Extract<Request, { t: 'packs' }>): void {
+    const packs = req.packs.map((b) => {
+      const r = loadPack(b);
+      if (!r.ok) throw new Error(`invalid pack: ${r.errors[0]!.message}`);
+      return r.pack;
+    });
+    registry = registryWithPacks(packs).registry;
+    post({ t: 'packs', id: req.id });
+  }
 
   async function load(req: Extract<Request, { t: 'load' }>): Promise<void> {
     const apk = await loadApk(req.bytes);
     const handle = nextHandle++;
     held.set(handle, { bytes: req.bytes, apk });
-    post({ t: 'loaded', id: req.id, handle, info: apk.info, rows: rowsOf(apk) });
+    post({ t: 'loaded', id: req.id, handle, info: apk.info, rows: rowsOf(apk, registry) });
   }
 
   /** Restores a possibly half-patched archive from the retained input, lazily and at most once per failure. */
@@ -49,7 +62,7 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
     const h = held.get(req.handle);
     if (!h) throw new Error('unknown APK handle');
     await restore(req.handle, h);
-    post({ t: 'reloaded', id: req.id, rows: rowsOf(h.apk) });
+    post({ t: 'reloaded', id: req.id, rows: rowsOf(h.apk, registry) });
   }
 
   async function patch(req: Extract<Request, { t: 'patch' }>): Promise<void> {
@@ -62,7 +75,7 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
     await keystore.set(req.identity);
     try {
       const r = await patchLoadedApk(h.apk, {
-        patchIds: req.patchIds, keystore, signal: ctl.signal,
+        patchIds: req.patchIds, keystore, registry, signal: ctl.signal,
         onProgress: (stage, fraction) => post({ t: 'progress', id: req.id, stage, fraction })
       });
       held.delete(req.handle); // the archive was consumed; the UI drops its handle after a successful patch
@@ -80,7 +93,8 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
     if (req.t === 'cancel') { jobs.get(req.id)?.abort(); return; }
     if (req.t === 'release') { held.delete(req.handle); return; }
     try {
-      if (req.t === 'load') await load(req);
+      if (req.t === 'packs') setPacks(req);
+      else if (req.t === 'load') await load(req);
       else if (req.t === 'reload') await reload(req);
       else await patch(req);
     } catch (e) {

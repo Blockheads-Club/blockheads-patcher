@@ -6,6 +6,7 @@
   import { PatcherState } from '$lib/state.svelte';
   import { IndexedDbKeyLibrary, KeysState } from '$lib/keys.svelte';
   import { Prefs } from '$lib/prefs.svelte';
+  import { PacksState } from '$lib/packs.svelte';
   import { Boot, bootWork } from '$lib/boot.svelte';
   import { splashIpc } from '$lib/splash';
   import App from '$lib/components/App.svelte';
@@ -16,7 +17,8 @@
   const patcher = new PatcherState(platform, engine);
   const keys = new KeysState(engine, new IndexedDbKeyLibrary());
   const prefs = new Prefs();
-  const boot = new Boot(() => bootWork(keys));
+  const packs = new PacksState(platform.packStore, engine, () => patcher.refresh());
+  const boot = new Boot(() => bootWork(keys, packs));
   /** Desktop: a separate splash window shows the boot while this (hidden) window does the work. */
   const windowed = platform.kind === 'tauri-desktop';
   const android = platform.kind === 'tauri-android';
@@ -57,7 +59,7 @@
 </script>
 
 {#if boot.phase === 'ready'}
-  <App state={patcher} {keys} {prefs} />
+  <App state={patcher} {keys} {prefs} {packs} />
 {:else if android}
   <SplashScreen variant="phone" phase={boot.phase} onretry={() => void boot.run()} />
 {:else}

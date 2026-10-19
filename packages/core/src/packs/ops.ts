@@ -9,7 +9,7 @@ import { findActivityByName, findApplication } from '../patches/manifest-flags';
 import type { PatchContext } from '../patches/types';
 import { getEntry, peekData, setEntry } from '../zip';
 import { arrayAppend, arrayHasString, countOf, parsePlist, plistHas, plistSet, type PlistScalar } from './plist';
-import { PACK_MANIFEST_ATTRS } from './schema';
+import { PACK_LIMITS, PACK_MANIFEST_ATTRS } from './schema';
 
 export type Target = 'application' | { activity: string };
 export type Locate = { symbol: string; add?: number } | { objcMethod: string; add?: number } | { vaddr: number } | { fileOffset: number };
@@ -205,6 +205,7 @@ function textOp(op: Extract<PackOp, { op: 'plist.set' | 'plist.arrayInsert' | 't
 function nativeOp(op: Extract<PackOp, { op: 'native.patch' }>): CompiledOp {
   const expect = fromHex(op.expect), replace = fromHex(op.replace);
   if (expect.length !== replace.length) throw new PackOpError('native.patch: `expect` and `replace` must have the same length');
+  if (expect.length > PACK_LIMITS.hexBytes) throw new PackOpError(`native.patch: at most ${PACK_LIMITS.hexBytes} bytes per operation`);
   if (sameBytes(expect, replace)) throw new PackOpError('native.patch: `replace` equals `expect`');
   const loc = op.locate;
   const where = 'symbol' in loc ? `symbol ${loc.symbol}` : 'objcMethod' in loc ? loc.objcMethod : 'vaddr' in loc ? `0x${loc.vaddr.toString(16)}` : `file offset 0x${loc.fileOffset.toString(16)}`;

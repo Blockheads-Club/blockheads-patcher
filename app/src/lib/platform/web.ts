@@ -1,4 +1,5 @@
-import type { PickedApk, PlatformAdapter } from './types';
+import { IndexedDbPackStore } from './packs-idb';
+import type { PickedApk, PickedFile, PlatformAdapter } from './types';
 
 export async function fileToPicked(file: File): Promise<PickedApk> {
   return { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), source: 'file' };
@@ -24,9 +25,26 @@ interface SaveFilePickerWindow {
   }>;
 }
 
+/** Opens the browser's file picker; resolves with the chosen file or null. */
+export function pickFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = () => resolve(input.files?.[0] ?? null);
+    input.oncancel = () => resolve(null);
+    input.click();
+  });
+}
+
 export function createWebPlatform(): PlatformAdapter {
   return {
     kind: 'web',
+    packStore: new IndexedDbPackStore(),
+    async pickPack(): Promise<PickedFile | null> {
+      const f = await pickFile('.bhpack,.zip,application/zip');
+      return f && { name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) };
+    },
     pickApk() {
       return new Promise<PickedApk | null>((resolve, reject) => {
         const input = document.createElement('input');

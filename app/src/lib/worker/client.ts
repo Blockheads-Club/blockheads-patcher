@@ -1,7 +1,7 @@
 // UI-thread side of the APK worker: an Engine whose heavy work (load, patch, sign) runs in a Web Worker.
 import {
-  CancelledError, PatchError, defaultRegistry, exportIdentityJson, exportIdentityEncryptedJson, generateIdentity,
-  getOrCreateIdentity, importIdentity, IndexedDbKeystore, type Keystore, type LoadedApk
+  CancelledError, PatchError, defaultRegistry, registryWithPacks, exportIdentityJson, exportIdentityEncryptedJson, generateIdentity,
+  getOrCreateIdentity, importIdentity, IndexedDbKeystore, type Keystore, type LoadedApk, type PatchRegistry
 } from '@bh-patcher/core';
 import type { ApplicableReport, Engine, PatchApkResult } from '../engine';
 import type { ReportRow, Request, Response, WireError } from './protocol';
@@ -42,6 +42,9 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
   let generation = 0;
   const pending = new Map<number, Pending>();
   const handles = new WeakMap<object, Handle>();
+  /** Patches known on this side (for report rows) and the pack files every (re)spawned worker gets first. */
+  let registry: PatchRegistry = defaultRegistry;
+  let packFiles: Uint8Array[] = [];
 
   function failAll(err: unknown): void {
     worker?.terminate();
@@ -65,6 +68,7 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
     w.onerror = (e) => failAll(new Error(e.message || 'worker failed'));
     w.onmessageerror = () => failAll(new Error('worker message could not be deserialized'));
     worker = w;
+    if (packFiles.length) w.postMessage({ t: 'packs', id: nextId++, packs: packFiles });
     return w;
   }
 
@@ -123,7 +127,7 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
     loadApk,
     listPatches(apk): ApplicableReport {
       return handleOf(apk).rows.map((row) => {
-        const patch = defaultRegistry.get(row.id)!;
+        const patch = registry.get(row.id)!;
         const out: ApplicableReport[number] = { patch, status: row.status };
         if (row.reason !== undefined) out.reason = row.reason;
         if (row.reasonCode !== undefined) out.reasonCode = row.reasonCode;
@@ -131,6 +135,12 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
       });
     },
     patchLoaded,
+    async setPacks(packs) {
+      registry = registryWithPacks(packs.map((p) => p.pack)).registry;
+      packFiles = packs.map((p) => p.bytes);
+      // a worker that does not exist yet gets the packs when it is spawned
+      if (worker) await send({ t: 'packs', id: nextId++, packs: packFiles });
+    },
     async patchApk(input, opts) {
       const apk = await loadApk(input);
       try { return await patchLoaded(apk, opts); } finally { releaseApk(apk); }

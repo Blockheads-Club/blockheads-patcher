@@ -19,6 +19,11 @@ a Windows desktop app and an Android app (Tauri 2). All processing is local; the
 joining a multiplayer server (opaque popup Activity stops the game activity, causing a main-thread deadlock).
 The patch changes the popup activity theme in `AndroidManifest.xml` to a translucent framework theme.
 
+## Patch packs
+
+Extra patches can be imported as declarative `.bhpack` files (Settings, Imported patch packs); the Patcher never runs
+code from a pack. Format, operations and an example: [`docs/patch-packs.md`](docs/patch-packs.md).
+
 ## Credits
 
 Bug list and ideas from [JarlPenguin/blockheads-android-patches](https://github.com/JarlPenguin/blockheads-android-patches);
@@ -35,6 +40,7 @@ originate from that list carry the credit in their metadata and in the app (patc
 | `app/src-tauri` | Tauri 2 project (Windows desktop + Android) |
 | `plugins/tauri-plugin-apk-tools` | Tauri plugin: Kotlin (Android installed-APK access, uninstall, install) |
 | `docs/ARCHITECTURE.md` | Module contracts |
+| `docs/patch-packs.md`, `examples/packs` | Patch pack format and an example pack (`bun scripts/build-pack.ts <folder>`) |
 
 ## Build
 

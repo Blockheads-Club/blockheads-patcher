@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
   ANDROID_NS, ValueType, applyPatches, buildPackArchive, CORE_VERSION, defaultRegistry, fixConfigChangeCrash, getAttr, getEntry, listPatches, loadApk,
@@ -179,6 +181,7 @@ describe('loadPack: archive and manifest checks', () => {
     expect(bad({ op: 'text.replace', path: 'assets/a.txt', find: 'a', replace: 'xax' })).toMatch(/must not contain `find`/);
     expect(bad({ op: 'native.patch', lib: LIB, locate: { vaddr: 0 }, expect: '0001', replace: '00' })).toMatch(/same length/);
     expect(bad({ op: 'native.patch', lib: LIB, locate: { vaddr: 0 }, expect: '00 01', replace: '0001' })).toMatch(/equals `expect`/);
+    expect(bad({ op: 'native.patch', lib: LIB, locate: { vaddr: 0 }, expect: '00'.repeat(4097), replace: '01'.repeat(4097) })).toMatch(/at most 4096 bytes/);
     expect(bad({ op: 'dex.add', from: 'a.dex' }, { 'a.dex': enc.encode('not a dex') })).toMatch(/not a valid dex/);
     expect(bad({ op: 'dex.add', from: 'a.dex' }, { 'a.dex': buildDex({ classes: [] }) })).toMatch(/defines no classes/);
     expect(bad({ op: 'dex.add', from: 'a.dex' }, { 'a.dex': helloDex('Landroid/app/Evil;') })).toMatch(/reserved namespace/);
@@ -477,5 +480,27 @@ describe('registry with packs', () => {
     const again = await loadApk(out.bytes);
     expect(getAttr(application(again), 'label', ANDROID_NS, 0x01010001)!.stringValue).toBe('Patched');
     expect(listPatches(again, registry).find((x) => x.patch.id === PID)!.status).toBe('applied');
+  });
+});
+
+describe('the example pack in examples/packs', () => {
+  it('is valid and does what docs/patch-packs.md says', async () => {
+    const dir = new URL('../../../examples/packs/example-label/', import.meta.url).pathname;
+    const files: Record<string, Uint8Array> = {};
+    const walk = (d: string): void => {
+      for (const n of readdirSync(d)) {
+        const p = join(d, n);
+        if (statSync(p).isDirectory()) walk(p); else files[relative(dir, p)] = new Uint8Array(readFileSync(p));
+      }
+    };
+    walk(dir);
+    const r = loadPack(buildPackArchive(files));
+    if (!r.ok) throw new Error(JSON.stringify(r.errors));
+    expect(r.pack.patches.map((p) => p.id)).toEqual(['pack:example-label/app-label', 'pack:example-label/hello-asset']);
+    const a = await apk();
+    const ids = r.pack.patches.map((p) => p.id);
+    expect(run(a, [r.pack], ids).result!.applied).toEqual(ids);
+    expect(getAttr(application(a), 'label', ANDROID_NS, 0x01010001)!.stringValue).toBe('Blockheads (patched)');
+    expect(text(a, 'assets/patch-pack-example.txt')).toBe('Hello from the example patch pack.\n');
   });
 });

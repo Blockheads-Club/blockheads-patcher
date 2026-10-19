@@ -74,7 +74,7 @@
           <div class="pb">
             <div class="pt">
               <span class="ptitle">{$t(patch.nameKey)}</span>
-              <Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>
+              {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{:else}<Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>{/if}
               <Badge tone="ok" icon="check">{$t('badge.compatible')}</Badge>
               {#if patch.optIn}<Badge tone="info">{$t('review.optIn')}</Badge>{/if}
             </div>
@@ -83,6 +83,7 @@
               <summary><Icon name="chev-d" size={16} />{$t('review.whatChanges')}</summary>
               <p class="hint">{$t(patch.descriptionKey)}</p>
               {#if patch.credits}<p class="hint">{$t('credit.line', { source: patch.credits.source })}</p>{/if}
+              {#if patch.source}<p class="hint">{$t('review.fromPack', { pack: patch.source.packName, version: patch.source.packVersion })}</p>{/if}
             </details>
           </div>
         </Card>
@@ -92,6 +93,7 @@
           <div class="pb">
             <div class="pt">
               <span class="ptitle off-t">{$t(patch.nameKey)}</span>
+              {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{/if}
               {#if status === 'applied'}<Badge tone="info" icon="check">{$t('badge.applied')}</Badge>
               {:else}<Badge tone="bad" icon="ban">{$t('badge.notForVersion')}</Badge>{/if}
             </div>

@@ -28,8 +28,14 @@ export function setLanguage(code: string): void {
   try { localStorage.setItem(STORAGE_KEY, code); } catch {}
 }
 
+/** Messages that do not come with the app (texts of imported patch packs), by language; looked up after the dictionaries. */
+const extra = writable<Record<string, Record<string, string>>>({});
+export function setExtraMessages(messages: Record<string, Record<string, string>>): void {
+  extra.set(messages);
+}
+
 /** $t('key', {name: 'x'}) -> string with {name} interpolation. Falls back to en, then key. */
-export const t = derived(lang, ($lang) => (key: MessageKey | (string & {}), params?: Record<string, string | number>) => {
-  const raw = dictionaries[$lang]?.[key as MessageKey] ?? en[key as MessageKey] ?? key;
+export const t = derived([lang, extra], ([$lang, $extra]) => (key: MessageKey | (string & {}), params?: Record<string, string | number>) => {
+  const raw = dictionaries[$lang]?.[key as MessageKey] ?? $extra[$lang]?.[key] ?? en[key as MessageKey] ?? $extra.en?.[key] ?? key;
   return params ? raw.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`)) : raw;
 });
