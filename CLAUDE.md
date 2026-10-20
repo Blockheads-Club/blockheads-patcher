@@ -19,7 +19,7 @@ Project: Blockheads Patcher (see README.md, docs/ARCHITECTURE.md - the contracts
   Real-APK suites live in `*.suite.ts` with one `*-1.7.x.test.ts` per version; gate new real-APK tests with
   `haveApk(path)` (it honours `BH_REAL_VERSIONS` / `BH_SKIP_REAL`). Compare zip entries with `sameContent`
   (raw bytes first) instead of inflating every entry. If `/tmp` (tmpfs) is full, run with `TMPDIR` elsewhere.
-- UI default language English; i18n dictionaries `app/src/lib/i18n/<code>.ts` (en, tr). New language = one new dictionary + register in `index.ts`. Key set must match en (test enforces).
+- UI default language English; i18n dictionaries `app/src/lib/i18n/<code>.ts` (en, tr, ru, kk; plurals use ICU `{n, plural, …}` via Intl.PluralRules). New language = one new dictionary + register in `index.ts`. Key set must match en (test enforces).
 - Code, comments, docs in English. No gold-plating; production quality + tests.
 - Android: use JDK 17/21 (`/usr/lib/jvm/java-21-openjdk`), not the default JDK 26.
 - Identifiers: bundle `com.blockheadspatcher.app`, productName "Blockheads Patcher", license GPL-3.0-or-later.
