@@ -45,7 +45,7 @@ pub fn splash_hold(var: Option<OsString>) -> Duration {
 /// app start, so the splash is seen for all of it.
 fn splash_shown(started: &Mutex<Instant>, shown: &AtomicBool) {
     if !shown.swap(true, Ordering::SeqCst) {
-        *started.lock().unwrap_or_else(|e| e.into_inner()) = Instant::now();
+        *started.lock().unwrap_or_else(PoisonError::into_inner) = Instant::now();
     }
 }
 
@@ -114,7 +114,7 @@ pub async fn reveal<R: Runtime>(app: AppHandle<R>, splash: &Splash) -> tauri::Re
         splash
             .started
             .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .unwrap_or_else(PoisonError::into_inner)
             .elapsed(),
     );
     if !wait.is_zero() {
