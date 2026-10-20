@@ -81,7 +81,7 @@ every fix was written independently by Blockheads Club from our own analysis of 
 ---
 
 ## 📄 License
-Blockheads Patcher is licensed under **GNU GPLv3** (GPL-3.0-only). See the [LICENSE](LICENSE) file for details.
+Blockheads Patcher is licensed under **GNU GPLv3 or later** (GPL-3.0-or-later). This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See the [LICENSE](LICENSE) file for details.
 Bundled Noto Sans font subsets are under the SIL Open Font License 1.1.
 
 Unofficial fan project, not affiliated with Majic Jungle Games or Noodlecake Studios. Only patch software you legally

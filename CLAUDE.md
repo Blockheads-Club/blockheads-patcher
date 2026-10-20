@@ -22,5 +22,5 @@ Project: Blockheads Patcher (see README.md, docs/ARCHITECTURE.md - the contracts
 - UI default language English; i18n dictionaries `app/src/lib/i18n/<code>.ts` (en, tr). New language = one new dictionary + register in `index.ts`. Key set must match en (test enforces).
 - Code, comments, docs in English. No gold-plating; production quality + tests.
 - Android: use JDK 17/21 (`/usr/lib/jvm/java-21-openjdk`), not the default JDK 26.
-- Identifiers: bundle `com.blockheadspatcher.app`, productName "Blockheads Patcher", license GPL-3.0-only.
+- Identifiers: bundle `com.blockheadspatcher.app`, productName "Blockheads Patcher", license GPL-3.0-or-later.
 - Verify signed output with `~/Android/Sdk/build-tools/35.0.0/apksigner verify --verbose` (v1 and v2 must verify).

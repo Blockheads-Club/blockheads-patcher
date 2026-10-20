@@ -2,7 +2,7 @@
 name = "tauri-plugin-apk-tools"
 version = "0.1.0"
 edition = "2021"
-license = "GPL-3.0-only"
+license = "GPL-3.0-or-later"
 links = "tauri-plugin-apk-tools"
 
 [dependencies]

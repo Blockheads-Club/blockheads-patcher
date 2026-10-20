@@ -23,7 +23,7 @@
 
   const platformName = $derived($t(platformKind === 'web' ? 'platform.web' : platformKind === 'tauri-android' ? 'platform.android' : 'platform.desktop'));
   const LICENCES = [
-    ['Blockheads Patcher', 'GPL-3.0-only'],
+    ['Blockheads Patcher', 'GPL-3.0-or-later'],
     ['Tauri', 'MIT / Apache-2.0'],
     ['Svelte, SvelteKit', 'MIT'],
     ['Bricolage Grotesque · Atkinson Hyperlegible Next · JetBrains Mono', 'OFL-1.1']
