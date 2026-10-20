@@ -12,7 +12,7 @@ import { findElementsByName } from '../../src/axml';
 import { dexNames } from '../../src/dex';
 import { getEntry } from '../../src/zip';
 import { calleeOf, insnsOf } from '../../src/patches/dex-support';
-import { haveApk } from '../helpers';
+import { haveApk, yieldToRunner } from '../helpers';
 
 const dl = join(homedir(), 'Downloads');
 const APKS: [string, string][] = [['1.7.4', 'The Blockheads_1.7.4_APKPure.apk'], ['1.7.5', 'The Blockheads_1.7.5_APKPure.apk'], ['1.7.6', 'The Blockheads_1.7.6.apk']];
@@ -28,10 +28,11 @@ const d8 = latest && existsSync(join(bt, latest, 'd8')) && existsSync(jdk) && an
 
 const norm = (t: string): string => t.replace(/^[0-9a-f]{6}: /gm, '').replace(/\[[0-9a-f]{6}\]/g, '').replace(/^(Processing|Opened).*$/gm, '').replace(/^ +\|/gm, '|');
 /** d8 compiles every edited dex file (untouched ones are the game's own; one run per file: the game repeats some classes across its dex files). */
-const d8Accepts = (dir: string, files: [string, Uint8Array][]): void => {
+const d8Accepts = async (dir: string, files: [string, Uint8Array][]): Promise<void> => {
   expect(files.length, 'no dex was edited').toBeGreaterThan(0);
   if (!d8) return;
   for (const [name, data] of files) {
+    await yieldToRunner();
     const f = join(dir, `d8-in-${name}`), o = join(dir, `d8-out-${name}`);
     writeFileSync(f, data);
     mkdirSync(o, { recursive: true });
@@ -58,10 +59,14 @@ export function realGameSuite(version: string): void {
     it.skipIf(!run)('re-serializes every dex into a valid, semantically identical file', async () => {
       const ctx = await ctxOf();
       for (const name of dexNames(ctx.zip)) {
+        await yieldToRunner();
         const src = getEntry(ctx.zip, name)!.data;
         expect(validateDex(src), `${version} ${name} (input)`).toEqual([]);
+        await yieldToRunner();
         const out = DexFile.parse(src).serialize();
+        await yieldToRunner();
         expect(validateDex(out), `${version} ${name}`).toEqual([]);
+        await yieldToRunner();
         if (dexdump) {
           const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
           try { expect(norm(dump(out, dir))).toBe(norm(dump(src, dir))); } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -72,16 +77,23 @@ export function realGameSuite(version: string): void {
     it.skipIf(!run)('applies both dex patches; output validates, dexdump parses it and d8 accepts it', async () => {
       const ctx = await ctxOf();
       expect(fixWebviewCrash.detect(ctx)).toBe('notApplied');
+      await yieldToRunner();
       expect(fixEmailShareLink.detect(ctx)).toBe('notApplied');
+      await yieldToRunner();
       fixWebviewCrash.apply(ctx);
+      await yieldToRunner();
       fixEmailShareLink.apply(ctx);
+      await yieldToRunner();
       expect(fixWebviewCrash.detect(ctx)).toBe('applied');
+      await yieldToRunner();
       expect(fixEmailShareLink.detect(ctx)).toBe('applied');
+      await yieldToRunner();
       const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
       try {
         const edited: [string, Uint8Array][] = [];
         let guard = false, mail = false;
         for (const name of dexNames(ctx.zip)) {
+          await yieldToRunner();
           const out = getEntry(ctx.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           const dex = DexFile.parse(out);
@@ -90,7 +102,7 @@ export function realGameSuite(version: string): void {
           if (dexdump) expect(dump(out, dir)).toContain('onRenderProcessGone');
           if (!getEntry(ctx.zip, name)!.raw) edited.push([name, out]);
         }
-        d8Accepts(dir, edited);
+        await d8Accepts(dir, edited);
         expect(guard && mail).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -99,13 +111,17 @@ export function realGameSuite(version: string): void {
     it.skipIf(!run)('applies fix-config-change-crash; output validates, dexdump shows the guard and the hook, d8 accepts it', async () => {
       const ctx = await ctxOf();
       expect(fixConfigChangeCrash.detect(ctx)).toBe('notApplied');
+      await yieldToRunner();
       fixConfigChangeCrash.apply(ctx);
+      await yieldToRunner();
       expect(fixConfigChangeCrash.detect(ctx)).toBe('applied');
+      await yieldToRunner();
       const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
       try {
         const edited: [string, Uint8Array][] = [];
         const holders: string[] = [];
         for (const name of dexNames(ctx.zip)) {
+          await yieldToRunner();
           const out = getEntry(ctx.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           const dex = DexFile.parse(out);
@@ -121,7 +137,7 @@ export function realGameSuite(version: string): void {
           }
           if (!getEntry(ctx.zip, name)!.raw) edited.push([name, out]);
         }
-        d8Accepts(dir, edited);
+        await d8Accepts(dir, edited);
         expect(holders).toEqual(['classes.dex']);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -130,13 +146,17 @@ export function realGameSuite(version: string): void {
     it.skipIf(!run)('applies gamepad-controls; output validates, dexdump shows both hooks, d8 accepts it', async () => {
       const ctx = await ctxOf();
       expect(gamepadControls.detect(ctx)).toBe('notApplied');
+      await yieldToRunner();
       gamepadControls.apply(ctx);
+      await yieldToRunner();
       expect(gamepadControls.detect(ctx)).toBe('applied');
+      await yieldToRunner();
       const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
       try {
         const edited: [string, Uint8Array][] = [];
         const holders: string[] = [];
         for (const name of dexNames(ctx.zip)) {
+          await yieldToRunner();
           const out = getEntry(ctx.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           const dex = DexFile.parse(out);
@@ -155,7 +175,7 @@ export function realGameSuite(version: string): void {
           }
           if (!getEntry(ctx.zip, name)!.raw) edited.push([name, out]);
         }
-        d8Accepts(dir, edited);
+        await d8Accepts(dir, edited);
         expect(holders).toEqual(['classes.dex']);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -165,20 +185,24 @@ export function realGameSuite(version: string): void {
       const ctx = await ctxOf();
       const patches = [signEditorCentred, lanMulticast, tabletLayout];
       for (const p of patches) expect(p.detect(ctx), `${version} ${p.id}`).toBe('notApplied');
+      await yieldToRunner();
       for (const p of patches) p.apply(ctx);
+      await yieldToRunner();
       for (const p of patches) expect(p.detect(ctx), `${version} ${p.id}`).toBe('applied');
+      await yieldToRunner();
       expect(findElementsByName(ctx.manifest, 'uses-permission', MULTICAST_PERMISSION)).toHaveLength(1);
       const dir = mkdtempSync(join(tmpdir(), 'bhdex-'));
       try {
         const edited: [string, Uint8Array][] = [];
         let text = '';
         for (const name of dexNames(ctx.zip)) {
+          await yieldToRunner();
           const out = getEntry(ctx.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           if (dexdump) text += dump(out, dir);
           if (!getEntry(ctx.zip, name)!.raw) edited.push([name, out]);
         }
-        d8Accepts(dir, edited);
+        await d8Accepts(dir, edited);
         if (dexdump) {
           expect(text).toMatch(/const\/16 v1, #int 49 \/\/ #31\s+\S+: \S+ \S+ \S+\s+\|\w+: invoke-virtual \{v0, v1\}, Lcom\/apportable\/ui\/TextView\$EditText;\.setGravity/);
           for (const needle of [`${MULTICAST_CLASS.slice(1, -1)};.acquire`, `${MULTICAST_CLASS.slice(1, -1)};.release`, `${TABLET_CLASS.slice(1, -1)};.init`, `${TABLET_CLASS.slice(1, -1)};.splash`]) expect(text).toContain(needle);
@@ -192,7 +216,9 @@ export function realGameSuite(version: string): void {
       const apk = await loadApk(new Uint8Array(readFileSync(path)));
       const ids = listPatches(apk).filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
       expect(ids).toEqual(expect.arrayContaining(['immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash']));
-      const { applied, skipped } = applyPatches(apk, ids);
+      await yieldToRunner();
+    const { applied, skipped } = applyPatches(apk, ids);
+    await yieldToRunner();
       expect(skipped).toEqual([]);
       expect(applied).toEqual(ids);
       const after = listPatches(apk);
@@ -201,6 +227,7 @@ export function realGameSuite(version: string): void {
       try {
         const edited: [string, Uint8Array][] = [];
         for (const name of dexNames(apk.zip)) {
+          await yieldToRunner();
           const out = getEntry(apk.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           const dex = DexFile.parse(out);
@@ -222,7 +249,7 @@ export function realGameSuite(version: string): void {
           }
           if (!getEntry(apk.zip, name)!.raw) edited.push([name, out]);
         }
-        d8Accepts(dir, edited);
+        await d8Accepts(dir, edited);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

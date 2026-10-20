@@ -8,6 +8,9 @@ export default defineConfig({
     setupFiles: ['tests/setup/seed-real-apks.ts'],
     // real-APK tests (skipped when the user's APKs are absent) are slow, especially under v8 coverage
     testTimeout: 600_000,
+    // The real-APK suites are CPU-heavy (inflate, dex serialization, d8/dexdump JVMs): one worker per core oversubscribes
+    // the machine, and a worker blocked for a minute fails the run with a vitest RPC timeout.
+    maxWorkers: '50%',
     hookTimeout: 600_000,
     coverage: {
       provider: 'v8',

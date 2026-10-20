@@ -1,4 +1,4 @@
-import { haveApk, haveFile } from './helpers';
+import { haveApk, haveFile, yieldToRunner } from './helpers';
 import { describe, expect, test, onTestFinished } from 'vitest';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -120,12 +120,13 @@ describe('zip synthetic', () => {
 describe.skipIf(!haveApk(APK))('zip on real APK', () => {
   const input = haveApk(APK) ? new Uint8Array(readFileSync(APK)) : new Uint8Array(0);
 
-  test('every entry survives read -> write -> read identically', () => {
+  test('every entry survives read -> write -> read identically', async () => {
     const a = readZip(input);
     const out = writeZip(a);
     const b = readZip(out);
     expect(b.entries.map((e) => e.name)).toEqual(a.entries.map((e) => e.name));
     for (let i = 0; i < a.entries.length; i++) {
+      if (i % 50 === 0) await yieldToRunner(); // inflating ~150 MB in one go blocks the worker > 60 s under load
       const x = a.entries[i]!, y = b.entries[i]!;
       expect(y.method).toBe(x.method);
       expect(y.raw!.crc32).toBe(x.raw!.crc32);

@@ -9,7 +9,7 @@ import {
   LIFECYCLE_CLASS, WAKE_METHOD, type Patch, type PatchContext,
 } from '../../src';
 import { getEntry } from '../../src/zip';
-import { haveApk } from '../helpers';
+import { haveApk, yieldToRunner } from '../helpers';
 
 const dl = join(homedir(), 'Downloads');
 const APKS: [string, string][] = [['1.7.4', 'The Blockheads_1.7.4_APKPure.apk'], ['1.7.5', 'The Blockheads_1.7.5_APKPure.apk'], ['1.7.6', 'The Blockheads_1.7.6.apk']];
@@ -41,13 +41,17 @@ export function audioLifecycleSuite(version: string): void {
       const apk = await loadApk(new Uint8Array(readFileSync(path)));
       const ctx: PatchContext = { zip: apk.zip, manifest: apk.manifest, info: apk.info, markManifestDirty() {}, log() {} };
       for (const p of PATCHES) expect(p.detect(ctx), p.id).toBe('notApplied');
+      await yieldToRunner();
       for (const p of PATCHES) p.apply(ctx);
+      await yieldToRunner();
       for (const p of PATCHES) expect(p.detect(ctx), p.id).toBe('applied');
+      await yieldToRunner();
       const dir = mkdtempSync(join(tmpdir(), 'bhaud-'));
       try {
         let seen = 0;
         const edited: string[] = [];
         for (const name of dexNames(ctx.zip)) {
+          await yieldToRunner();
           const out = getEntry(ctx.zip, name)!.data;
           expect(validateDex(out), `${version} ${name}`).toEqual([]);
           const dex = DexFile.parse(out);

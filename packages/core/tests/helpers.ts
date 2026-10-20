@@ -56,3 +56,10 @@ export function sameContent(a: ZipEntry, b: ZipEntry): boolean {
   if (a.raw && b.raw && a.method === b.method && a.raw.crc32 === b.raw.crc32 && Buffer.compare(a.raw.compressed, b.raw.compressed) === 0) return true;
   return Buffer.compare(a.data, b.data) === 0;
 }
+
+/**
+ * Lets the vitest worker answer its RPC between long synchronous steps. A worker that stays blocked for about a minute
+ * (dexdump/d8 and dex re-serialization under coverage on a loaded machine) fails the run with
+ * `Timeout calling "onTaskUpdate"` even though every test passed.
+ */
+export const yieldToRunner = (): Promise<void> => new Promise((r) => setImmediate(r));
