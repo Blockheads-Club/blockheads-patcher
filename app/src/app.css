@@ -1,7 +1,7 @@
 /* Sunlit Blocks design tokens and base styles (see notes/design-source: Main.dc.html). Components read semantic tokens only. */
 :root {
-  --f-display: 'Bricolage Grotesque Variable', ui-rounded, 'Segoe UI', system-ui, sans-serif;
-  --f-body: 'Atkinson Hyperlegible Next Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --f-display: 'Bricolage Grotesque Variable', 'Onest Variable', ui-rounded, 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Atkinson Hyperlegible Next Variable', 'Onest Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --f-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, Consolas, monospace;
 
   --bg: #fbf8f4; --surface: #ffffff; --surface-2: #f5efe8; --surface-3: #ece4da;

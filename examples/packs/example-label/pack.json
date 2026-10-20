@@ -3,10 +3,12 @@
   "schemaVersion": 1,
   "id": "example-label",
   "version": "1.0.0",
-  "name": { "en": "Example pack", "tr": "Örnek paket" },
+  "name": { "en": "Example pack", "tr": "Örnek paket", "ru": "Пример пакета", "kk": "Мысал пакет" },
   "description": {
     "en": "A harmless example of the .bhpack format: renames the app and adds a small text file.",
-    "tr": ".bhpack biçimine zararsız bir örnek: uygulamanın adını değiştirir ve küçük bir metin dosyası ekler."
+    "tr": ".bhpack biçimine zararsız bir örnek: uygulamanın adını değiştirir ve küçük bir metin dosyası ekler.",
+    "ru": "Безобидный пример формата .bhpack: меняет название приложения и добавляет небольшой текстовый файл.",
+    "kk": ".bhpack пішімінің зиянсыз мысалы: қолданбаның атауын өзгертеді және шағын мәтіндік файл қосады."
   },
   "author": "Blockheads Club",
   "minPatcherVersion": "0.1.0",
@@ -14,11 +16,13 @@
   "patches": [
     {
       "id": "app-label",
-      "name": { "en": "Rename the app to “Blockheads (patched)”", "tr": "Uygulamanın adını “Blockheads (patched)” yap" },
-      "summary": { "en": "Shows a different name under the app icon.", "tr": "Uygulama simgesinin altında farklı bir ad gösterir." },
+      "name": { "en": "Rename the app to “Blockheads (patched)”", "tr": "Uygulamanın adını “Blockheads (patched)” yap", "ru": "Переименовать приложение в «Blockheads (patched)»", "kk": "Қолданба атауын «Blockheads (patched)» деп өзгерту" },
+      "summary": { "en": "Shows a different name under the app icon.", "tr": "Uygulama simgesinin altında farklı bir ad gösterir.", "ru": "Показывает другое название под значком приложения.", "kk": "Қолданба белгішесінің астында басқа атау көрсетеді." },
       "description": {
         "en": "Sets android:label of the <application> element. Launchers that read the activity label may keep the old name.",
-        "tr": "<application> öğesinin android:label özelliğini ayarlar. Etkinlik etiketini okuyan başlatıcılar eski adı göstermeye devam edebilir."
+        "tr": "<application> öğesinin android:label özelliğini ayarlar. Etkinlik etiketini okuyan başlatıcılar eski adı göstermeye devam edebilir.",
+        "ru": "Задаёт android:label элемента <application>. Лаунчеры, которые читают название активности, могут показывать старое имя.",
+        "kk": "<application> элементінің android:label атрибутын орнатады. Әрекет атауын оқитын іске қосқыштар ескі атауды көрсете беруі мүмкін."
       },
       "ops": [
         { "op": "manifest.set", "target": "application", "attr": "label", "value": "Blockheads (patched)" }
@@ -26,10 +30,12 @@
     },
     {
       "id": "hello-asset",
-      "name": { "en": "Add a hello file", "tr": "Merhaba dosyası ekle" },
+      "name": { "en": "Add a hello file", "tr": "Merhaba dosyası ekle", "ru": "Добавить файл-приветствие", "kk": "Сәлемдесу файлын қосу" },
       "description": {
         "en": "Adds assets/patch-pack-example.txt. The game never reads it; it only shows that a pack was applied.",
-        "tr": "assets/patch-pack-example.txt dosyasını ekler. Oyun bu dosyayı hiç okumaz; yalnızca bir paketin uygulandığını gösterir."
+        "tr": "assets/patch-pack-example.txt dosyasını ekler. Oyun bu dosyayı hiç okumaz; yalnızca bir paketin uygulandığını gösterir.",
+        "ru": "Добавляет assets/patch-pack-example.txt. Игра никогда не читает этот файл; он лишь показывает, что пакет применён.",
+        "kk": "assets/patch-pack-example.txt файлын қосады. Ойын бұл файлды ешқашан оқымайды; ол тек пакеттің қолданылғанын көрсетеді."
       },
       "ops": [
         { "op": "file.add", "path": "assets/patch-pack-example.txt", "from": "files/hello.txt" }

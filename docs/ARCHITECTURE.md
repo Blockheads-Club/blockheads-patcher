@@ -198,7 +198,7 @@ Tests (skip if APK missing): detect on 1.7.4 = notApplied; after apply = applied
 
 ## 6. App (`app/`, agent D)
 
-Routes: single page `src/routes/+page.svelte` (static SPA, `ssr=false`). Svelte 5 runes only. i18n: `import { t, lang, setLanguage, languageNames } from '$lib/i18n'`; `$t('key', {param})`; dictionaries `en.ts` (source of truth, `as const`), `tr.ts` (`Record<MessageKey,string>`) - adding a language = new file + entry in `dictionaries` and `languageNames`. Language auto-detected from `navigator.languages`, persisted in localStorage `bhp.lang`.
+Routes: single page `src/routes/+page.svelte` (static SPA, `ssr=false`). Svelte 5 runes only. i18n: `import { t, lang, setLanguage, languageNames } from '$lib/i18n'`; `$t('key', {param})`; dictionaries `en.ts` (source of truth, `as const`), `tr.ts`, `ru.ts`, `kk.ts` (`Record<MessageKey,string>`) - adding a language = new file + entry in `dictionaries` and `languageNames` (native name). Plurals use ICU syntax inside a message, `{n, plural, one {# fix} few {…} many {…} other {# fixes}}` (`=N` branches allowed; categories from `Intl.PluralRules`, `#` is the locale-formatted number); every plural needs `other`, and the test enforces the locale's own categories. Language auto-detected from `navigator.languages`, persisted in localStorage `bhp.lang`.
 
 Platform adapter (`src/lib/platform/types.ts`):
 ```ts

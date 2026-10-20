@@ -28,6 +28,7 @@ vi.mock('@bh-patcher/tauri-plugin-apk-tools-api', () => plugin);
 import { createTauriDesktopAdapter } from './tauri-desktop';
 import { createTauriAndroidAdapter } from './tauri-android';
 import { baseName, safeFileName, filterFor, WRITE_CHUNK } from './tauri-common';
+import { setLanguage } from '../i18n';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -58,6 +59,9 @@ describe('save filter and chunked writes', () => {
   it('derives the dialog filter from the extension', async () => {
     expect(filterFor('k.json')[0]!.extensions).toEqual(['json']);
     expect(filterFor('p.apk')[0]!.extensions).toEqual(['apk']);
+    expect(filterFor('p.apk')[0]!.name).toBe('Android package');
+    setLanguage('ru');
+    try { expect(filterFor('p.apk')[0]!.name).toBe('Пакет Android'); } finally { setLanguage('en'); }
     const a = createTauriDesktopAdapter();
     dialog.save.mockResolvedValueOnce('/out/k.json');
     await a.saveOutput('blockheads-patcher-key.json', new Uint8Array([1]));

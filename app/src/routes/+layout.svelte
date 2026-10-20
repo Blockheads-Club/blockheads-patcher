@@ -2,6 +2,8 @@
   import '@fontsource-variable/bricolage-grotesque/opsz.css';
   import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
   import '@fontsource-variable/jetbrains-mono/wght.css';
+  // Cyrillic (ru, kk) for display and body text: the faces above have Latin glyphs only.
+  import '@fontsource-variable/onest/wght.css';
   import '../app.css';
   import { lang } from '$lib/i18n';
   import { applyTheme, loadTheme } from '$lib/theme.svelte';

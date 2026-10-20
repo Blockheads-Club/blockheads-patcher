@@ -93,7 +93,7 @@
         <p class="rt">{localized(pack.name)}</p>
         <p class="hint">
           {pack.author ? $t('packs.meta', { version: pack.version, author: pack.author }) : $t('packs.metaNoAuthor', { version: pack.version })}
-          · {pack.patches.length === 1 ? $t('packs.countOne') : $t('packs.countMany', { n: pack.patches.length })}
+          · {$t('packs.count', { n: pack.patches.length })}
         </p>
         {#if pack.description}<p class="hint">{localized(pack.description)}</p>{/if}
       </div>

@@ -80,6 +80,38 @@ test('language switch to Turkish persists, including the consent dialog', async 
   await expect(page.getByRole('heading', { name: 'Oyununuzu seçin' })).toBeVisible();
 });
 
+test('Russian and Kazakh: consent, plural button, Intl formats, Kazakh from Settings, persisted', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Language').selectOption('ru');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(page.getByRole('heading', { name: 'Прежде чем начать' })).toBeVisible();
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Продолжить' }).click();
+  await expect(page.getByRole('heading', { name: 'Выберите игру' })).toBeVisible();
+  await page.getByTestId('apk-input').setInputFiles(apk());
+  await expect(page.getByRole('heading', { name: 'Проверьте исправления' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Применить \d+ исправлени(е|я|й)$/ })).toBeVisible();
+  await expect(page.getByText(/\d,\d\s?кБ|\d+\sБ/).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Настройки' }).click();
+  await page.getByLabel('Язык').first().selectOption('kk');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'kk');
+  await expect(page.getByRole('heading', { name: 'Баптаулар' }).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Ойынды таңдаңыз' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'kk');
+});
+
+test('the browser locale picks the language on first start', async ({ browser }) => {
+  for (const [locale, heading] of [['kk-KZ', 'Бастамас бұрын'], ['ru-RU', 'Прежде чем начать']] as const) {
+    const ctx = await browser.newContext({ locale });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    await ctx.close();
+  }
+});
+
 test('keys: generate, rename and export a backup', async ({ page }) => {
   await page.addInitScript(() => { localStorage.setItem('bhp.consent', '1'); delete (window as unknown as Record<string, unknown>).showSaveFilePicker; });
   await page.goto('/');

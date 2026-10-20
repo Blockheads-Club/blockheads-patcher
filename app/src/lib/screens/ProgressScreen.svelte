@@ -2,7 +2,7 @@
   import logo from '$lib/assets/patcher-icon.svg';
   import { t, lang } from '$lib/i18n';
   import { completedRows, overallPercent, ROWS } from '$lib/progress';
-  import { formatClock } from '$lib/format';
+  import { formatClock, numberLocale } from '$lib/format';
   import { copyText } from '$lib/clipboard';
   import type { PatcherState } from '$lib/state.svelte';
   import type { KeysState } from '$lib/keys.svelte';
@@ -17,7 +17,7 @@
 
   const done = $derived(completedRows(s.progress.stage, s.progress.fraction));
   const pct = $derived(overallPercent(s.progress.stage, s.progress.fraction));
-  const fmt = (n: number) => new Intl.NumberFormat($lang, { style: 'percent' }).format(n / 100);
+  const fmt = (n: number) => new Intl.NumberFormat(numberLocale($lang), { style: 'percent' }).format(n / 100);
   const active = $derived(Math.min(done, ROWS.length - 1));
   const activeLabel = $derived($t(`stage.${ROWS[active]!}`));
   const names = $derived(s.selected.map((id) => $t(`patch.${id}.name`)).join(', '));

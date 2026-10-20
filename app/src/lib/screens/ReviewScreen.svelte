@@ -22,6 +22,12 @@
     s.selected = on ? [...s.selected.filter((x) => x !== id), id] : s.selected.filter((x) => x !== id);
   }
   const summary = (id: string) => `patch.${id}.summary` as MessageKey;
+  /** The pack's name in the UI language (from its texts), else the English name the patch carries. */
+  const packName = (src: { packId: string; packName: string }) => {
+    const key = `pack.${src.packId}.name`;
+    const name = $t(key);
+    return name === key ? src.packName : name;
+  };
 </script>
 
 <div class="head">
@@ -83,7 +89,7 @@
               <summary><Icon name="chev-d" size={16} />{$t('review.whatChanges')}</summary>
               <p class="hint">{$t(patch.descriptionKey)}</p>
               {#if patch.credits}<p class="hint">{$t('credit.line', { source: patch.credits.source })}</p>{/if}
-              {#if patch.source}<p class="hint">{$t('review.fromPack', { pack: patch.source.packName, version: patch.source.packVersion })}</p>{/if}
+              {#if patch.source}<p class="hint">{$t('review.fromPack', { pack: packName(patch.source), version: patch.source.packVersion })}</p>{/if}
             </details>
           </div>
         </Card>

@@ -84,7 +84,9 @@ export class PacksState {
 
   private async commit(items: LoadedPack[]): Promise<void> {
     const packs = items.map((x) => x.pack);
-    setExtraMessages(patchMessages(packs.flatMap((p) => p.patches)));
+    const messages = patchMessages(packs.flatMap((p) => p.patches));
+    for (const p of packs) for (const [l, name] of Object.entries(p.name)) (messages[l] ??= {})[`pack.${p.id}.name`] = name;
+    setExtraMessages(messages);
     this.conflicts = registryWithPacks(packs).conflicts;
     this.items = items;
     await this.engine.setPacks(items);

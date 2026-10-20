@@ -142,4 +142,33 @@ describe('pack patches on the Review step', () => {
     expect(screen.getAllByText('Recommended')).toHaveLength(1);
     expect(screen.getByText('From the imported pack “Pack demo” (version 1.0.0). Not part of the Patcher and not checked by its authors.')).toBeInTheDocument();
   });
+
+  test('pack and patch texts follow ru and kk, falling back to English', async () => {
+    const packs = packsFor();
+    await packs.import('demo.bhpack', packBytes('demo', 1, {
+      name: { en: 'Demo', ru: 'Демо-пакет' },
+      patches: [{ id: 'p0', name: { en: 'Patch', ru: 'Патч', kk: 'Түзету' }, summary: { en: 'Short', kk: 'Қысқа' }, description: { en: 'Does' }, ops: [{ op: 'manifest.set', target: 'application', attr: 'label', value: 'L' }] }]
+    }));
+    const [p0] = packs.items[0]!.pack.patches;
+    const engine = mockEngine({ listPatches: vi.fn(() => [{ patch: p0, status: 'notApplied' }] as never) });
+    const s = new PatcherState(mockPlatform(), engine);
+    await s.load({ name: 'g.apk', bytes: new Uint8Array([1]), source: 'file' });
+    const keys = new KeysState(engine, new MemoryKeyLibrary());
+    const props = { state: s, keys, info: s.loaded!.info, file: { name: 'g.apk', size: 1 }, onchangekey: () => {} };
+    setLanguage('ru');
+    const r = render(ReviewScreen, props);
+    expect(screen.getByText('Патч')).toBeInTheDocument();
+    expect(screen.getByText('Short')).toBeInTheDocument();
+    expect(screen.getByText(/«Демо-пакет»/)).toBeInTheDocument();
+    r.unmount();
+    setLanguage('kk');
+    const k = render(ReviewScreen, props);
+    expect(screen.getByText('Түзету')).toBeInTheDocument();
+    expect(screen.getByText('Қысқа')).toBeInTheDocument();
+    expect(screen.getByText(/Demo/)).toBeInTheDocument();
+    k.unmount();
+    setExtraMessages({}); // texts gone: the review falls back to the English pack name the patch carries
+    render(ReviewScreen, props);
+    expect(screen.getByText(/Demo/)).toBeInTheDocument();
+  });
 });

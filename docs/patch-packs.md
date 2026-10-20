@@ -48,7 +48,7 @@ my-pack.bhpack
 | `schemaVersion` | required | `1` |
 | `id` | required | `[a-z0-9._-]`, 1–48 characters, starts and ends with a letter or digit; patch ids become `pack:<id>/<patchId>` |
 | `version` | required | `major.minor.patch` |
-| `name` | required | texts by language code, `en` required (`{ "en": "…", "tr": "…" }`) |
+| `name` | required | texts by language code, `en` required (`{ "en": "…", "tr": "…", "ru": "…", "kk": "…" }`) |
 | `description`, `author` | optional | |
 | `minPatcherVersion` | optional | the pack is refused by older Patchers |
 | `appliesTo` | required | `packageName`, optional `versionNames`, `versionCodes` (exact list), `sha256` (exact list of APK file hashes) |
@@ -56,7 +56,7 @@ my-pack.bhpack
 
 Each patch has `id`, `name`, `description`, optional `summary` (short line in the list; defaults to the description),
 optional `appliesTo` (replaces the pack's) and `ops`, 1–256 operations applied in order. Texts fall back to English for
-languages a pack does not translate.
+languages a pack does not translate. The app is available in `en`, `tr`, `ru` and `kk` (Kazakh, Cyrillic).
 
 A patch is *applied* when all its operations are already in effect, *not applied* when each of them is either in
 effect or can be done, and *not for this version* when any operation does not fit the APK (missing file, unexpected

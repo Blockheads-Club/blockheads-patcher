@@ -1,16 +1,19 @@
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { open as openFile, readFile, writeFile } from '@tauri-apps/plugin-fs';
+import { get } from 'svelte/store';
+import { t } from '../i18n';
 import type { PickedApk, PickedFile } from './types';
 
 export const GAME_PACKAGE = 'com.noodlecake.blockheads';
 
-const APK_FILTER = [{ name: 'Android package', extensions: ['apk'] }];
+/** File-dialog filters, named in the UI language. */
+const APK_FILTER = () => [{ name: get(t)('filter.apk'), extensions: ['apk'] }];
 const JSON_FILTER = [{ name: 'JSON', extensions: ['json'] }];
-const PACK_FILTER = [{ name: 'Patch pack', extensions: ['bhpack', 'zip'] }];
+const PACK_FILTER = () => [{ name: get(t)('filter.pack'), extensions: ['bhpack', 'zip'] }];
 
 /** Save-dialog filter derived from the file name's extension. */
 export function filterFor(name: string): { name: string; extensions: string[] }[] {
-  return name.toLowerCase().endsWith('.json') ? JSON_FILTER : APK_FILTER;
+  return name.toLowerCase().endsWith('.json') ? JSON_FILTER : APK_FILTER();
 }
 
 /**
@@ -56,7 +59,7 @@ export function safeFileName(name: string): string {
 }
 
 export async function pickApkWithDialog(): Promise<PickedApk | null> {
-  const selected = await open({ multiple: false, directory: false, filters: APK_FILTER });
+  const selected = await open({ multiple: false, directory: false, filters: APK_FILTER() });
   if (!selected) return null;
   const path = Array.isArray(selected) ? selected[0] : selected;
   const bytes = await readFile(path);
@@ -72,7 +75,7 @@ export async function saveWithDialog(name: string, bytes: Uint8Array): Promise<{
 
 /** `filter: false` shows every file (Android's picker filters by MIME type, which .bhpack does not have). */
 export async function pickPackWithDialog(filter = true): Promise<PickedFile | null> {
-  const selected = await open({ multiple: false, directory: false, ...(filter ? { filters: PACK_FILTER } : {}) });
+  const selected = await open({ multiple: false, directory: false, ...(filter ? { filters: PACK_FILTER() } : {}) });
   if (!selected) return null;
   const path = Array.isArray(selected) ? selected[0] : selected;
   return { name: baseName(path), bytes: await readFile(path) };

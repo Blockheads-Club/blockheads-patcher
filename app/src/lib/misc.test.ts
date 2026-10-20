@@ -73,6 +73,10 @@ describe('i18n', () => {
     expect(detectLanguage()).toBe('tr');
     vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['de', '']);
     expect(detectLanguage()).toBe('en');
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['kk-KZ', 'ru-RU']);
+    expect(detectLanguage()).toBe('kk');
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['ru_KZ']);
+    expect(detectLanguage()).toBe('ru');
   });
   test('detect falls back to navigator.language and survives storage errors', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('x'); });
