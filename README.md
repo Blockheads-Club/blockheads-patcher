@@ -1,132 +1,88 @@
-# Blockheads Patcher
+<p align="center">
+  <img width="120" height="120" src="app/static/icon-512.png" alt="Blockheads Patcher logo">
+</p>
 
-Open-source (GPL-3.0-only) tool that patches **your own copy** of *The Blockheads* for Android
-(`com.noodlecake.blockheads`) to fix bugs and, later, add features. Runs as a static website,
-a Windows desktop app and an Android app (Tauri 2). All processing is local; there is no server.
+<h1 align="center">Blockheads Patcher</h1>
 
-## Legal notice
+<p align="center">
+  Fix crashes and add small improvements to <b>The Blockheads</b> on your phone. Works in the browser, on desktop and on Android. 🔧
+</p>
 
-- This project is **not affiliated with, endorsed by or connected to Majic Jungle Games or Noodlecake Studios.**
-  "The Blockheads" is their trademark and software.
-- **No game files are distributed or downloaded by this project.** You supply the APK yourself
-  (file picker on web/desktop; on Android the app reads the copy already installed on your device).
-- Only patch software you legally own. You are responsible for complying with the game's license and the law
-  in your country. The output is re-signed with your own key, so it is a different app signature than the original.
+<p align="center">
+  <img src="https://img.shields.io/maintenance/yes/2026?style=for-the-badge" alt="Maintained">
+  <a href="https://github.com/Blockheads-Club/blockheads-patcher/releases"><img src="https://img.shields.io/github/v/release/Blockheads-Club/blockheads-patcher?include_prereleases&style=for-the-badge" alt="Release"></a>
+  <a href="https://github.com/Blockheads-Club/blockheads-patcher/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Blockheads-Club/blockheads-patcher/ci.yml?branch=dev&style=for-the-badge&label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Blockheads-Club/blockheads-patcher?style=for-the-badge" alt="License"></a>
+</p>
 
-## First patch
+---
 
-`fix-welcome-popup-deadlock`: on Android 10+ the game can freeze on the "WELCOME TO <world>!" popup when
-joining a multiplayer server (opaque popup Activity stops the game activity, causing a main-thread deadlock).
-The patch changes the popup activity theme in `AndroidManifest.xml` to a translucent framework theme.
+## 🚀 Project Status
+**Current Status:** Alpha (v0.1.0 pre-release). Usable, but test the patched game before you rely on it.
 
-## Patch packs
+The Patcher takes **your own copy** of The Blockheads for Android and gives you back a fixed copy to install. It fixes
+the freeze on the "WELCOME TO ...!" popup when joining a server on Android 10+, several crashes and freezes, and adds
+small improvements such as controller support, fullscreen and a tablet layout. You choose which patches to apply.
 
-Extra patches can be imported as declarative `.bhpack` files (Settings, Imported patch packs); the Patcher never runs
-code from a pack. Format, operations and an example: [`docs/patch-packs.md`](docs/patch-packs.md).
+Everything happens on your device: **no game files are included or downloaded**, and there is no server.
 
-## Credits
+---
 
+## 📦 Other Blockheads Club Repositories
+- [**blockheads-pc**](https://github.com/Blockheads-Club/blockheads-pc) - Play The Blockheads on your computer
+- [**blockheads-server**](https://github.com/Blockheads-Club/blockheads-server) - Host your own Blockheads server for friends
+- [**website**](https://github.com/Blockheads-Club/website) - The [Blockheads Club website](https://blockheads-club.github.io/website/): downloads, guides and docs
+
+---
+
+## ⚡ Trying Blockheads Patcher
+- **In the browser:** open [blockheads-club.github.io/blockheads-patcher](https://blockheads-club.github.io/blockheads-patcher/), pick your game APK, choose patches, download the result.
+- **On Android:** install the APK for your phone (`android-arm64` for most phones) from the [latest release](https://github.com/Blockheads-Club/blockheads-patcher/releases/latest). It patches the copy already installed on your phone.
+- **On desktop:** Windows (`.exe` / `.msi`), macOS (`.dmg`) and Linux (`.AppImage` / `.deb`) from the [latest release](https://github.com/Blockheads-Club/blockheads-patcher/releases/latest).
+
+The patched game is signed with a new key, so Android asks you to uninstall the original first (back up your worlds).
+Step by step: [Fix the game on your phone](https://blockheads-club.github.io/website/guides/fix-game-on-phone/), more in the
+[docs](https://blockheads-club.github.io/website/docs/).
+
+Extra patches can be imported as `.bhpack` files (Settings -> Imported patch packs). Packs are data only; the Patcher
+never runs code from them. Format: [docs/patch-packs.md](docs/patch-packs.md).
+
+---
+
+## 🛠️ Requirements
+**To use:** a modern browser, or Windows / macOS / Linux / Android, and your own copy of The Blockheads for Android.
+
+**For contributors / development:** [bun](https://bun.sh) and Rust stable. For the Android app also the Android SDK,
+NDK 27 and JDK 17 or 21.
+
+---
+
+## 🤝 Contributing
+Everyone can open [issues](https://github.com/Blockheads-Club/blockheads-patcher/issues) and pull requests. Irrelevant
+or abusive issues may be closed or removed.
+
+### Development Guide
+```bash
+git clone https://github.com/Blockheads-Club/blockheads-patcher.git
+cd blockheads-patcher
+bun install
+bun run dev        # web app on http://localhost:1420
+bun run test:cov   # the gate: every test, 100% coverage
+```
+
+More: [docs/development.md](docs/development.md) (desktop and Android builds, tests, deploy, releases, CI) and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (module contracts).
+
+### Credits
 Bug list and ideas from [JarlPenguin/blockheads-android-patches](https://github.com/JarlPenguin/blockheads-android-patches);
-implemented independently by Blockheads Club. That project has no licence, so we used only its public list of bugs as
-ideas and wrote every fix from our own analysis of the game; see `docs/cleanroom/jarlpenguin-triage.md`. Patches that
-originate from that list carry the credit in their metadata and in the app (patch details and Settings, Credits).
+every fix was written independently by Blockheads Club from our own analysis of the game
+([details](docs/cleanroom/jarlpenguin-triage.md)). Credited patches show this in the app.
 
-## Repository layout
+---
 
-| Path | Purpose |
-|---|---|
-| `packages/core` | Pure TypeScript patch engine (zip, binary XML, APK signing v1+v2, patches, pipeline) |
-| `app` | SvelteKit 2 + Svelte 5 static app (web + Tauri webview) |
-| `app/src-tauri` | Tauri 2 project (Windows desktop + Android) |
-| `plugins/tauri-plugin-apk-tools` | Tauri plugin: Kotlin (Android installed-APK access, uninstall, install) |
-| `docs/ARCHITECTURE.md` | Module contracts |
-| `docs/patch-packs.md`, `examples/packs` | Patch pack format and an example pack (`bun scripts/build-pack.ts <folder>`) |
+## 📄 License
+Blockheads Patcher is licensed under **GNU GPLv3** (GPL-3.0-only). See the [LICENSE](LICENSE) file for details.
+Bundled Noto Sans font subsets are under the SIL Open Font License 1.1.
 
-## Build
-
-Prerequisites: [bun](https://bun.sh), Rust stable (rustup). `bun install` at the repo root.
-
-```sh
-bun run check      # type checks (all workspaces)
-bun run test       # unit tests (all workspaces)
-bun run test:fast  # quick loop: unit tests + the 1.7.6 real-APK tests, no coverage (NOT a gate)
-bun run test:cov   # the gate: every test, all three game versions, 100 % coverage thresholds
-```
-
-Real-APK tests run against your own game APKs (see `packages/core/tests/helpers.ts`) and are skipped when they are
-absent. `BH_REAL_VERSIONS=1.7.6` (comma separated) limits them to some versions, `BH_SKIP_REAL=1` skips them all.
-Each APK is opened once per run: a vitest globalSetup (`packages/core/tests/setup/`) computes the JAR digests of its
-entries with Node's zlib/crypto, caches them in `~/.cache/bh-patcher` (`BH_PATCHER_CACHE`) keyed by the APK's SHA-256
-and seeds every test worker, so the many patch-and-sign tests do not each inflate ~150 MB again. The slow suites are
-split into one file per game version so the versions run in parallel.
-
-### Web (static)
-```sh
-bun run dev                              # dev server on :1420
-bun run --filter @bh-patcher/app build   # output: app/build
-```
-
-### Windows desktop
-```sh
-cd app
-bun run tauri build                      # on Windows
-# from Linux (cross-check): cargo xwin check --target x86_64-pc-windows-msvc  (in app/src-tauri)
-```
-
-### Android
-Requires Android SDK, NDK 27, JDK 17 or 21 (Gradle/AGP do not support JDK 26), rust android targets.
-```sh
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
-export ANDROID_HOME=~/Android/Sdk NDK_HOME=~/Android/Sdk/ndk/27.2.12479018
-cd app
-bun run tauri android init               # once
-bun run tauri android build --apk
-```
-
-### E2E
-`cd app && bunx playwright install chromium && bun run test:e2e`
-
-## Deploy
-
-The app is fully static (no server). Two targets, both built from `app/build`:
-
-| Target | Workflow | Notes |
-| --- | --- | --- |
-| GitHub Pages (project site, `/blockheads-patcher/`) | `deploy-pages.yml` (push to `dev`/`main`, manual) | Built with `BASE_PATH=/blockheads-patcher`; `.nojekyll` and a `404.html` SPA fallback are emitted. Enable Pages with source "GitHub Actions" and allow the `dev` branch in the `github-pages` environment rules. |
-| Cloudflare Pages | `deploy-cloudflare.yml` (push to `dev`/`main`, manual) | Needs secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; skipped (with a notice) when absent. Project name `blockheads-patcher` (`wrangler.toml`). `main` is the production branch, others get preview URLs. |
-
-```sh
-bun run --filter @bh-patcher/app build:web                       # root-hosted (Cloudflare, local)
-BASE_PATH=/blockheads-patcher bun run --filter @bh-patcher/app build:web   # GitHub Pages
-```
-
-`build:web` runs `app/scripts/finalize-web.mjs`, which writes the sha256 of SvelteKit's inline bootstrap script into
-`_headers` (strict CSP: no `unsafe-inline` for scripts, `worker-src 'self' blob:`) and creates `404.html`.
-`_headers`/`_redirects` only take effect on Cloudflare Pages; GitHub Pages ignores them.
-
-## Releases
-
-Push a signed tag `vX.Y.Z` on `dev` (versions follow `app/package.json`, `app/src-tauri/Cargo.toml` and
-`tauri.conf.json`). `release.yml` (on a `v*` tag, or manual with the tag as input) builds every bundle and attaches it to
-a **draft** GitHub release for that tag (marked prerelease for `0.x` and `-pre` tags); publish the draft once CI is green:
-
-- Windows: NSIS `.exe` + `.msi`; Linux: `.AppImage` + `.deb`; macOS: universal `.dmg` (arm64 + x86_64)
-- Android APKs per ABI: `arm64-v8a`, `armeabi-v7a`, `x86_64`. Release-signed when the secrets `ANDROID_KEYSTORE_BASE64`,
-  `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` exist, otherwise debug-signed
-- `blockheads-patcher-web-<version>.zip` (static site)
-
-MSI requires numeric prerelease identifiers, so bundle metadata uses `1.0.0-3` for `1.0.0-dev.3` (release tag/asset names keep the full version).
-Desktop bundles are unsigned/not notarized unless you add signing secrets. Every workflow has `workflow_dispatch`.
-
-## CI
-
-`ci.yml`: `check` (svelte-check + tsc), `test` (vitest with 100% coverage thresholds, defined in the vitest configs),
-`e2e` (Playwright), `clippy` (`-D warnings`), `kotlin` (JDK 17 Android compile via a debug build).
-
-## License
-
-GPL-3.0-only. See `LICENSE`.
-
-Third-party font: the `fix-system-font-crash` patch embeds subsets of Noto Sans Regular, Bold and Italic (Copyright 2022
-The Noto Project Authors), licensed under the SIL Open Font License 1.1 (`packages/core/src/patches/fonts/OFL.txt`). They
-are free fonts from the Noto Project, not game files; `scripts/fonts/noto-sans-subset.py` regenerates them.
+Unofficial fan project, not affiliated with Majic Jungle Games or Noodlecake Studios. Only patch software you legally
+own.
