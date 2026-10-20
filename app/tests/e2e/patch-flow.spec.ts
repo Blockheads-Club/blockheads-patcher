@@ -17,7 +17,7 @@ async function consent(page: Page) {
 test('first run asks for consent once, then the full web flow works (choose, review, patch, save)', async ({ page }) => {
   // Force the plain blob-download path (no native save dialog in headless).
   await page.addInitScript(() => { delete (window as unknown as Record<string, unknown>).showSaveFilePicker; });
-  await page.goto('/');
+  await page.goto('./');
   await consent(page);
   await expect(page.getByTestId('legal-notice')).toContainText('Not affiliated');
   await expect(page.getByRole('heading', { name: 'Choose your game' })).toBeVisible();
@@ -51,14 +51,14 @@ test('first run asks for consent once, then the full web flow works (choose, rev
 
 test('unsupported file shows the error state on the Choose step', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('bhp.consent', '1'));
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('apk-input').setInputFiles({ name: 'photo.zip', mimeType: 'application/zip', buffer: Buffer.from('not an apk') });
   await expect(page.getByRole('alert')).toContainText('photo.zip');
 });
 
 test('theme toggle in Settings persists', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('bhp.consent', '1'));
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('radio', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -70,7 +70,7 @@ test('theme toggle in Settings persists', async ({ page }) => {
 });
 
 test('language switch to Turkish persists, including the consent dialog', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByLabel('Language').selectOption('tr');
   await expect(page.getByRole('heading', { name: 'Başlamadan önce' })).toBeVisible();
   await page.getByRole('checkbox').check();
@@ -81,7 +81,7 @@ test('language switch to Turkish persists, including the consent dialog', async 
 });
 
 test('Russian and Kazakh: consent, plural button, Intl formats, Kazakh from Settings, persisted', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByLabel('Language').selectOption('ru');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
   await expect(page.getByRole('heading', { name: 'Прежде чем начать' })).toBeVisible();
@@ -106,7 +106,7 @@ test('the browser locale picks the language on first start', async ({ browser })
   for (const [locale, heading] of [['kk-KZ', 'Бастамас бұрын'], ['ru-RU', 'Прежде чем начать']] as const) {
     const ctx = await browser.newContext({ locale });
     const page = await ctx.newPage();
-    await page.goto('/');
+    await page.goto('./');
     await expect(page.getByRole('heading', { name: heading })).toBeVisible();
     await ctx.close();
   }
@@ -114,7 +114,7 @@ test('the browser locale picks the language on first start', async ({ browser })
 
 test('keys: generate, rename and export a backup', async ({ page }) => {
   await page.addInitScript(() => { localStorage.setItem('bhp.consent', '1'); delete (window as unknown as Record<string, unknown>).showSaveFilePicker; });
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Keys' }).click();
   await expect(page.getByText('No signing key yet')).toBeVisible();
   await page.getByRole('button', { name: 'Generate new key' }).last().click();
@@ -128,7 +128,7 @@ test('keys: generate, rename and export a backup', async ({ page }) => {
 test('narrow phone viewport: compact app bar with progress segments, no horizontal scroll', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => localStorage.setItem('bhp.consent', '1'));
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('apk-input').setInputFiles(apk());
   await expect(page.getByRole('heading', { name: 'Review the fixes' })).toBeVisible();
   // the step names are visually hidden but still exposed to assistive tech

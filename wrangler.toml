@@ -1,5 +1,13 @@
-# Cloudflare Pages project (static assets from the SvelteKit build).
-# Deploy: bun run --filter @bh-patcher/app build:web && bunx wrangler pages deploy app/build
-name = "blockheads-patcher"
-pages_build_output_dir = "app/build"
-compatibility_date = "2025-01-01"
+# Cloudflare Worker serving the web app at https://blockheads.club/patcher/ (static assets only, no script).
+# The website Worker (Blockheads-Club/website) forwards /patcher and /patcher/* here through a service binding;
+# this Worker has no route or custom domain of its own.
+# Deployed by Cloudflare Workers Builds (see docs/development.md): build `bun run build:worker`,
+# deploy `npx wrangler deploy`, non-production branches `npx wrangler versions upload`.
+name = "blockheads-patcher-web"
+compatibility_date = "2025-10-01"
+
+[assets]
+# app/scripts/build-worker.mjs stages the build under app/build-worker/<BASE_PATH>/ (default /patcher).
+directory = "./app/build-worker"
+# Unknown navigation paths (deep links) get the app shell (build-worker/index.html) with 200; missing files 404.
+not_found_handling = "single-page-application"

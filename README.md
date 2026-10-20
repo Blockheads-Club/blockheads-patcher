@@ -36,7 +36,7 @@ Everything happens on your device: **no game files are included or downloaded**,
 ---
 
 ## ⚡ Trying Blockheads Patcher
-- **In the browser:** open [blockheads-club.github.io/blockheads-patcher](https://blockheads-club.github.io/blockheads-patcher/), pick your game APK, choose patches, download the result.
+- **In the browser:** open [blockheads.club/patcher](https://blockheads.club/patcher/), pick your game APK, choose patches, download the result.
 - **On Android:** install the APK for your phone (`android-arm64` for most phones) from the [latest release](https://github.com/Blockheads-Club/blockheads-patcher/releases/latest). It patches the copy already installed on your phone.
 - **On desktop:** Windows (`.exe` / `.msi`), macOS (`.dmg`) and Linux (`.AppImage` / `.deb`) from the [latest release](https://github.com/Blockheads-Club/blockheads-patcher/releases/latest).
 

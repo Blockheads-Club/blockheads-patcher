@@ -25,3 +25,5 @@ app/src-tauri/gen/android/.tauri
 app/src-tauri/gen/android/build
 dist-release
 coverage
+app/build-worker
+.wrangler

@@ -24,7 +24,7 @@ test('an imported pack is kept across reloads and its patches can be applied', a
     localStorage.setItem('bhp.consent', '1');
     delete (window as unknown as Record<string, unknown>).showSaveFilePicker;
   });
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(page.getByText('Packs come from other people')).toBeVisible();
   await page.getByTestId('pack-input').setInputFiles({ name: 'example.bhpack', mimeType: 'application/zip', buffer: examplePack() });

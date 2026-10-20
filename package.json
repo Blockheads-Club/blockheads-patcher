@@ -15,7 +15,8 @@
     "dev": "bun run --filter @bh-patcher/app dev",
     "test:cov": "bun run --filter '*' test:cov",
     "test:fast": "bun run --filter '*' test:fast",
-    "test:cov:native": "scripts/coverage-rust.sh && scripts/coverage-kotlin.sh"
+    "test:cov:native": "scripts/coverage-rust.sh && scripts/coverage-kotlin.sh",
+    "build:worker": "bun run --filter @bh-patcher/app build:worker"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "3.2.4"
