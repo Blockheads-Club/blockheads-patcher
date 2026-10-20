@@ -106,18 +106,16 @@ BASE_PATH=/blockheads-patcher bun run --filter @bh-patcher/app build:web   # Git
 
 ## Releases
 
-Fully automated with [semantic-release](https://semantic-release.gitbook.io) and Conventional Commits
-(`.releaserc.json`). `main` publishes stable versions (`v1.0.0`), `dev` publishes the prerelease channel `dev`
-(`v1.0.0-dev.N`). Only a git tag and a GitHub release are created; nothing is committed back.
-
-`release.yml` (on push to `main`/`dev` or manual) determines the next version with a dry run, builds, then publishes:
+Push a signed tag `vX.Y.Z` on `dev` (versions follow `app/package.json`, `app/src-tauri/Cargo.toml` and
+`tauri.conf.json`). `release.yml` (on a `v*` tag, or manual with the tag as input) builds every bundle and attaches it to
+a **draft** GitHub release for that tag (marked prerelease for `0.x` and `-pre` tags); publish the draft once CI is green:
 
 - Windows: NSIS `.exe` + `.msi`; Linux: `.AppImage` + `.deb`; macOS: universal `.dmg` (arm64 + x86_64)
 - Android APKs per ABI: `arm64-v8a`, `armeabi-v7a`, `x86_64`. Release-signed when the secrets `ANDROID_KEYSTORE_BASE64`,
   `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` exist, otherwise debug-signed
 - `blockheads-patcher-web-<version>.zip` (static site)
 
-MSI requires numeric prerelease identifiers, so bundle metadata uses `1.0.0-3` for `1.0.0-dev.3` (release tag/asset names keep `dev.N`).
+MSI requires numeric prerelease identifiers, so bundle metadata uses `1.0.0-3` for `1.0.0-dev.3` (release tag/asset names keep the full version).
 Desktop bundles are unsigned/not notarized unless you add signing secrets. Every workflow has `workflow_dispatch`.
 
 ## CI

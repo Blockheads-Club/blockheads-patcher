@@ -1,10 +1,15 @@
 name: release
 
-# main = stable (v1.0.0), dev = prerelease channel "dev" (v1.0.0-dev.N). Tags + GitHub release only.
+# Push a tag `vX.Y.Z` (or `vX.Y.Z-pre.N`) to build every bundle and attach it to a DRAFT GitHub release for that tag.
+# Publish the draft by hand once CI is green. Manual runs (workflow_dispatch) take the tag as input.
 on:
   push:
-    branches: [main, dev]
+    tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and attach (e.g. v0.1.0)'
+        required: true
 
 permissions:
   contents: read
@@ -15,48 +20,25 @@ concurrency:
 
 jobs:
   version:
-    name: next version (semantic-release dry run)
+    name: version from tag
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
+      tag: ${{ steps.v.outputs.tag }}
       version: ${{ steps.v.outputs.version }}
       bundle_version: ${{ steps.v.outputs.bundle_version }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - id: v
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          # semantic-release needs at least one non-prerelease branch (main) to exist on the remote.
-          if ! git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then
-            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/main
-          fi
-          set +e
-          bunx_out=$(bunx semantic-release@24 --dry-run --no-ci 2>&1)
-          status=$?
-          set -e
-          echo "$bunx_out"
-          if [ "$status" -ne 0 ]; then
-            echo "::error::semantic-release dry run failed (exit $status)"
-            exit "$status"
-          fi
-          version=$(echo "$bunx_out" | sed -n 's/.*[Tt]he next release version is \(.*\)$/\1/p' | tail -1)
-          if [ -z "$version" ]; then
-            echo "::notice::No releasable commits; nothing to build."
-          else
-            # MSI only accepts numeric prerelease identifiers: 1.0.0-dev.3 -> 1.0.0-3 for bundle metadata.
-            bundle=$(echo "$version" | sed -E 's/-dev\./-/')
-            echo "version=$version" >> "$GITHUB_OUTPUT"
-            echo "bundle_version=$bundle" >> "$GITHUB_OUTPUT"
-          fi
+          tag="${INPUT_TAG:-$GITHUB_REF_NAME}"
+          case "$tag" in v[0-9]*) ;; *) echo "::error::not a version tag: $tag"; exit 1 ;; esac
+          version="${tag#v}"
+          # MSI only accepts numeric prerelease identifiers: 1.0.0-dev.3 -> 1.0.0-3 for bundle metadata.
+          bundle=$(echo "$version" | sed -E 's/-[A-Za-z]+\./-/')
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "bundle_version=$bundle" >> "$GITHUB_OUTPUT"
 
   web:
     needs: version
@@ -64,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run --filter @bh-patcher/app build:web
@@ -96,6 +80,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
       - uses: oven-sh/setup-bun@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -135,6 +121,8 @@ jobs:
       HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-java@v4
         with:
@@ -189,29 +177,27 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: tag + GitHub release
+    name: draft GitHub release
     needs: [version, web, desktop, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - uses: actions/download-artifact@v4
         with:
           pattern: rel-*
           path: dist-release
           merge-multiple: true
       - run: ls -la dist-release
-      - name: semantic-release (tag + release assets, no commit back)
+      - name: Create or update the draft release (prerelease for 0.x and -pre tags)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bunx semantic-release@24
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          pre=""
+          case "$TAG" in v0.*|*-*) pre="--prerelease" ;; esac
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-release/* --clobber -R "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" dist-release/* --draft $pre --verify-tag --title "$TAG" --generate-notes -R "$GITHUB_REPOSITORY"
+          fi
