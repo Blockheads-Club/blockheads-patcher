@@ -111,7 +111,7 @@ BASE_PATH=/patcher E2E_PORT=8787 bun run --filter @bh-patcher/app test:e2e # app
 
 Push a signed tag `vX.Y.Z` on `dev` (versions follow `app/package.json`, `app/src-tauri/Cargo.toml` and
 `tauri.conf.json`). `release.yml` (on a `v*` tag, or manual with the tag as input) builds every bundle and attaches it to
-a **draft** GitHub release for that tag (marked prerelease for `0.x` and `-pre` tags); publish the draft once CI is green.
+a **draft** GitHub release for that tag (marked prerelease only for `-pre` tags such as `v0.2.0-rc.1`); publish the draft once CI is green.
 A manual run with an empty tag is a dry run of the dispatched commit: it uploads the bundles as workflow artifacts only.
 
 - Windows x64 + arm64: NSIS `.exe` + `.msi`; Linux x64 + arm64: `.AppImage`, `.deb`, `.rpm` (built on Ubuntu 22.04)

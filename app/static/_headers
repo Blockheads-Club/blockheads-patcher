@@ -1,7 +1,7 @@
 # Cloudflare response headers (build-worker.mjs prefixes the paths with the base path). __SCRIPT_HASH__ is replaced by scripts/finalize-web.mjs
 # with the sha256 of SvelteKit's single inline bootstrap script (no 'unsafe-inline' for scripts).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' __SCRIPT_HASH__; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' __SCRIPT_HASH__; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer

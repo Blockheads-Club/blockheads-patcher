@@ -78,6 +78,7 @@ jobs:
           if-no-files-found: error
 
   desktop:
+    name: desktop (${{ matrix.name }})
     needs: version
     if: needs.version.outputs.version != ''
     strategy:
@@ -235,14 +236,14 @@ jobs:
           name: release-all
           path: dist-release/*
           if-no-files-found: error
-      - name: Create or update the draft release (prerelease for 0.x and -pre tags)
+      - name: Create or update the draft release (prerelease only for -pre tags such as v0.2.0-rc.1)
         if: needs.version.outputs.tag != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.version.outputs.tag }}
         run: |
           pre=""
-          case "$TAG" in v0.*|*-*) pre="--prerelease" ;; esac
+          case "$TAG" in *-*) pre="--prerelease" ;; esac
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" dist-release/* --clobber -R "$GITHUB_REPOSITORY"
           else
