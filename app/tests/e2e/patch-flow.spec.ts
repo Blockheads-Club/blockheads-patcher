@@ -75,9 +75,9 @@ test('language switch to Turkish persists, including the consent dialog', async 
   await expect(page.getByRole('heading', { name: 'Başlamadan önce' })).toBeVisible();
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Devam' }).click();
-  await expect(page.getByRole('heading', { name: 'Oyununuzu seçin' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Oyununu seç' })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Oyununuzu seçin' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Oyununu seç' })).toBeVisible();
 });
 
 test('Russian and Kazakh: consent, plural button, Intl formats, Kazakh from Settings, persisted', async ({ page }) => {
