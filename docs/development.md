@@ -64,48 +64,35 @@ The app is fully static (no server). Two web targets:
 
 | Target | How | Notes |
 | --- | --- | --- |
-| **blockheads.club/patcher/** (primary) | Cloudflare Workers Builds, Worker `blockheads-patcher-web` (`wrangler.toml`) | Assets-only Worker built by `bun run build:worker`. It has no route or domain of its own: the website Worker (`blockheads-club-website`, repo Blockheads-Club/website) forwards `/patcher` and `/patcher/*` to it through a service binding (`PATCHER`). |
+| **blockheads.club/patcher/** (primary) | Bundled into the website (Blockheads-Club/website) | The website's `bun run build` (`scripts/build-patcher.ts` there) clones the **latest published release** of this repo, builds it with `BASE_PATH=/patcher` (`build:web`) and ships it as plain static files of its assets-only Worker `blockheads-club-website`, with this app's `_headers` merged under `/patcher`. Nothing to deploy from this repo; publishing a release triggers a website rebuild (below). |
 | GitHub Pages (project site, `/blockheads-patcher/`) | `deploy-pages.yml` (push to `dev`, manual) | Built with `BASE_PATH=/blockheads-patcher`; `.nojekyll` and a `404.html` SPA fallback are emitted. Enable Pages with source "GitHub Actions" and allow the `dev` branch in the `github-pages` environment rules. Kept running because keys and packs live in the browser's storage per origin; users of the old address keep them there. |
 
 ```sh
 bun run --filter @bh-patcher/app build:web                                 # root-hosted (local preview, release zip)
 BASE_PATH=/blockheads-patcher bun run --filter @bh-patcher/app build:web   # GitHub Pages
-bun run build:worker                                                       # Cloudflare Worker, BASE_PATH defaults to /patcher
+BASE_PATH=/patcher bun run --filter @bh-patcher/app build:web              # what the website bundles
 ```
 
 `build:web` runs `app/scripts/finalize-web.mjs`, which writes the sha256 of SvelteKit's inline bootstrap script into
 `_headers` (strict CSP: no `unsafe-inline` for scripts, `worker-src 'self' blob:`) and creates `404.html`.
-GitHub Pages ignores `_headers`/`_redirects`.
+GitHub Pages ignores `_headers`/`_redirects`. The website drops `_redirects`, keeps `404.html` (Workers assets serve
+the nearest `404.html` for unknown `/patcher/*` paths) and copies `index.html` to `<route>.html` for each static route
+(e.g. `splash.html`), so keep routes static or expect deep links to them to answer 404 (the app still boots).
 
-`build:worker` (`app/scripts/build-worker.mjs`) builds with `BASE_PATH` (default `/patcher`), then stages the output
-under `app/build-worker/patcher/` (Worker assets are matched by the full request path), copies `index.html` to
-`app/build-worker/index.html` (the shell `not_found_handling = "single-page-application"` serves for deep links such as
-`/patcher/splash`) and writes `_headers` with the rules prefixed by the base path. `_redirects` and `404.html` are not
-needed there.
+`build:worker`, `app/scripts/build-worker.mjs` and `wrangler.toml` (the former separate Worker
+`blockheads-patcher-web`) are no longer used by any deployment; no Cloudflare project should be connected to this repo.
 
-### Cloudflare: create the Worker (once)
+### Website rebuild on release
 
-The patcher Worker must exist before the website Worker is deployed with its `PATCHER` service binding.
+`.github/workflows/website-rebuild.yml` runs when a release is **published** (and by hand) and POSTs to the website
+Worker's Cloudflare deploy hook, stored as the repository secret `WEBSITE_DEPLOY_HOOK`; without the secret it only
+logs a notice. Create the hook in the Cloudflare dashboard (Workers & Pages → `blockheads-club-website` → Settings →
+Builds → Deploy Hooks, branch = the website's production branch) and add its URL under this repo's Settings → Secrets
+and variables → Actions. Full steps in the website's `docs/development.md`.
 
-1. Cloudflare dashboard → **Workers & Pages** → **Create** → **Import a repository** → GitHub → `Blockheads-Club/blockheads-patcher`.
-2. **Project name**: `blockheads-patcher-web` (must equal `name` in `wrangler.toml` and the website's `[[services]] service`).
-3. **Build command**: `bun run build:worker`
-4. **Deploy command**: `npx wrangler deploy`
-5. **Non-production branch deploy command** (Settings → Build → Branch control, "Builds for non-production branches"): `npx wrangler versions upload`
-6. **Root directory** (Advanced settings → Path): `/` (repo root, where `wrangler.toml` and `bun.lock` are; dependencies are installed with bun automatically).
-7. **Production branch**: `dev` (switch to `main` once stable releases exist).
-8. **Build variables**: none required. Optional `BASE_PATH=/patcher` (that is the default; it must match the path the website forwards).
-9. Do not add a route or custom domain. You may turn off the `workers.dev` URL and preview URLs (Settings → Domains & Routes); the app is reached through blockheads.club/patcher/.
-
-Then deploy the website Worker (its next build picks up the binding). Check https://blockheads.club/patcher/ and a deep
-link such as https://blockheads.club/patcher/splash.
-
-Local check of both Workers together (from the website checkout, after building both):
-
-```sh
-npx wrangler dev -c wrangler.toml -c ../blockheads-patcher/wrangler.toml   # http://localhost:8787/patcher/
-BASE_PATH=/patcher E2E_PORT=8787 bun run --filter @bh-patcher/app test:e2e # app e2e through the website Worker
-```
+The app e2e suite also runs under a base path against a local website build
+(`BASE_PATH=/patcher E2E_PORT=8787 bunx playwright test` in `app/`, with the website's `npx wrangler dev --port 8787`
+running; Playwright reuses the server).
 
 ## Releases
 
