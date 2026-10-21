@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "example-label",
   "version": "1.0.0",
-  "name": { "en": "Example pack", "tr": "Örnek paket", "ru": "Пример пакета", "kk": "Мысал пакет" },
+  "name": { "en": "Example pack", "tr": "Örnek paket", "ru": "Пакет-пример", "kk": "Мысал бума" },
   "description": {
     "en": "A harmless example of the .bhpack format: renames the app and adds a small text file.",
     "tr": ".bhpack biçimine zararsız bir örnek: uygulamanın adını değiştirir ve küçük bir metin dosyası ekler.",
@@ -35,7 +35,7 @@
         "en": "Adds assets/patch-pack-example.txt. The game never reads it; it only shows that a pack was applied.",
         "tr": "assets/patch-pack-example.txt dosyasını ekler. Oyun bu dosyayı hiç okumaz; yalnızca bir paketin uygulandığını gösterir.",
         "ru": "Добавляет assets/patch-pack-example.txt. Игра никогда не читает этот файл; он лишь показывает, что пакет применён.",
-        "kk": "assets/patch-pack-example.txt файлын қосады. Ойын бұл файлды ешқашан оқымайды; ол тек пакеттің қолданылғанын көрсетеді."
+        "kk": "assets/patch-pack-example.txt файлын қосады. Ойын бұл файлды ешқашан оқымайды; ол тек буманың қолданылғанын көрсетеді."
       },
       "ops": [
         { "op": "file.add", "path": "assets/patch-pack-example.txt", "from": "files/hello.txt" }
