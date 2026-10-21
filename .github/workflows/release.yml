@@ -1,22 +1,25 @@
 name: release
 
 # Push a tag `vX.Y.Z` (or `vX.Y.Z-pre.N`) to build every bundle and attach it to a DRAFT GitHub release for that tag.
-# Publish the draft by hand once CI is green. Manual runs (workflow_dispatch) take the tag as input.
+# Publish the draft by hand once CI is green. Manual runs (workflow_dispatch) take the tag as input; with an empty tag
+# they build the dispatched commit as a dry run (artifacts + SHA256SUMS.txt only, no release is touched).
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to build and attach (e.g. v0.1.0)'
-        required: true
+        description: 'Existing tag to build and attach (e.g. v0.1.0); empty = dry run of the dispatched commit'
+        required: false
+        default: ''
 
 permissions:
   contents: read
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  # Dry runs of a branch supersede each other; tag runs never cancel a half-uploaded release.
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' && inputs.tag == '' }}
 
 jobs:
   version:
@@ -24,19 +27,32 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.v.outputs.tag }}
+      ref: ${{ steps.v.outputs.ref }}
       version: ${{ steps.v.outputs.version }}
       bundle_version: ${{ steps.v.outputs.bundle_version }}
     steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.tag == ''
       - id: v
         env:
           INPUT_TAG: ${{ inputs.tag }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.tag == '' }}
         run: |
-          tag="${INPUT_TAG:-$GITHUB_REF_NAME}"
-          case "$tag" in v[0-9]*) ;; *) echo "::error::not a version tag: $tag"; exit 1 ;; esac
-          version="${tag#v}"
+          if [ "$DRY_RUN" = true ]; then
+            # Dry run: no tag, version from tauri.conf.json, build the dispatched commit.
+            tag=""
+            ref="$GITHUB_SHA"
+            version=$(jq -r .version app/src-tauri/tauri.conf.json)
+          else
+            tag="${INPUT_TAG:-$GITHUB_REF_NAME}"
+            case "$tag" in v[0-9]*) ;; *) echo "::error::not a version tag: $tag"; exit 1 ;; esac
+            ref="$tag"
+            version="${tag#v}"
+          fi
           # MSI only accepts numeric prerelease identifiers: 1.0.0-dev.3 -> 1.0.0-3 for bundle metadata.
           bundle=$(echo "$version" | sed -E 's/-[A-Za-z]+\./-/')
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "bundle_version=$bundle" >> "$GITHUB_OUTPUT"
 
@@ -47,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ needs.version.outputs.ref }}
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run --filter @bh-patcher/app build:web
@@ -68,32 +84,49 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: windows
+          - name: windows-x64
             os: windows-latest
             args: --bundles nsis,msi
-          - name: linux
+          - name: windows-arm64
+            os: windows-11-arm
+            args: --bundles nsis,msi
+          # 22.04 (glibc 2.35) on both arches so the bundles run on older distros too.
+          - name: linux-x64
             os: ubuntu-22.04
-            args: --bundles appimage,deb
-          - name: macos
+            args: --bundles appimage,deb,rpm
+          - name: linux-arm64
+            os: ubuntu-22.04-arm
+            args: --bundles appimage,deb,rpm
+          - name: macos-universal
             os: macos-latest
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
             args: --target universal-apple-darwin --bundles dmg
+          - name: macos-arm64
+            os: macos-latest
+            targets: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles dmg
+          - name: macos-x64
+            os: macos-latest
+            targets: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles dmg
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ needs.version.outputs.ref }}
       - uses: oven-sh/setup-bun@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.name == 'macos' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.targets || '' }}
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: app/src-tauri
+          key: ${{ matrix.name }}
       - name: Linux system libraries
-        if: matrix.name == 'linux'
+        if: startsWith(matrix.name, 'linux')
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils file libfuse2
       - run: bun install --frozen-lockfile
       - name: Build bundles
         working-directory: app
@@ -104,7 +137,7 @@ jobs:
         run: |
           mkdir -p dist-release
           find app/src-tauri/target -path '*/release/bundle/*' -type f \
-            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) \
+            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) \
             -exec cp {} dist-release/ \;
           ls -la dist-release
       - uses: actions/upload-artifact@v4
@@ -122,7 +155,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ needs.version.outputs.ref }}
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-java@v4
         with:
@@ -188,8 +221,22 @@ jobs:
           pattern: rel-*
           path: dist-release
           merge-multiple: true
-      - run: ls -la dist-release
+      - name: Normalise asset names and write SHA256SUMS.txt
+        working-directory: dist-release
+        run: |
+          # GitHub turns spaces in asset names into dots; rename first so the sums match the stored names.
+          for f in *' '*; do [ -e "$f" ] && mv -v -- "$f" "${f// /.}"; done
+          rm -f SHA256SUMS.txt
+          sha256sum -- * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-all
+          path: dist-release/*
+          if-no-files-found: error
       - name: Create or update the draft release (prerelease for 0.x and -pre tags)
+        if: needs.version.outputs.tag != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.version.outputs.tag }}

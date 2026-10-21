@@ -111,12 +111,16 @@ BASE_PATH=/patcher E2E_PORT=8787 bun run --filter @bh-patcher/app test:e2e # app
 
 Push a signed tag `vX.Y.Z` on `dev` (versions follow `app/package.json`, `app/src-tauri/Cargo.toml` and
 `tauri.conf.json`). `release.yml` (on a `v*` tag, or manual with the tag as input) builds every bundle and attaches it to
-a **draft** GitHub release for that tag (marked prerelease for `0.x` and `-pre` tags); publish the draft once CI is green:
+a **draft** GitHub release for that tag (marked prerelease for `0.x` and `-pre` tags); publish the draft once CI is green.
+A manual run with an empty tag is a dry run of the dispatched commit: it uploads the bundles as workflow artifacts only.
 
-- Windows: NSIS `.exe` + `.msi`; Linux: `.AppImage` + `.deb`; macOS: universal `.dmg` (arm64 + x86_64)
+- Windows x64 + arm64: NSIS `.exe` + `.msi`; Linux x64 + arm64: `.AppImage`, `.deb`, `.rpm` (built on Ubuntu 22.04)
+- macOS: universal `.dmg` (arm64 + x86_64) plus per-arch `aarch64` / `x64` `.dmg`
 - Android APKs per ABI: `arm64-v8a`, `armeabi-v7a`, `x86_64`. Release-signed when the secrets `ANDROID_KEYSTORE_BASE64`,
   `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` exist, otherwise debug-signed
 - `blockheads-patcher-web-<version>.zip` (static site)
+- `SHA256SUMS.txt` over every asset. Spaces in bundle names are replaced with dots first (as GitHub does on upload), so
+  `sha256sum -c SHA256SUMS.txt` works in a folder of downloaded assets
 
 MSI requires numeric prerelease identifiers, so bundle metadata uses `1.0.0-3` for `1.0.0-dev.3` (release tag/asset names keep the full version).
 Desktop bundles are unsigned/not notarized unless you add signing secrets. Every workflow has `workflow_dispatch`.
@@ -124,7 +128,8 @@ Desktop bundles are unsigned/not notarized unless you add signing secrets. Every
 ## CI
 
 `ci.yml`: `check` (svelte-check + tsc), `test` (vitest with 100% coverage thresholds, defined in the vitest configs),
-`e2e` (Playwright), `clippy` (`-D warnings`), `kotlin` (JDK 17 Android compile via a debug build).
+`e2e` (Playwright), `clippy` (`-D warnings`), `desktop-check` (`cargo check` on Windows x64/arm64, Linux arm64 and
+macOS), `kotlin` (JDK 17 Android compile via a debug build).
 
 ## Third-party fonts
 

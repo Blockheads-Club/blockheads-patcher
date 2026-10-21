@@ -45,6 +45,7 @@
       "msi",
       "appimage",
       "deb",
+      "rpm",
       "dmg"
     ],
     "category": "Utility",
