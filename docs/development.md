@@ -112,6 +112,44 @@ A manual run with an empty tag is a dry run of the dispatched commit: it uploads
 MSI requires numeric prerelease identifiers, so bundle metadata uses `1.0.0-3` for `1.0.0-dev.3` (release tag/asset names keep the full version).
 Desktop bundles are unsigned/not notarized unless you add signing secrets. Every workflow has `workflow_dispatch`.
 
+## App updates
+
+The app checks for a newer version itself (update icon in the app bar, Settings → Updates; automatic check at most
+once a day when the app opens, can be switched off). Code: `packages/core/src/update/` (release selection, notes,
+asset choice) and `app/src/lib/update.svelte.ts` (state, per-platform behaviour).
+
+- **Feed:** the GitHub REST releases of this repository. Drafts are skipped; only tags `vX.Y.Z` count, pre-releases
+  (`-` suffix or the GitHub flag) only on the "Pre-release" channel. Release notes in the popup are the bullets of the
+  `## What's new` section of the release body (or of the whole body), so keep that heading in release notes.
+- **Web:** blockheads.club serves the latest published release, so the web app fetches `<base>/version.json`
+  (prerendered by `src/routes/version.json/+server.ts`) and, for deployments older than this feature, the website's
+  `patcher-version.txt`, with `cache: no-store`. A newer deployed version offers "Reload now" (and prefixes the tab
+  title with ↑). There is no service worker, so a reload always loads the new build (`/_app/immutable/*` files are
+  content-hashed).
+- **Desktop:** no in-app updater. "Download and install" opens the release asset for this OS/arch in the system browser
+  (NSIS `-setup.exe`, `.dmg`, or the `.AppImage` when running as one; Rust command `update_target` reports OS, arch
+  and `$APPIMAGE`). `.deb`/`.rpm` installs get the release page. The Tauri CSP allows `connect-src https://api.github.com`;
+  the opener plugin may open only `https://github.com/Blockheads-Club/blockheads-patcher/releases/*` and
+  `https://blockheads.club/*` (capabilities/default.json).
+- **Android:** "Download and install" opens the APK for the device ABI in the browser; installing it asks the user to
+  confirm. It installs over the current app only because every release APK is signed with the same release key (the
+  `ANDROID_*` secrets); a debug-signed build (no secrets) cannot update a release install.
+
+### Enabling the Tauri updater (not set up)
+
+The repository has no updater signing key, so desktop builds cannot update in place. To add in-app download, verify
+and install (the popup's downloading / installing / restart stages in the design):
+
+1. Generate a key pair once: `bun tauri signer generate -w ~/.tauri/blockheads-patcher.key` (keep the private key
+   offline; losing it means existing installs can never update in place again).
+2. Add repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` and pass them to the
+   `bun tauri build` step in `release.yml`; set `bundle.createUpdaterArtifacts: true` in `tauri.conf.json`.
+3. Add `tauri-plugin-updater` (Rust + `@tauri-apps/plugin-updater`) with the public key and the endpoint
+   `https://github.com/Blockheads-Club/blockheads-patcher/releases/latest/download/latest.json`, and make the
+   release workflow upload `latest.json` (e.g. with `tauri-apps/tauri-action`, which writes it).
+4. Switch the desktop branch of `UpdateState.install()` from opening the browser to the plugin's
+   `downloadAndInstall` with progress, then `relaunch` (plugin-process).
+
 ## CI
 
 `ci.yml`: `check` (svelte-check + tsc), `test` (vitest with 100% coverage thresholds, defined in the vitest configs),
