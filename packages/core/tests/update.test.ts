@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import {
   compareVersions, fetchLatestRelease, isNewer, parseDeployedVersion, parseVersion, pickAsset, pickLatestRelease,
-  releaseNoteItems, type Release, type ReleaseAsset
+  releaseNoteItems, buildUpdaterManifest, UPDATER_PLATFORMS, type Release, type ReleaseAsset
 } from '../src';
 
 const rel = (tag: string, over: Partial<Release> = {}): Release => ({
@@ -136,5 +136,28 @@ describe('fetchLatestRelease', () => {
   test('HTTP errors reject', async () => {
     const fetcher = vi.fn(async () => new Response('rate limited', { status: 403 }));
     await expect(fetchLatestRelease(fetcher as never)).rejects.toThrow('HTTP 403');
+  });
+});
+
+describe('buildUpdaterManifest', () => {
+  const v = '0.2.0';
+  const files: Record<string, string> = {
+    [`Blockheads.Patcher_${v}_x64-setup.exe`]: 'sig-win-x64\n', [`Blockheads.Patcher_${v}_arm64-setup.exe`]: 'sig-win-arm',
+    [`Blockheads.Patcher_${v}_amd64.AppImage`]: 'sig-lx', [`Blockheads.Patcher_${v}_aarch64.AppImage`]: 'sig-la',
+    [`Blockheads.Patcher_${v}_x64.app.tar.gz`]: 'sig-mx', [`Blockheads.Patcher_${v}_aarch64.app.tar.gz`]: 'sig-ma'
+  };
+  test('one entry per desktop platform with the signature and the release download URL', () => {
+    const m = buildUpdaterManifest({ version: v, tag: 'v0.2.0', files, pubDate: '2026-10-22T00:00:00Z' });
+    expect(Object.keys(m.platforms).sort()).toEqual(Object.keys(UPDATER_PLATFORMS).sort());
+    expect(m.platforms['windows-x86_64']).toEqual({
+      signature: 'sig-win-x64', url: 'https://github.com/Blockheads-Club/blockheads-patcher/releases/download/v0.2.0/Blockheads.Patcher_0.2.0_x64-setup.exe'
+    });
+    expect(m).toMatchObject({ version: v, notes: '', pub_date: '2026-10-22T00:00:00Z' });
+    expect(buildUpdaterManifest({ version: v, tag: 't', files, pubDate: 'd', notes: 'n', repo: 'o/r' }).platforms['darwin-aarch64']!.url)
+      .toBe(`https://github.com/o/r/releases/download/t/Blockheads.Patcher_${v}_aarch64.app.tar.gz`);
+  });
+  test('a missing platform fails', () => {
+    const { [`Blockheads.Patcher_${v}_aarch64.AppImage`]: _, ...rest } = files;
+    expect(() => buildUpdaterManifest({ version: v, tag: 't', files: rest, pubDate: 'd' })).toThrow('linux-aarch64');
   });
 });

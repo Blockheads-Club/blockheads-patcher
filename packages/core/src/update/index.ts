@@ -147,3 +147,38 @@ export async function fetchLatestRelease(
   if (!res.ok) throw new Error(`GitHub releases: HTTP ${res.status}`);
   return pickLatestRelease((await res.json()) as Release[], opts.allowPrerelease);
 }
+
+/** Tauri updater platform keys and the release file each one installs (see .github/workflows/release.yml). */
+export const UPDATER_PLATFORMS: Record<string, string> = {
+  'windows-x86_64': '_x64-setup.exe',
+  'windows-aarch64': '_arm64-setup.exe',
+  'linux-x86_64': '_amd64.AppImage',
+  'linux-aarch64': '_aarch64.AppImage',
+  'darwin-x86_64': '_x64.app.tar.gz',
+  'darwin-aarch64': '_aarch64.app.tar.gz'
+};
+
+export interface UpdaterManifest {
+  version: string;
+  notes: string;
+  pub_date: string;
+  platforms: Record<string, { signature: string; url: string }>;
+}
+
+/**
+ * The Tauri updater's `latest.json` for a release: one entry per desktop platform, pointing at the release asset and
+ * carrying the content of its `.sig` file. `files` maps asset names to signatures (assets without one are ignored).
+ * Throws when a platform has no signed file, so a release never ships a partial manifest.
+ */
+export function buildUpdaterManifest(opts: {
+  version: string; tag: string; files: Record<string, string>; notes?: string; pubDate: string; repo?: string;
+}): UpdaterManifest {
+  const base = `https://github.com/${opts.repo ?? PATCHER_REPO}/releases/download/${opts.tag}/`;
+  const platforms: UpdaterManifest['platforms'] = {};
+  for (const [key, suffix] of Object.entries(UPDATER_PLATFORMS)) {
+    const name = Object.keys(opts.files).find((n) => n.endsWith(suffix));
+    if (!name) throw new Error(`no signed updater file for ${key} (*${suffix})`);
+    platforms[key] = { signature: opts.files[name]!.trim(), url: base + encodeURIComponent(name) };
+  }
+  return { version: opts.version, notes: opts.notes ?? '', pub_date: opts.pubDate, platforms };
+}
