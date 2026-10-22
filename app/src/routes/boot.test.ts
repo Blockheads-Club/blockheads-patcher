@@ -122,3 +122,15 @@ test('the static start-up card from app.html fades out when the app is ready and
   spy.mockRestore();
   vi.useRealTimers();
 });
+
+test('web: a newer deployed version opens the update popup and marks the tab title', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('{"version":"99.0.0"}')));
+  for (const k of ['bhp.upd.checked', 'bhp.upd.seen']) localStorage.removeItem(k);
+  try {
+    render(Page);
+    expect(await screen.findByRole('dialog', { name: 'Patcher 99.0.0 is here' })).toBeInTheDocument();
+    expect(document.title).toBe('↑ Blockheads Patcher');
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

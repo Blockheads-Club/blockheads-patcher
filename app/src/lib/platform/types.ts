@@ -1,3 +1,4 @@
+import type { UpdateTarget } from '@bh-patcher/core';
 export type PlatformKind = 'web' | 'tauri-desktop' | 'tauri-android';
 export interface PickedApk { name: string; bytes: Uint8Array; source: 'file' | 'installed'; }
 export interface InstalledGameInfo { packageName: string; versionName?: string; versionCode?: number; splitSourceDirs: string[]; }
@@ -21,6 +22,10 @@ export interface PlatformAdapter {
   pickPack?(): Promise<PickedFile | null>;
   /** Desktop shell: files dropped on the window (the webview gets no DOM drop events there). Resolves to an unsubscribe. */
   onFileDrop?(cb: (files: PickedFile[]) => void): Promise<() => void>;
+  /** Opens a web page outside the app (system browser; a new tab on the web). */
+  openUrl?(url: string): Promise<void>;
+  /** Native builds: OS and architecture, to pick the release file that updates this install. */
+  updateTarget?(): Promise<UpdateTarget>;
   // Android only (undefined elsewhere):
   getInstalledGame?(): Promise<InstalledGameInfo | null>;
   loadInstalledApk?(): Promise<PickedApk>;

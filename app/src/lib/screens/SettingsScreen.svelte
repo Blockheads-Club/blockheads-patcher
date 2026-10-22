@@ -6,6 +6,8 @@
   import type { PlatformAdapter, PlatformKind } from '$lib/platform/types';
   import type { PacksState } from '$lib/packs.svelte';
   import PacksSection from './PacksSection.svelte';
+  import UpdatesSection from './UpdatesSection.svelte';
+  import type { UpdateState } from '$lib/update.svelte';
   import Button from '$lib/ui/Button.svelte';
   import Card from '$lib/ui/Card.svelte';
   import Icon from '$lib/ui/Icon.svelte';
@@ -14,8 +16,8 @@
   import Switch from '$lib/ui/Switch.svelte';
   import logo from '$lib/assets/patcher-icon-macos.svg';
 
-  let { prefs, platformKind, packs, platform, onback, onlegal }: {
-    prefs: Prefs; platformKind: PlatformKind; packs?: PacksState; platform?: PlatformAdapter; onback: () => void; onlegal: () => void;
+  let { prefs, platformKind, packs, platform, update, onback, onlegal }: {
+    prefs: Prefs; platformKind: PlatformKind; packs?: PacksState; platform?: PlatformAdapter; update?: UpdateState; onback: () => void; onlegal: () => void;
   } = $props();
 
   let theme = $state<ThemeMode>(loadTheme());
@@ -48,6 +50,8 @@
     ]} />
   </div>
 </Card>
+
+{#if update}<UpdatesSection {update} />{/if}
 
 <Card tag="section" class="grp" aria-labelledby="s-p">
   <h2 id="s-p">{$t('settings.patching')}</h2>

@@ -24,6 +24,9 @@ vi.mock('@tauri-apps/api/path', () => ({
   join: async (...p: string[]) => p.join('/')
 }));
 vi.mock('@bh-patcher/tauri-plugin-apk-tools-api', () => plugin);
+const native = vi.hoisted(() => ({ openUrl: vi.fn(async () => {}), invoke: vi.fn(async () => ({ os: 'windows', arch: 'x86_64', appimage: false })) }));
+vi.mock('@tauri-apps/plugin-opener', () => ({ openUrl: native.openUrl }));
+vi.mock('@tauri-apps/api/core', () => ({ invoke: native.invoke }));
 
 import { createTauriDesktopAdapter } from './tauri-desktop';
 import { createTauriAndroidAdapter } from './tauri-android';
@@ -92,6 +95,17 @@ describe('save filter and chunked writes', () => {
     plugin.readInstalledApk.mockResolvedValueOnce({ path: '/cache/bhp/x.apk', size: 1, splitSourceDirs: ['/data/app/split_config.apk'] });
     await expect(a.loadInstalledApk!()).rejects.toThrow(/unsupported/);
     expect(fs.readFile).not.toHaveBeenCalled();
+  });
+});
+
+describe('updates', () => {
+  it('both shells open pages in the system browser and ask Rust for the build target', async () => {
+    for (const a of [createTauriDesktopAdapter(), createTauriAndroidAdapter()]) {
+      await a.openUrl!('https://blockheads.club/');
+      expect(native.openUrl).toHaveBeenLastCalledWith('https://blockheads.club/');
+      expect(await a.updateTarget!()).toEqual({ os: 'windows', arch: 'x86_64', appimage: false });
+      expect(native.invoke).toHaveBeenLastCalledWith('update_target');
+    }
   });
 });
 

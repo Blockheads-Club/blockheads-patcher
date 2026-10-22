@@ -9,6 +9,11 @@ function stubUrl() {
 }
 
 describe('web platform', () => {
+  test('openUrl opens a new tab without opener access', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    await createWebPlatform().openUrl!('https://blockheads.club/');
+    expect(open).toHaveBeenCalledWith('https://blockheads.club/', '_blank', 'noopener,noreferrer');
+  });
   test('downloadBlob clicks an anchor and revokes later', () => {
     vi.useFakeTimers();
     stubUrl();

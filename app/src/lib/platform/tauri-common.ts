@@ -1,4 +1,7 @@
+import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import { openUrl as openerOpenUrl } from '@tauri-apps/plugin-opener';
+import type { UpdateTarget } from '@bh-patcher/core';
 import { open as openFile, readFile, writeFile } from '@tauri-apps/plugin-fs';
 import { get } from 'svelte/store';
 import { t } from '../i18n';
@@ -79,4 +82,14 @@ export async function pickPackWithDialog(filter = true): Promise<PickedFile | nu
   if (!selected) return null;
   const path = Array.isArray(selected) ? selected[0] : selected;
   return { name: baseName(path), bytes: await readFile(path) };
+}
+
+/** Opens a web page in the system browser (Android: the default app for the URL, e.g. the browser's downloader). */
+export async function openExternal(url: string): Promise<void> {
+  await openerOpenUrl(url);
+}
+
+/** OS and CPU architecture of this build (Rust command `update_target`). */
+export function updateTarget(): Promise<UpdateTarget> {
+  return invoke<UpdateTarget>('update_target');
 }

@@ -3,13 +3,17 @@
   import logo from '$lib/assets/patcher-icon-small.svg';
   import { t } from '$lib/i18n';
   import { win, type Os } from '$lib/winctl';
+  import type { UpdateState } from '$lib/update.svelte';
+  import Icon from './Icon.svelte';
 
-  let { os, ctx = '', maximized }: {
+  let { os, ctx = '', maximized, update }: {
     os: Os;
     /** The part after "Blockheads Patcher ·". */
     ctx?: string;
     /** Force the maximized look; otherwise tracked from the window. */
     maximized?: boolean;
+    /** Update state: while the popup is hidden, a chip after the title shows it and opens the popup again. */
+    update?: UpdateState;
   } = $props();
 
   let isMax = $state(false);
@@ -33,6 +37,9 @@
   const toggle = () => void win.toggleMaximize().catch(() => {});
   const close = () => void win.close().catch(() => {});
   const maxLabel = $derived(max ? $t('tb.restore') : $t('tb.maximize'));
+  const chip = $derived(
+    !update || update.open ? '' : update.stage === 'available' ? $t('upd.chip.available') : update.stage === 'error' ? $t('upd.chip.failed') : ''
+  );
 </script>
 
 <header class={['bar', os, inactive && 'inactive']} aria-label={$t('tb.label')} data-tauri-drag-region>
@@ -41,6 +48,11 @@
     <img src={logo} alt="" width="20" height="20" data-tauri-drag-region />
     <span class="name" data-tauri-drag-region>Blockheads<span class="tag" data-tauri-drag-region>{$t('brand.product')}</span></span>
     {#if ctx}<span class="ctx" data-tauri-drag-region>{`· ${ctx}`}</span>{/if}
+    {#if chip}
+      <button class={['chip', update!.stage]} aria-haspopup="dialog" aria-label={$t('upd.chip.aria', { state: chip })} onclick={() => update!.show()}>
+        <Icon name="update" size={16} />{chip}
+      </button>
+    {/if}
   </div>
   {#if os === 'windows'}
     <div class="wctl" role="group" aria-label={$t('tb.controls')}>
@@ -105,4 +117,8 @@
   .l:hover { background: var(--b-round-hov); }
   .l.close:hover { background: #c8301e; color: #fff; }
   .native { width: 78px; height: 100%; flex: none; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; flex: none; border-radius: 999px; border: 1.5px solid currentColor; font: 700 12.5px var(--f-body); white-space: nowrap; cursor: pointer; color: var(--primary-ink); }
+  .chip.error { color: var(--bad); }
+  .chip:hover { background: var(--b-hov); }
+  .chip:focus-visible { outline-offset: 2px; }
 </style>

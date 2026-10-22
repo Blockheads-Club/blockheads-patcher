@@ -1,5 +1,6 @@
 mod entry;
 pub mod splash;
+pub mod update;
 
 pub use entry::run;
 
@@ -10,6 +11,7 @@ pub fn configure<R: Runtime>(builder: Builder<R>) -> Builder<R> {
     builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_apk_tools::init())
         .manage(splash::Splash::from_env())
         .invoke_handler(tauri::generate_handler![
@@ -19,6 +21,7 @@ pub fn configure<R: Runtime>(builder: Builder<R>) -> Builder<R> {
             entry::app_quit,
             entry::main_ready,
             entry::open_log,
+            update::update_target,
         ])
 }
 

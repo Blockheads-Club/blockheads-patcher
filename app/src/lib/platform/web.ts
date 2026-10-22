@@ -40,6 +40,9 @@ export function pickFile(accept: string): Promise<File | null> {
 export function createWebPlatform(): PlatformAdapter {
   return {
     kind: 'web',
+    async openUrl(url: string): Promise<void> {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
     packStore: new IndexedDbPackStore(),
     async pickPack(): Promise<PickedFile | null> {
       const f = await pickFile('.bhpack,.zip,application/zip');

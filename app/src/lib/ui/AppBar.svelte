@@ -7,9 +7,11 @@
   import { t } from '$lib/i18n';
   import Button from './Button.svelte';
   import Stepper from './Stepper.svelte';
+  import UpdateButton from './UpdateButton.svelte';
+  import type { UpdateState } from '$lib/update.svelte';
 
-  let { view, step, failed = false, install = false, locked = false, onnavigate }: {
-    view: View; step: number; failed?: boolean; install?: boolean; locked?: boolean; onnavigate: (v: View) => void;
+  let { view, step, failed = false, install = false, locked = false, update, onnavigate }: {
+    view: View; step: number; failed?: boolean; install?: boolean; locked?: boolean; update?: UpdateState; onnavigate: (v: View) => void;
   } = $props();
 </script>
 
@@ -19,6 +21,8 @@
     <span class="name"><small>{$t('brand.club')}</small><b>{$t('brand.product')}</b></span>
   </div>
   {#if view === 'patch'}<Stepper current={step} {failed} {install} />{/if}
+  <div class="end">
+  {#if update}<UpdateButton {update} />{/if}
   {#if locked}
     <span class="hint locked" role="status">{$t('nav.locked')}</span>
   {:else}
@@ -28,6 +32,7 @@
       <Button variant="ghost" size="sm" icon="sliders" current={view === 'settings'} class="tool" onclick={() => onnavigate(view === 'settings' ? 'patch' : 'settings')}>{$t('nav.settings')}</Button>
     </nav>
   {/if}
+  </div>
 </header>
 
 <style>
@@ -38,14 +43,15 @@
   small { font: 700 12px var(--f-body); color: var(--text-3); }
   b { font: 800 19px var(--f-display); letter-spacing: -0.01em; }
   .tools { display: flex; gap: 6px; }
+  .end { display: flex; gap: 6px; align-items: center; }
   /* Brand and the Patcher / Keys / Settings tabs share the top row; the stepper sits between them when there is
      room, else on its own row below (never pushing the tabs down). */
   .brand { order: 1; }
-  .tools, .locked { order: 2; }
+  .end { order: 2; }
   .appbar > :global(.stepper) { order: 3; flex-basis: 100%; display: flex; justify-content: center; }
   @media (min-width: 1100px) {
     .appbar > :global(.stepper) { order: 2; flex-basis: auto; }
-    .tools, .locked { order: 3; }
+    .end { order: 3; }
   }
   .locked { min-width: 120px; text-align: end; }
   @media (max-width: 600px) {

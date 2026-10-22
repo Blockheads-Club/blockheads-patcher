@@ -15,6 +15,17 @@
     "core:default",
     "dialog:default",
     "apk-tools:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/Blockheads-Club/blockheads-patcher/releases/*"
+        },
+        {
+          "url": "https://blockheads.club/*"
+        }
+      ]
+    },
     "fs:allow-read-file",
     "fs:allow-write-file",
     "fs:allow-open",

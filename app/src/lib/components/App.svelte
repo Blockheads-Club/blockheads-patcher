@@ -18,10 +18,12 @@
   import SettingsScreen from '$lib/screens/SettingsScreen.svelte';
   import FirstRunDialog from '$lib/screens/FirstRunDialog.svelte';
   import TitleBar from '$lib/ui/TitleBar.svelte';
+  import UpdateDialog from '$lib/screens/UpdateDialog.svelte';
+  import type { UpdateState } from '$lib/update.svelte';
   import { guessOs, win } from '$lib/winctl';
   import { splashIpc } from '$lib/splash';
 
-  let { state: s, keys, prefs, packs }: { state: PatcherState; keys: KeysState; prefs: Prefs; packs?: PacksState } = $props();
+  let { state: s, keys, prefs, packs, update }: { state: PatcherState; keys: KeysState; prefs: Prefs; packs?: PacksState; update?: UpdateState } = $props();
 
   let view = $state<View>('patch');
   let consented = $state(hasConsent());
@@ -61,7 +63,13 @@
     win.onResized(sync).then((u) => (gone ? u() : (off = u))).catch(() => {});
     return () => { gone = true; off?.(); };
   });
-  const modal = $derived(!consented || legalOpen);
+  const modal = $derived(!consented || legalOpen || !!update?.open);
+  const patching = $derived(s.stage === 'patching');
+
+  // Updates: the automatic check runs once the app is up; a newly found version opens the popup once, but never over
+  // the legal notice or while a patch is running (the icon dot and the title-bar chip show it meanwhile).
+  onMount(() => { update?.autoStart(); });
+  $effect(() => { if (update?.pending && consented && !legalOpen && !patching) update.show(); });
 
   $effect(() => { keys.refresh().catch(() => {}); });
   // Newly created signing key (first patch) shows up in the footer and Keys.
@@ -92,17 +100,17 @@
 
 <div class={['frame', round && 'round']}>
 <div class={['app', desktop && 'desk', android && 'fixed']}>
-  {#if desktop}<TitleBar {os} {ctx} />{/if}
+  {#if desktop}<TitleBar {os} {ctx} {update} />{/if}
   <!-- A modal blocks the app but not the title bar: the window can still be moved, resized and closed. -->
   <div class="under" inert={modal}>
-  <AppBar {view} {step} {failed} install={!!platform.installApk} locked={s.stage === 'patching'} onnavigate={(v) => (view = v)} />
+  <AppBar {view} {step} {failed} install={!!platform.installApk} locked={patching} {update} onnavigate={(v) => (view = v)} />
 
   <main id="main" class="body" bind:this={main} tabindex="-1">
     <div class={['col', view === 'patch' ? `s${step}` : view]}>
       {#if view === 'keys'}
         <KeysScreen {keys} {platform} onback={() => (view = 'patch')} />
       {:else if view === 'settings'}
-        <SettingsScreen {prefs} platformKind={platform.kind} {packs} {platform} onback={() => (view = 'patch')} onlegal={() => (legalOpen = true)} />
+        <SettingsScreen {prefs} platformKind={platform.kind} {packs} {platform} {update} onback={() => (view = 'patch')} onlegal={() => (legalOpen = true)} />
       {:else if failed}
         <FailureScreen state={s} onopenkeys={openKeys} />
       {:else if s.step === 1}
@@ -138,6 +146,8 @@
   <FirstRunDialog {quitHint} onaccept={accept} onquit={quit} />
 {:else if legalOpen}
   <FirstRunDialog review onclose={() => (legalOpen = false)} />
+{:else if update?.open}
+  <UpdateDialog {update} busy={patching} />
 {/if}
 
 <style>

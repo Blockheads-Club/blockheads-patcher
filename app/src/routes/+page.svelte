@@ -8,6 +8,7 @@
   import { Prefs } from '$lib/prefs.svelte';
   import { PacksState } from '$lib/packs.svelte';
   import { Boot, bootWork } from '$lib/boot.svelte';
+  import { createUpdateState } from '$lib/update.svelte';
   import { splashIpc } from '$lib/splash';
   import App from '$lib/components/App.svelte';
   import SplashScreen from '$lib/screens/SplashScreen.svelte';
@@ -19,12 +20,14 @@
   const prefs = new Prefs();
   const packs = new PacksState(platform.packStore, engine, () => patcher.refresh());
   const boot = new Boot(() => bootWork(keys, packs));
+  const update = createUpdateState(platform);
   /** Desktop: a separate splash window shows the boot while this (hidden) window does the work. */
   const windowed = platform.kind === 'tauri-desktop';
   const android = platform.kind === 'tauri-android';
   let showDetail = $state(false);
 
-  $effect(() => { document.title = $t('app.title'); });
+  // A found update also shows in the browser tab (the web app has no title bar of its own).
+  $effect(() => { document.title = (update.stage === 'available' ? '↑ ' : '') + $t('app.title'); });
 
   $effect(() => {
     void boot.run();
@@ -59,7 +62,7 @@
 </script>
 
 {#if boot.phase === 'ready'}
-  <App state={patcher} {keys} {prefs} {packs} />
+  <App state={patcher} {keys} {prefs} {packs} {update} />
 {:else if android}
   <SplashScreen variant="phone" phase={boot.phase} onretry={() => void boot.run()} />
 {:else}
