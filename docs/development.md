@@ -115,8 +115,9 @@ Desktop bundles are unsigned/not notarized unless you add signing secrets. Every
 ## App updates
 
 The app checks for a newer version itself (update icon in the app bar, Settings → Updates; automatic check at most
-once a day when the app opens, can be switched off). Code: `packages/core/src/update/` (release selection, notes,
-asset choice) and `app/src/lib/update.svelte.ts` (state, per-platform behaviour).
+once a day when the app opens, can be switched off). A check only shows the popup: **nothing is downloaded or
+installed until the user clicks the update button** (same rule as the Blockheads PC launcher). Code:
+`packages/core/src/update/` (release selection, notes, asset choice, `latest.json`) and `app/src/lib/update.svelte.ts`.
 
 - **Feed:** the GitHub REST releases of this repository. Drafts are skipped; only tags `vX.Y.Z` count, pre-releases
   (`-` suffix or the GitHub flag) only on the "Pre-release" channel. Release notes in the popup are the bullets of the
@@ -126,29 +127,37 @@ asset choice) and `app/src/lib/update.svelte.ts` (state, per-platform behaviour)
   `patcher-version.txt`, with `cache: no-store`. A newer deployed version offers "Reload now" (and prefixes the tab
   title with ↑). There is no service worker, so a reload always loads the new build (`/_app/immutable/*` files are
   content-hashed).
-- **Desktop:** no in-app updater. "Download and install" opens the release asset for this OS/arch in the system browser
-  (NSIS `-setup.exe`, `.dmg`, or the `.AppImage` when running as one; Rust command `update_target` reports OS, arch
-  and `$APPIMAGE`). `.deb`/`.rpm` installs get the release page. The Tauri CSP allows `connect-src https://api.github.com`;
+- **Desktop (in place):** "Download and install" runs the Tauri updater (`tauri-plugin-updater`, desktop only). It reads
+  `https://github.com/Blockheads-Club/blockheads-patcher/releases/latest/download/latest.json`, downloads the file for
+  this platform, verifies its minisign signature against `plugins.updater.pubkey` in `tauri.conf.json`, then waits:
+  "Restart now" installs (Windows: NSIS in passive mode, which closes the app) and restarts (`app_restart` command).
+  Restart is disabled while a patch runs. In-place covers Windows (NSIS), macOS (`.app.tar.gz`) and Linux AppImage.
+  `latest.json` points Windows at the NSIS installer: MSI installs then get a second (NSIS, per-user) install, so
+  recommend the `-setup.exe` for downloads.
+- **Desktop (browser fallback):** `.deb`/`.rpm` installs (release page), a pre-release that `latest.json` does not
+  describe, or any updater error open the installer download (or release page) in the system browser instead. The
+  Rust command `update_target` reports OS, arch and `$APPIMAGE`. The Tauri CSP allows `connect-src https://api.github.com`;
   the opener plugin may open only `https://github.com/Blockheads-Club/blockheads-patcher/releases/*` and
   `https://blockheads.club/*` (capabilities/default.json).
 - **Android:** "Download and install" opens the APK for the device ABI in the browser; installing it asks the user to
   confirm. It installs over the current app only because every release APK is signed with the same release key (the
   `ANDROID_*` secrets); a debug-signed build (no secrets) cannot update a release install.
 
-### Enabling the Tauri updater (not set up)
+### Updater signing (release.yml)
 
-The repository has no updater signing key, so desktop builds cannot update in place. To add in-app download, verify
-and install (the popup's downloading / installing / restart stages in the design):
-
-1. Generate a key pair once: `bun tauri signer generate -w ~/.tauri/blockheads-patcher.key` (keep the private key
-   offline; losing it means existing installs can never update in place again).
-2. Add repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` and pass them to the
-   `bun tauri build` step in `release.yml`; set `bundle.createUpdaterArtifacts: true` in `tauri.conf.json`.
-3. Add `tauri-plugin-updater` (Rust + `@tauri-apps/plugin-updater`) with the public key and the endpoint
-   `https://github.com/Blockheads-Club/blockheads-patcher/releases/latest/download/latest.json`, and make the
-   release workflow upload `latest.json` (e.g. with `tauri-apps/tauri-action`, which writes it).
-4. Switch the desktop branch of `UpdateState.install()` from opening the browser to the plugin's
-   `downloadAndInstall` with progress, then `relaunch` (plugin-process).
+- Secrets `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (the maintainer's minisign key; the public
+  half is `plugins.updater.pubkey`). When the key is set, the desktop jobs build with `bundle.createUpdaterArtifacts`
+  (passed on the command line, so local `bun tauri build` needs no key) and upload a `.sig` for every installer,
+  AppImage and macOS `.app.tar.gz` (renamed `Blockheads.Patcher_<version>_<universal|aarch64|x64>.app.tar.gz`).
+- The publish job writes `latest.json` (`scripts/updater-manifest.ts`) for the six desktop targets (Windows, Linux and
+  macOS, each x64 and arm64) before `SHA256SUMS.txt`; it fails if one is missing. Without signatures (no key) it is skipped.
+- `latest.json` is only reachable through `releases/latest/...` once the release is **published** (drafts and
+  pre-releases are not "latest"), so desktop installs see an update right after publishing.
+- Losing the private key means existing installs can no longer update in place (they still get the browser fallback);
+  rotating it needs a release that ships the new public key, signed with the old key.
+- Local test of the signing path with a throwaway key: `bun tauri signer generate --ci -p x -w ~/.cache/<dir>/k.key`,
+  `TAURI_SIGNING_PRIVATE_KEY_PATH=… TAURI_SIGNING_PRIVATE_KEY_PASSWORD=x bun tauri signer sign <file>`, then
+  `bun scripts/updater-manifest.ts <dir> <version> <tag>`.
 
 ## CI
 
