@@ -183,6 +183,34 @@ describe('PatcherState run, log and navigation', () => {
     expect(s.stage).toBe('done');
     expect(s.log.map((l) => l.kind)).toEqual(['read', 'detect', 'patch', 'patch', 'sign', 'done', 'done']);
   });
+  test('the mod loader files are read and handed to the engine only when its patch is selected', async () => {
+    const engine = mockEngine();
+    const zip = new Uint8Array([9]);
+    const load = vi.fn(async () => zip);
+    const s = new PatcherState(mockPlatform(), engine, load);
+    await s.load(picked());
+    await s.run();
+    expect(load).not.toHaveBeenCalled();
+    await s.load(picked());
+    s.selected = [...s.selected, 'mod-loader'];
+    await s.run();
+    expect(engine.setModLoader).toHaveBeenCalledWith(zip);
+    expect(s.log.some((l) => l.text === 'mod loader files checked')).toBe(true);
+    const failing = new PatcherState(mockPlatform(), mockEngine(), async () => { throw new Error('missing'); });
+    await failing.load(picked());
+    failing.selected = ['mod-loader'];
+    await failing.run();
+    expect(failing.runFailed).toBe(true);
+  });
+  test('the default mod loader reader fetches next to the app', async () => {
+    const g = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
+    const s = new PatcherState(mockPlatform(), mockEngine());
+    await s.load(picked());
+    s.selected = ['mod-loader'];
+    await s.run();
+    expect(s.runFailed).toBe(true);
+    g.mockRestore();
+  });
   test('run without a selection does nothing', async () => {
     const s = new PatcherState(mockPlatform(), mockEngine());
     await s.load(picked());

@@ -13,6 +13,8 @@ import { dexNames } from '../../src/dex';
 import { getEntry } from '../../src/zip';
 import { calleeOf, insnsOf } from '../../src/patches/dex-support';
 import { haveApk, yieldToRunner } from '../helpers';
+import { parseModLoaderZip, setModLoaderArtifact } from '../../src';
+import { fakeLoaderZip } from './mod-loader-fixture';
 
 const dl = join(homedir(), 'Downloads');
 const APKS: [string, string][] = [['1.7.4', 'The Blockheads_1.7.4_APKPure.apk'], ['1.7.5', 'The Blockheads_1.7.5_APKPure.apk'], ['1.7.6', 'The Blockheads_1.7.6.apk']];
@@ -214,8 +216,10 @@ export function realGameSuite(version: string): void {
     // one version is enough for the composition check (the hooks are identical in 1.7.4-1.7.6) and keeps the suite fast
     it.skipIf(!run || version !== '1.7.6')('applies every patch together (VerdeActivity and WindowDialog hooks compose); output validates and d8 accepts it', async () => {
       const apk = await loadApk(new Uint8Array(readFileSync(path)));
+      // the mod loader needs its build: a synthetic one (fake library, a dex with the listener class)
+      setModLoaderArtifact(parseModLoaderZip(fakeLoaderZip(), null));
       const ids = listPatches(apk).filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
-      expect(ids).toEqual(expect.arrayContaining(['immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash']));
+      expect(ids).toEqual(expect.arrayContaining(['immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash', 'mod-loader']));
       await yieldToRunner();
     const { applied, skipped } = applyPatches(apk, ids);
     await yieldToRunner();
@@ -251,6 +255,7 @@ export function realGameSuite(version: string): void {
         }
         await d8Accepts(dir, edited);
       } finally {
+        setModLoaderArtifact(null);
         rmSync(dir, { recursive: true, force: true });
       }
     });

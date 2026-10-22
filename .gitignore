@@ -27,3 +27,4 @@ dist-release
 coverage
 app/build-worker
 .wrangler
+app/static/mod-loader/

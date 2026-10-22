@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { base } from '$app/paths';
+  import { fetchModLoader } from '$lib/modloader';
   import { tick } from 'svelte';
   import { lang, t } from '$lib/i18n';
   import { getPlatform } from '$lib/platform';
@@ -15,7 +17,7 @@
 
   const platform = getPlatform();
   const engine = createEngine();
-  const patcher = new PatcherState(platform, engine);
+  const patcher = new PatcherState(platform, engine, () => fetchModLoader(fetch, base));
   const keys = new KeysState(engine, new IndexedDbKeyLibrary());
   const prefs = new Prefs();
   const packs = new PacksState(platform.packStore, engine, () => patcher.refresh());

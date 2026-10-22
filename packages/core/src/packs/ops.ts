@@ -52,7 +52,7 @@ const sameBytes = (a: Uint8Array, b: Uint8Array): boolean => a.length === b.leng
 const fromHex = (h: string): Uint8Array => Uint8Array.from(h.replace(/ /g, '').match(/../g)!, (x) => parseInt(x, 16));
 
 /** Class namespaces a pack's dex may not define (platform, runtime and the patcher's own helpers). */
-export const RESERVED_CLASS_PREFIXES = ['Ljava/', 'Ljavax/', 'Landroid/', 'Landroidx/', 'Ldalvik/', 'Lkotlin/', 'Lsun/', 'Llibcore/', 'Lorg/apache/harmony/', 'Lcom/android/', 'Lcom/google/android/', 'Lcom/blockheadsclub/patch/'];
+export const RESERVED_CLASS_PREFIXES = ['Ljava/', 'Ljavax/', 'Landroid/', 'Landroidx/', 'Ldalvik/', 'Lkotlin/', 'Lsun/', 'Llibcore/', 'Lorg/apache/harmony/', 'Lcom/android/', 'Lcom/google/android/', 'Lcom/blockheadsclub/patch/', 'Lcom/blockheadsclub/modloader/'];
 
 export interface CompileEnv {
   /** Payload files of the pack by path. */

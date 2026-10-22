@@ -41,8 +41,22 @@ describe('ReviewScreen', () => {
     const { s, engine } = await loaded([row(W, 'notApplied'), credited]);
     expect(s.selected).toEqual([W]);
     render(ReviewScreen, { state: s, keys: keysFor(engine), info: s.loaded!.info, file: { name: 'game.apk', size: 1 }, onchangekey: vi.fn() });
-    expect(screen.getByText('Off by default')).toBeInTheDocument();
+    expect(screen.getByText('Optional')).toBeInTheDocument();
+    expect(screen.queryByText('Off by default')).toBeNull();
     expect(screen.getByText('Bug list and ideas from JarlPenguin/blockheads-android-patches; implemented independently by Blockheads Club.')).toBeInTheDocument();
+  });
+  test('the mod loader is optional and says when it is needed; opt-in pack patches say off by default', async () => {
+    const ml = row('mod-loader', 'notApplied');
+    Object.assign(ml.patch, { optIn: true });
+    const pk = row('pack.x.y', 'notApplied');
+    Object.assign(pk.patch, { optIn: true, source: { kind: 'pack', packId: 'x', packName: 'X', packVersion: '1.0.0' } });
+    const { s, engine } = await loaded([row(W, 'notApplied'), ml, pk]);
+    expect(s.selected).toEqual([W]);
+    render(ReviewScreen, { state: s, keys: keysFor(engine), info: s.loaded!.info, file: { name: 'game.apk', size: 1 }, onchangekey: vi.fn() });
+    expect(screen.getByText('Add the mod loader')).toBeInTheDocument();
+    expect(screen.getByText('Needed for servers with client mods')).toBeInTheDocument();
+    expect(screen.getByText('Optional')).toBeInTheDocument();
+    expect(screen.getByText('Off by default')).toBeInTheDocument();
   });
   test('lists applicable, applied and incompatible patches; toggling updates the selection', async () => {
     const { s, engine } = await loaded([row(W, 'notApplied'), row(I, 'incompatible', { reasonCode: { code: 'versionTooLow', params: { actual: 1, min: 2 } } })]);

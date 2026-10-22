@@ -66,7 +66,7 @@ export interface Patch {
   apply(ctx: PatchContext): void;
 }
 /** Stable machine-readable error codes so UIs can show translated messages. */
-export type PatchErrorCode = 'notApk' | 'noManifest' | 'unknownPatch' | 'cannotApply' | 'duplicatePatch' | 'generic';
+export type PatchErrorCode = 'notApk' | 'noManifest' | 'unknownPatch' | 'cannotApply' | 'duplicatePatch' | 'modLoaderUnavailable' | 'generic';
 export class PatchError extends Error {
   /** `params.message` carries the untranslated technical detail. */
   readonly params: Record<string, string | number>;

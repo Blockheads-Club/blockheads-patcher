@@ -26,6 +26,7 @@ import { musicResume } from './fix-music-resume';
 import { menuMusicLoop } from './menu-music-loop';
 import { worldSelectionKeep } from './world-selection-keep';
 import { gamepadControls } from './gamepad-controls';
+import { modLoader } from './mod-loader';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -52,4 +53,5 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   signEditorCentred, lanMulticast, tabletLayout,
   musicResume, menuMusicLoop, worldSelectionKeep,
   gamepadControls,
+  modLoader,
 ]);

@@ -1,7 +1,7 @@
 // Single seam between the UI and @bh-patcher/core, so components and state can be tested with a mock engine.
 import {
   loadApk, listPatches, patchApk, patchLoadedApk, IndexedDbKeystore, generateIdentity, exportIdentityJson,
-  exportIdentityEncryptedJson, importIdentity, getOrCreateIdentity, defaultRegistry, registryWithPacks,
+  exportIdentityEncryptedJson, importIdentity, getOrCreateIdentity, defaultRegistry, registryWithPacks, parseModLoaderZip, setModLoaderArtifact,
   type LoadedApk, type ApplicableReport, type PatchApkOptions, type PatchApkResult, type Keystore, type SigningIdentity,
   type Pack, type PatchRegistry
 } from '@bh-patcher/core';
@@ -19,6 +19,8 @@ export interface Engine {
   patchApk(input: Uint8Array, opts: Omit<PatchApkOptions, 'keystore' | 'registry'>): Promise<PatchApkResult>;
   /** Patches an already loaded APK (no second read). Mutates `apk`. */
   patchLoaded(apk: LoadedApk, opts: Omit<PatchApkOptions, 'keystore' | 'registry'>): Promise<PatchApkResult>;
+  /** The mod loader build (the pinned zip, checked again) that the mod-loader patch installs. */
+  setModLoader(zip: Uint8Array): Promise<void>;
   /** Built-in patches followed by the patches of these packs, for every later list and patch call. */
   setPacks(packs: LoadedPack[]): Promise<void>;
   /** Worker engines only: restores `apk` to its freshly parsed state after a failed or cancelled patch. */
@@ -43,6 +45,7 @@ export function createInlineEngine(keystore: Keystore = new IndexedDbKeystore())
     patchApk: (input, opts) => patchApk(input, { ...opts, keystore, registry }),
     patchLoaded: (apk, opts) => patchLoadedApk(apk, { ...opts, keystore, registry }),
     async setPacks(packs) { registry = registryWithPacks(packs.map((p) => p.pack)).registry; },
+    async setModLoader(zip) { setModLoaderArtifact(parseModLoaderZip(zip)); },
     getOrCreateIdentity: () => getOrCreateIdentity(keystore),
     generateIdentity: () => generateIdentity(),
     exportIdentityJson,

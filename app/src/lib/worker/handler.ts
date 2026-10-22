@@ -1,6 +1,7 @@
 // Worker-side request handler. Kept free of `self` so it can be driven directly in tests.
 import {
   loadApk, listPatches, patchLoadedApk, MemoryKeystore, PatchError, defaultRegistry, loadPack, registryWithPacks,
+  parseModLoaderZip, setModLoaderArtifact,
   type LoadedApk, type PatchRegistry
 } from '@bh-patcher/core';
 import type { ReportRow, Request, Response, WireError } from './protocol';
@@ -94,6 +95,7 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
     if (req.t === 'release') { held.delete(req.handle); return; }
     try {
       if (req.t === 'packs') setPacks(req);
+      else if (req.t === 'modLoader') { setModLoaderArtifact(parseModLoaderZip(req.zip)); post({ t: 'modLoader', id: req.id }); }
       else if (req.t === 'load') await load(req);
       else if (req.t === 'reload') await reload(req);
       else await patch(req);

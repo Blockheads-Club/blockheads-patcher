@@ -1,11 +1,16 @@
 // Builds one test APK per patch set for device testing, signed with a reusable local test key.
-// Usage: BH_APK=<original.apk> bun scripts/device-test/build.ts list | <name> <patchId...>
-import { loadApk, listPatches, patchApk, MemoryKeystore, importIdentity } from '../../packages/core/src/index';
+// Usage: BH_APK=<original.apk> [BH_MOD_LOADER_ZIP=<bhmod-android-loader-*.zip>] bun scripts/device-test/build.ts list | <name> <patchId...>
+// BH_MOD_LOADER_ZIP: a loader build for the mod-loader patch (checked against the pin unless BH_MOD_LOADER_UNPINNED=1).
+import { loadApk, listPatches, patchApk, MemoryKeystore, importIdentity, parseModLoaderZip, setModLoaderArtifact } from '../../packages/core/src/index';
 const INPUT = process.env.BH_APK ?? (() => { throw new Error('set BH_APK to the original APK'); })();
 const KEY = new URL('../../.local-out/device-test/key.json', import.meta.url).pathname;
 const OUT = new URL('../../.local-out/device-test/', import.meta.url).pathname;
 const [name, ...ids] = process.argv.slice(2);
 const bytes = new Uint8Array(await Bun.file(INPUT).arrayBuffer());
+if (process.env.BH_MOD_LOADER_ZIP) {
+  const zip = new Uint8Array(await Bun.file(process.env.BH_MOD_LOADER_ZIP).arrayBuffer());
+  setModLoaderArtifact(parseModLoaderZip(zip, process.env.BH_MOD_LOADER_UNPINNED === '1' ? null : undefined));
+}
 if (name === 'list') {
   for (const r of listPatches(await loadApk(bytes))) console.log(r.patch.id, r.status, JSON.stringify({ optIn: (r.patch as any).optIn }));
   process.exit(0);

@@ -1,6 +1,7 @@
 import type { Engine, LoadedApk, ApplicableReport, PatchApkResult } from './engine';
 import { GAME_PACKAGE, type PickedApk, type PlatformAdapter } from './platform/types';
 import { formatBytes } from './format';
+import { fetchModLoader } from './modloader';
 
 export type Stage = 'idle' | 'loaded' | 'patching' | 'done' | 'error';
 export type ProgressStage = 'read' | 'parse' | 'patch' | 'write' | 'sign' | 'done';
@@ -41,7 +42,12 @@ export class PatcherState {
   private abort: AbortController | null = null;
   private loadSeq = 0;
 
-  constructor(readonly platform: PlatformAdapter, readonly engine: Engine) {}
+  constructor(
+    readonly platform: PlatformAdapter,
+    readonly engine: Engine,
+    /** Reads the pinned mod loader zip (only when the mod-loader patch is selected). */
+    private readonly loadModLoader: () => Promise<Uint8Array> = () => fetchModLoader(),
+  ) {}
 
   /** Wizard step 1..4 for the step indicator. */
   step = $derived(
@@ -111,6 +117,10 @@ export class PatcherState {
     let last: ProgressStage | null = null;
     try {
       await tick();
+      if (this.selected.includes('mod-loader')) {
+        await this.engine.setModLoader(await this.loadModLoader());
+        this.addLog('patch', 'mod loader files checked');
+      }
       // Reuse the already parsed archive (no second read/inflate); it is mutated, so drop it afterwards.
       this.result = await this.engine.patchLoaded(loaded, {
         // registry order, whatever order the patches were ticked in: the same selection always patches the same way

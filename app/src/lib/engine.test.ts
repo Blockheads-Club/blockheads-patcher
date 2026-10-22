@@ -6,7 +6,9 @@ vi.mock('@bh-patcher/core', async (orig) => ({
   loadApk: vi.fn(async () => { core.calls.push('load'); return { info: {} }; }),
   listPatches: vi.fn(() => { core.calls.push('list'); return []; }),
   patchApk: vi.fn(async (_i: unknown, o: { keystore: unknown }) => { core.calls.push('patchApk'); return { ks: o.keystore }; }),
-  patchLoadedApk: vi.fn(async (_a: unknown, o: { keystore: unknown }) => { core.calls.push('patchLoaded'); return { ks: o.keystore }; })
+  patchLoadedApk: vi.fn(async (_a: unknown, o: { keystore: unknown }) => { core.calls.push('patchLoaded'); return { ks: o.keystore }; }),
+  parseModLoaderZip: vi.fn(() => { core.calls.push('parseModLoader'); return { version: 'v' }; }),
+  setModLoaderArtifact: vi.fn(() => { core.calls.push('setModLoader'); })
 }));
 
 import { certFingerprint, createEngine, createInlineEngine } from './engine';
@@ -27,6 +29,8 @@ describe('engines', () => {
     const id = await e.getOrCreateIdentity();
     expect(await e.generateIdentity()).not.toBe(id);
     expect(JSON.parse(await e.exportIdentityJson(id)).version).toBe(1);
+    await e.setModLoader(new Uint8Array(1));
+    expect(core.calls.slice(-2)).toEqual(['parseModLoader', 'setModLoader']);
   });
 
   test('createEngine uses the inline engine without Worker support', () => {

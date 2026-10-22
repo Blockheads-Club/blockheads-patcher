@@ -22,6 +22,8 @@
     s.selected = on ? [...s.selected.filter((x) => x !== id), id] : s.selected.filter((x) => x !== id);
   }
   const summary = (id: string) => `patch.${id}.summary` as MessageKey;
+  /** Optional "when you need it" line of a patch (`patch.<id>.when`). */
+  const when = (id: string) => `patch.${id}.when` as MessageKey;
   /** The pack's name in the UI language (from its texts), else the English name the patch carries. */
   const packName = (src: { packId: string; packName: string }) => {
     const key = `pack.${src.packId}.name`;
@@ -80,13 +82,14 @@
           <div class="pb">
             <div class="pt">
               <span class="ptitle">{$t(patch.nameKey)}</span>
-              {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{:else}<Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>{/if}
+              {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{:else if patch.optIn}<Badge tone="info">{$t('badge.optional')}</Badge>{:else}<Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>{/if}
               <Badge tone="ok" icon="check">{$t('badge.compatible')}</Badge>
-              {#if patch.optIn}<Badge tone="info">{$t('review.optIn')}</Badge>{/if}
+              {#if patch.optIn && patch.source}<Badge tone="info">{$t('review.optIn')}</Badge>{/if}
             </div>
             <p id={`pd-${patch.id}`} class="muted desc">{$t(summary(patch.id))}</p>
             <details class="more">
               <summary><Icon name="chev-d" size={16} />{$t('review.whatChanges')}</summary>
+              {#if $t(when(patch.id)) !== when(patch.id)}<p class="hint when">{$t(when(patch.id))}</p>{/if}
               <p class="hint">{$t(patch.descriptionKey)}</p>
               {#if patch.credits}<p class="hint">{$t('credit.line', { source: patch.credits.source })}</p>{/if}
               {#if patch.source}<p class="hint">{$t('review.fromPack', { pack: packName(patch.source), version: patch.source.packVersion })}</p>{/if}
@@ -145,4 +148,5 @@
   .more summary::-webkit-details-marker { display: none; }
   .more[open] summary :global(.ico) { transform: rotate(180deg); }
   .more p { margin-top: 4px; max-width: 560px; }
+  .more .when { font-weight: 700; }
 </style>

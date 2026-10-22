@@ -30,6 +30,7 @@ export function mockEngine(over: Partial<Engine> = {}): Engine {
       return { bytes: new Uint8Array([1, 2, 3]), applied: [...opts.patchIds], skipped: [], info: {}, certSha256: 'cc'.repeat(32), suggestedFileName: 'blockheads-1.7.4-patched.apk' };
     }) as never,
     setPacks: vi.fn(async () => {}),
+    setModLoader: vi.fn(async () => {}),
     getOrCreateIdentity: vi.fn(async () => {
       if (!id) id = { certificateDer: new Uint8Array([9, 9]) };
       return id as never;

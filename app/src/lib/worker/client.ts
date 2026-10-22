@@ -45,6 +45,7 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
   /** Patches known on this side (for report rows) and the pack files every (re)spawned worker gets first. */
   let registry: PatchRegistry = defaultRegistry;
   let packFiles: Uint8Array[] = [];
+  let modLoaderZip: Uint8Array | null = null;
 
   function failAll(err: unknown): void {
     worker?.terminate();
@@ -69,6 +70,7 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
     w.onmessageerror = () => failAll(new Error('worker message could not be deserialized'));
     worker = w;
     if (packFiles.length) w.postMessage({ t: 'packs', id: nextId++, packs: packFiles });
+    if (modLoaderZip) w.postMessage({ t: 'modLoader', id: nextId++, zip: modLoaderZip });
     return w;
   }
 
@@ -140,6 +142,11 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
       packFiles = packs.map((p) => p.bytes);
       // a worker that does not exist yet gets the packs when it is spawned
       if (worker) await send({ t: 'packs', id: nextId++, packs: packFiles });
+    },
+    async setModLoader(zip) {
+      await send({ t: 'modLoader', id: nextId++, zip });
+      // kept for workers spawned later (only once this one accepted it)
+      modLoaderZip = zip;
     },
     async patchApk(input, opts) {
       const apk = await loadApk(input);
