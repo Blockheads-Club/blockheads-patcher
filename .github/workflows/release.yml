@@ -189,7 +189,12 @@ jobs:
         run: |
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKM" --licenses >/dev/null || true
-          "$SDKM" "ndk;27.2.12479018" "platforms;android-36" "platforms;android-37.0" "build-tools;35.0.0"
+          # The NDK download sometimes breaks off mid-file ("Error on ZipFile unknown archive"); retry it.
+          for i in 1 2 3; do
+            "$SDKM" "ndk;27.2.12479018" "platforms;android-36" "platforms;android-37.0" "build-tools;35.0.0" && break
+            [ "$i" = 3 ] && exit 1
+            echo "::warning::sdkmanager attempt $i failed, retrying"; sleep $((20 * i))
+          done
           echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@stable
         with:
