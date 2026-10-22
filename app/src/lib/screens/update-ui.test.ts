@@ -22,9 +22,9 @@ const info = (over: Partial<UpdateInfo> = {}): UpdateInfo => ({
 function mk(kind: PlatformKind = 'tauri-desktop', stage: UpdateState['stage'] = 'available', i: UpdateInfo | null = info()) {
   const u = new UpdateState({ kind, current: '0.1.1', openUrl: vi.fn(async () => {}), now: () => NOW, fetch: vi.fn(async () => new Response('[]')) as never });
   u.stage = stage;
-  u.info = stage === 'available' ? i : null;
+  u.info = ['available', 'downloading', 'installing', 'ready'].includes(stage) ? i : null;
   u.open = true;
-  for (const k of ['check', 'cancel', 'hide', 'show', 'install', 'openPage', 'setAutoCheck', 'setChannel'] as const) vi.spyOn(u, k).mockImplementation((() => undefined) as never);
+  for (const k of ['check', 'cancel', 'hide', 'show', 'install', 'openPage', 'setAutoCheck', 'setChannel', 'cancelDownload', 'restart'] as const) vi.spyOn(u, k).mockImplementation((() => undefined) as never);
   return u;
 }
 const dialog = (u: UpdateState, busy = false) => render(UpdateDialog, { update: u, busy });
@@ -123,6 +123,72 @@ describe('UpdateDialog', () => {
   });
 });
 
+describe('UpdateDialog: in-place update (desktop)', () => {
+  const at = (u: UpdateState, done: number, total: number | null, eta: number | null) => { u.progress = { done, total, speed: 1_100_000, eta }; };
+  test('available: shorter promise, Download and install', async () => {
+    const u = mk('tauri-desktop', 'available', info({ inPlace: true }));
+    dialog(u);
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('You have 0.1.1. The update takes less than a minute.');
+    await fireEvent.click(btn('Download and install'));
+    expect(u.install).toHaveBeenCalled();
+  });
+  test('downloading: percent, progress bar with time left, stats; Hide and Cancel download', async () => {
+    const u = mk('tauri-desktop', 'downloading');
+    at(u, 14_600_000, 25_100_000, 10);
+    dialog(u);
+    expect(screen.getByRole('dialog', { name: 'Downloading 0.2.0' })).toHaveAccessibleDescription('Keep working — we tell you when it’s ready.');
+    const bar = screen.getByRole('progressbar', { name: 'Download progress' });
+    expect(bar).toHaveAttribute('aria-valuenow', '58');
+    expect(bar).toHaveAttribute('aria-valuetext', '58 percent, about 10 seconds left');
+    expect(screen.getByText('58 %')).toBeInTheDocument();
+    expect(screen.getByText('14.6 MB of 25.1 MB · 1.1 MB/s · about 10 s left')).toBeInTheDocument();
+    await fireEvent.click(btn('Cancel download'));
+    expect(u.cancelDownload).toHaveBeenCalled();
+    await fireEvent.click(btn('Hide'));
+    expect(u.hide).toHaveBeenCalled();
+    at(u, 1000, null, null);
+    await vi.waitFor(() => expect(screen.getByText('1 kB · 1.1 MB/s')).toBeInTheDocument());
+    expect(screen.getByRole('progressbar', { name: 'Download progress' })).toHaveAttribute('aria-valuetext', '0 percent');
+    at(u, 1000, 2000, null);
+    await vi.waitFor(() => expect(screen.getByText('1 kB of 2 kB · 1.1 MB/s')).toBeInTheDocument());
+  });
+  test('installing: steps, nothing to click, Escape does nothing', async () => {
+    const u = mk('tauri-desktop', 'installing');
+    dialog(u);
+    const d = screen.getByRole('dialog', { name: 'Installing 0.2.0' });
+    expect(d).toHaveAccessibleDescription('The Patcher restarts by itself when this finishes.');
+    expect(screen.getByText('Downloaded and verified')).toBeInTheDocument();
+    expect(btn('Restart now')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+    await fireEvent.keyDown(d, { key: 'Escape' });
+    expect(u.hide).not.toHaveBeenCalled();
+    expect(u.cancel).not.toHaveBeenCalled();
+  });
+  test('ready: Restart now / Later; blocked while patching', async () => {
+    const u = mk('tauri-desktop', 'ready');
+    const { unmount } = dialog(u);
+    expect(screen.getByRole('dialog', { name: 'Update ready' })).toHaveAccessibleDescription('Restart the Patcher to finish. It takes a few seconds.');
+    expect(screen.getByRole('status')).toHaveTextContent('Downloaded and verified. Restart to start using it.');
+    await fireEvent.click(btn('Restart now'));
+    expect(u.restart).toHaveBeenCalled();
+    await fireEvent.click(btn('Later'));
+    expect(u.hide).toHaveBeenCalled();
+    unmount();
+    dialog(mk('tauri-desktop', 'ready'), true);
+    expect(screen.getByRole('status')).toHaveTextContent('Restarting now would stop it');
+    expect(btn('Restart now')).toBeDisabled();
+  });
+  test('a failed install says so and offers the website', () => {
+    const u = mk('tauri-desktop', 'error');
+    u.installFailed = true;
+    u.error = 'access denied';
+    dialog(u);
+    expect(screen.getByRole('dialog', { name: 'Update failed' })).toHaveAccessibleDescription('The new version couldn’t be installed. The Patcher you have still works.');
+    expect(screen.getByRole('alert')).toHaveTextContent('access denied Download the new version from the website instead.');
+    expect(btn('Download from website')).toBeInTheDocument();
+  });
+});
+
 describe('UpdateButton', () => {
   test('states: label, accessible name, dot; a click opens the popup', async () => {
     const u = mk('tauri-desktop', 'idle');
@@ -141,6 +207,15 @@ describe('UpdateButton', () => {
     await vi.waitFor(() => expect(btn('Last update check failed')).toHaveTextContent('Check for updates'));
     u.stage = 'uptodate';
     await vi.waitFor(() => expect(btn('Check for updates')).toBeInTheDocument());
+    u.progress = { done: 58, total: 100, speed: 1, eta: 1 };
+    u.stage = 'downloading';
+    await vi.waitFor(() => expect(btn('Downloading update, 58 percent')).toHaveTextContent('Updating 58 %'));
+    expect(container.querySelector('.ring')).not.toBeNull();
+    u.stage = 'installing';
+    await vi.waitFor(() => expect(btn('Installing update')).toHaveAttribute('aria-busy', 'true'));
+    u.stage = 'ready';
+    await vi.waitFor(() => expect(btn('Update downloaded, restart to finish')).toHaveTextContent('Restart to update'));
+    expect(container.querySelector('.pip')).not.toBeNull();
   });
   test('the app bar shows it next to the tabs, also while patching', () => {
     const u = mk('tauri-desktop', 'idle');
@@ -194,6 +269,17 @@ describe('Settings → Updates', () => {
     await fireEvent.click(btn('Try again'));
     expect(u.check).toHaveBeenCalled();
   });
+  test('while updating, the button opens the popup', async () => {
+    const u = mk('tauri-desktop', 'downloading');
+    section(u);
+    expect(screen.getByRole('status')).toHaveTextContent('Downloading 0.2.0…');
+    await fireEvent.click(btn('Show update'));
+    expect(u.show).toHaveBeenCalled();
+    u.stage = 'installing';
+    await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Installing…'));
+    u.stage = 'ready';
+    await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('0.2.0 is ready — restart to finish'));
+  });
   test('web: only the automatic switch, with the reload hint', () => {
     section(mk('web', 'idle'));
     expect(screen.getByRole('switch')).toHaveAccessibleDescription('When the Patcher opens, at most once a day. A new version loads on the next page reload.');
@@ -219,6 +305,15 @@ describe('title-bar chip', () => {
     u.open = true;
     await vi.waitFor(() => expect(screen.queryByRole('button', { name: /update window/ })).toBeNull());
     u.open = false;
+    u.progress = { done: 58, total: 100, speed: 1, eta: 1 };
+    u.stage = 'downloading';
+    await vi.waitFor(() => expect(btn('Updating 58 % — open the update window')).toBeInTheDocument());
+    expect(document.querySelector('.cb')).toHaveStyle({ width: '58%' });
+    u.stage = 'installing';
+    await vi.waitFor(() => expect(btn('Installing update… — open the update window')).toBeInTheDocument());
+    expect(document.querySelector('.cb')).toBeNull();
+    u.stage = 'ready';
+    await vi.waitFor(() => expect(btn('Restart to update — open the update window')).toBeInTheDocument());
     u.stage = 'uptodate';
     await vi.waitFor(() => expect(screen.queryByRole('button', { name: /update window/ })).toBeNull());
   });

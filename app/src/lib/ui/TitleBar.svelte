@@ -37,9 +37,17 @@
   const toggle = () => void win.toggleMaximize().catch(() => {});
   const close = () => void win.close().catch(() => {});
   const maxLabel = $derived(max ? $t('tb.restore') : $t('tb.maximize'));
-  const chip = $derived(
-    !update || update.open ? '' : update.stage === 'available' ? $t('upd.chip.available') : update.stage === 'error' ? $t('upd.chip.failed') : ''
-  );
+  const chip = $derived.by(() => {
+    if (!update || update.open) return '';
+    switch (update.stage) {
+      case 'available': return $t('upd.chip.available');
+      case 'downloading': return $t('upd.chip.downloading', { n: update.percent });
+      case 'installing': return $t('upd.chip.installing');
+      case 'ready': return $t('upd.chip.ready');
+      case 'error': return $t('upd.chip.failed');
+      default: return '';
+    }
+  });
 </script>
 
 <header class={['bar', os, inactive && 'inactive']} aria-label={$t('tb.label')} data-tauri-drag-region>
@@ -50,7 +58,8 @@
     {#if ctx}<span class="ctx" data-tauri-drag-region>{`· ${ctx}`}</span>{/if}
     {#if chip}
       <button class={['chip', update!.stage]} aria-haspopup="dialog" aria-label={$t('upd.chip.aria', { state: chip })} onclick={() => update!.show()}>
-        <Icon name="update" size={16} />{chip}
+        <Icon name="update" size={16} />{`${chip}`}
+        {#if update!.stage === 'downloading'}<span class="cb" style:width={`${update!.percent}%`} aria-hidden="true"></span>{/if}
       </button>
     {/if}
   </div>
@@ -118,7 +127,11 @@
   .l.close:hover { background: #c8301e; color: #fff; }
   .native { width: 78px; height: 100%; flex: none; }
   .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; flex: none; border-radius: 999px; border: 1.5px solid currentColor; font: 700 12.5px var(--f-body); white-space: nowrap; cursor: pointer; color: var(--primary-ink); }
+  .chip { position: relative; overflow: hidden; }
   .chip.error { color: var(--bad); }
+  .chip.ready { color: var(--ok); }
+  .chip.installing { color: var(--b-fg2); }
+  .cb { position: absolute; left: 0; bottom: 0; height: 3px; background: currentColor; }
   .chip:hover { background: var(--b-hov); }
   .chip:focus-visible { outline-offset: 2px; }
 </style>

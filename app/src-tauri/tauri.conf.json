@@ -90,5 +90,16 @@
         "bundleMediaFramework": false
       }
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdCNTJDNDA2NzdCQjdFMjQKUldRa2ZydDNCc1JTZTc3N0d4T0J3eEhFeXdTZGpwQ04ySXdwNGl2WmxFMkJYby80cC9iWUdVU20K",
+      "endpoints": [
+        "https://github.com/Blockheads-Club/blockheads-patcher/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

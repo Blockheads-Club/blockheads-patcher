@@ -2,6 +2,7 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { createFsPackStore } from './packs-fs';
 import type { PickedFile, PlatformAdapter } from './types';
+import { checkInPlaceUpdate, restartApp } from './updater';
 import { baseName, openExternal, pickApkWithDialog, pickPackWithDialog, saveWithDialog, updateTarget } from './tauri-common';
 
 /** Windows/Linux/macOS Tauri shell: native dialogs + scoped fs. No Android-only capabilities. */
@@ -10,6 +11,8 @@ export function createTauriDesktopAdapter(): PlatformAdapter {
     kind: 'tauri-desktop',
     openUrl: openExternal,
     updateTarget,
+    checkInPlaceUpdate,
+    restart: restartApp,
     pickApk: pickApkWithDialog,
     saveOutput: saveWithDialog,
     packStore: createFsPackStore(),

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Release } from '@bh-patcher/core';
 import { DAY_MS, RELEASES_URL, UpdateState, createUpdateState, releasePage, type UpdateDeps } from './update.svelte';
 import { mockPlatform } from './testing';
+import type { InPlaceUpdate } from './platform/types';
 
 const asset = (name: string, size = 5_000_000) => ({ name, size, browser_download_url: `https://github.com/dl/${name}` });
 const rel = (tag: string, over: Partial<Release> = {}): Release => ({
@@ -61,7 +62,8 @@ describe('native check (GitHub releases)', () => {
     expect(u.stage).toBe('available');
     expect(u.info).toEqual({
       version: '0.2.0', notes: ['Faster patching', 'Fixes'], page: 'https://github.com/rel/v0.2.0',
-      download: { name: 'Blockheads.Patcher_0.2.0_x64-setup.exe', url: 'https://github.com/dl/Blockheads.Patcher_0.2.0_x64-setup.exe', size: 5_000_000 }
+      download: { name: 'Blockheads.Patcher_0.2.0_x64-setup.exe', url: 'https://github.com/dl/Blockheads.Patcher_0.2.0_x64-setup.exe', size: 5_000_000 },
+      inPlace: false
     });
     expect([u.lastChecked, u.lastSuccess, u.pending, u.open]).toEqual([1_000_000_000_000, 1_000_000_000_000, true, false]);
     expect((deps.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0]).toContain('/releases?per_page=20');
@@ -261,6 +263,8 @@ describe('createUpdateState', () => {
   test('wires the platform', async () => {
     const openUrl = vi.fn(async () => {});
     const updateTarget = vi.fn(async () => ({ os: 'android' as const, arch: 'aarch64' }));
+    const desk = createUpdateState(mockPlatform({ kind: 'tauri-desktop', checkInPlaceUpdate: async () => null, restart: async () => {} }), '0.0.1');
+    expect(desk.kind).toBe('tauri-desktop');
     const u = createUpdateState(mockPlatform({ kind: 'tauri-android', openUrl, updateTarget }), '0.0.1');
     expect([u.kind, u.current]).toEqual(['tauri-android', '0.0.1']);
     u.openPage();
@@ -280,5 +284,172 @@ describe('createUpdateState', () => {
     await u.check();
     await u.install();
     expect(reload).toHaveBeenCalled();
+  });
+});
+
+describe('in-place update (desktop, Tauri updater)', () => {
+  type Ev = { done: number; total: number | null };
+  function handle(over: Partial<InPlaceUpdate> = {}, events: Ev[] = [{ done: 0, total: 1000 }, { done: 500, total: 1000 }, { done: 1000, total: 1000 }]) {
+    return {
+      version: '0.2.0',
+      download: vi.fn(async (cb: (p: Ev) => void) => { for (const e of events) cb(e); }),
+      install: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+      ...over
+    } satisfies InPlaceUpdate;
+  }
+  function setup(h: InPlaceUpdate | null | (() => Promise<InPlaceUpdate | null>), over: Partial<UpdateDeps> = {}) {
+    let t = 1000;
+    const checkInPlace = vi.fn(typeof h === 'function' ? h : async () => h);
+    const restart = vi.fn(async () => {});
+    const r = make({ checkInPlace, restart, now: () => (t += 1000), ...over });
+    return { ...r, checkInPlace, restart };
+  }
+
+  test('only offered with the updater and a matching file', async () => {
+    const { u } = setup(handle());
+    await u.check();
+    expect(u.info?.inPlace).toBe(true);
+    const deb = setup(handle(), { target: async () => ({ os: 'linux', arch: 'x86_64' }) });
+    await deb.u.check();
+    expect(deb.u.info?.inPlace).toBe(false);
+  });
+  test('download with progress, then ready; Restart now installs and restarts', async () => {
+    const h = handle();
+    const { u, restart, deps } = setup(h);
+    await u.check();
+    expect(u.percent).toBe(0);
+    await u.install();
+    expect(deps.openUrl).not.toHaveBeenCalled();
+    expect(u.stage).toBe('ready');
+    expect(u.progress).toEqual({ done: 1000, total: 1000, speed: expect.any(Number), eta: 0 });
+    expect(u.percent).toBe(100);
+    const done = u.restart();
+    expect(u.stage).toBe('installing');
+    await done;
+    expect(h.install).toHaveBeenCalled();
+    expect(restart).toHaveBeenCalled();
+  });
+  test('progress: speed and time left, unknown size, capped percent', async () => {
+    const seen: unknown[] = [];
+    const events = [{ done: 300, total: 1200 }, { done: 50, total: null }, { done: 2000, total: 1000 }];
+    let t = 0;
+    const h = handle({ download: vi.fn(async (cb: (p: Ev) => void) => { for (const e of events) { cb(e); seen.push({ ...u.progress, percent: u.percent }); } }) });
+    const { u } = setup(h, { now: () => t });
+    await u.check();
+    t = 0;
+    const run = u.install();
+    await vi.waitFor(() => expect(h.download).toHaveBeenCalled());
+    await run;
+    // the clock does not move: no speed, no estimate
+    expect(seen[0]).toEqual({ done: 300, total: 1200, speed: 0, eta: null, percent: 25 });
+    expect(seen[1]).toEqual({ done: 50, total: null, speed: 0, eta: null, percent: 0 });
+    expect((seen[2] as { percent: number }).percent).toBe(100);
+  });
+  test('falls back to the browser: no update at the endpoint, another version, updater or download error', async () => {
+    const cases: [InPlaceUpdate | null | (() => Promise<InPlaceUpdate | null>), string][] = [
+      [null, ''],
+      [handle({ version: '0.1.9' }), ''],
+      [async () => { throw new Error('endpoint down'); }, 'endpoint down'],
+      [handle({ download: vi.fn(async () => { throw new Error('bad signature'); }) }), 'bad signature'],
+      [handle({ download: vi.fn(async () => { throw new Error('x'); }), close: vi.fn(async () => { throw new Error('closed'); }) }), 'x']
+    ];
+    for (const [h, error] of cases) {
+      const { u, deps } = setup(h);
+      await u.check();
+      await u.install();
+      expect([u.stage, u.handedOff, u.progress, u.error]).toEqual(['available', true, null, error]);
+      expect(deps.openUrl).toHaveBeenCalledWith('https://github.com/dl/Blockheads.Patcher_0.2.0_x64-setup.exe');
+    }
+    const other = handle({ version: '0.1.9' });
+    const s = setup(other);
+    await s.u.check();
+    await s.u.install();
+    expect(other.close).toHaveBeenCalled();
+  });
+  test('Cancel download: while looking for the update, while downloading, or when the download then fails', async () => {
+    let resolve!: (h: InPlaceUpdate) => void;
+    const h1 = handle();
+    const a = setup(() => new Promise((r) => { resolve = r; }));
+    await a.u.check();
+    const p1 = a.u.install();
+    a.u.cancelDownload();
+    expect([a.u.stage, a.u.progress]).toEqual(['available', null]);
+    resolve(h1);
+    await p1;
+    expect(h1.close).toHaveBeenCalled();
+    expect(a.u.stage).toBe('available');
+
+    let feed!: (p: Ev) => void, finish!: () => void;
+    const h2 = handle({ download: vi.fn((cb: (p: Ev) => void) => new Promise<void>((r) => { feed = cb; finish = r; })) });
+    const b = setup(h2);
+    await b.u.check();
+    const p2 = b.u.install();
+    await vi.waitFor(() => expect(h2.download).toHaveBeenCalled());
+    feed({ done: 10, total: 100 });
+    expect(b.u.percent).toBe(10);
+    b.u.cancelDownload();
+    feed({ done: 50, total: 100 });
+    expect(b.u.progress).toBeNull();
+    finish();
+    await p2;
+    expect(h2.close).toHaveBeenCalled();
+    expect(b.u.stage).toBe('available');
+
+    let fail!: (e: Error) => void;
+    const h3 = handle({ download: vi.fn(() => new Promise<void>((_, rej) => { fail = rej; })) });
+    const c = setup(h3);
+    await c.u.check();
+    const p3 = c.u.install();
+    await vi.waitFor(() => expect(h3.download).toHaveBeenCalled());
+    c.u.cancelDownload();
+    fail(new Error('aborted'));
+    await p3;
+    expect([c.u.stage, c.u.handedOff, c.deps.openUrl]).toEqual(['available', false, c.deps.openUrl]);
+    expect(c.deps.openUrl).not.toHaveBeenCalled();
+  });
+  test('while updating, checks only open the popup; a channel change drops the download', async () => {
+    const h = handle({ close: vi.fn(async () => { throw new Error('gone'); }) });
+    const { u, deps } = setup(h);
+    await u.check();
+    await u.install();
+    expect(u.stage).toBe('ready');
+    await u.check();
+    expect([u.stage, u.open]).toEqual(['ready', false]);
+    await u.check({ popup: true });
+    expect([u.stage, u.open]).toEqual(['ready', true]);
+    u.show();
+    expect((deps.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
+    u.setChannel('beta');
+    expect([u.stage, u.progress, u.info]).toEqual(['idle', null, null]);
+    expect(h.close).toHaveBeenCalled();
+    await u.restart(); // nothing downloaded any more
+    expect(h.install).not.toHaveBeenCalled();
+  });
+  test('a failed install: error stage with the reason; the next check clears it; no restart seam is fine', async () => {
+    const h = handle({ install: vi.fn(async () => { throw new Error('access denied'); }) });
+    const { u, restart } = setup(h);
+    await u.check();
+    await u.install();
+    await u.restart();
+    expect([u.stage, u.installFailed, u.error]).toEqual(['error', true, 'access denied']);
+    expect(restart).not.toHaveBeenCalled();
+    expect(h.close).toHaveBeenCalled();
+    await u.check();
+    expect(u.installFailed).toBe(false);
+
+    const failing = handle({ install: vi.fn(async () => { throw new Error('y'); }), close: vi.fn(async () => { throw new Error('z'); }) });
+    const f = setup(failing);
+    await f.u.check();
+    await f.u.install();
+    await f.u.restart();
+    expect(f.u.error).toBe('y');
+
+    const ok = handle();
+    const n = setup(ok, { restart: undefined });
+    await n.u.check();
+    await n.u.install();
+    await n.u.restart();
+    expect(ok.install).toHaveBeenCalled();
   });
 });

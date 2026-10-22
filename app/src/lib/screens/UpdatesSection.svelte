@@ -12,11 +12,21 @@
   let { update: u, now = () => Date.now() }: { update: UpdateState; now?: () => number } = $props();
 
   const stage = $derived(u.stage);
-  const result = $derived(
-    stage === 'checking' ? $t('upd.s.checking') : stage === 'available' ? $t('upd.s.available', { v: u.info!.version })
-    : stage === 'error' ? $t('upd.s.failed') : stage === 'uptodate' ? $t('upd.s.ok') : $t('upd.s.idle')
-  );
-  const icon = $derived(stage === 'available' ? 'update' : stage === 'error' ? 'alert' : stage === 'uptodate' ? 'check' : '');
+  const result = $derived.by(() => {
+    switch (stage) {
+      case 'checking': return $t('upd.s.checking');
+      case 'available': return $t('upd.s.available', { v: u.info!.version });
+      case 'downloading': return $t('upd.s.downloading', { v: u.info!.version });
+      case 'installing': return $t('upd.s.installing');
+      case 'ready': return $t('upd.s.ready', { v: u.info!.version });
+      case 'error': return $t('upd.s.failed');
+      case 'uptodate': return $t('upd.s.ok');
+      default: return $t('upd.s.idle');
+    }
+  });
+  /** Something to show in the popup: the button opens it instead of checking again. */
+  const found = $derived(['available', 'downloading', 'installing', 'ready'].includes(stage));
+  const icon = $derived(found ? 'update' : stage === 'error' ? 'alert' : stage === 'uptodate' ? 'check' : '');
   function when(ms: number): string {
     if (!ms) return $t('upd.s.never');
     if (now() - ms < 60_000) return $t('upd.s.justNow');
@@ -33,11 +43,11 @@
     <div class="rl">
       <p class="rt">{$t('upd.s.version', { v: u.current })}</p>
       <p class={['res', stage]} role="status">
-        {#if stage === 'checking'}<span class="spin" aria-hidden="true"></span>{:else if icon}<Icon name={icon} size={18} />{/if}{result}
+        {#if stage === 'checking' || stage === 'installing'}<span class="spin" aria-hidden="true"></span>{:else if icon}<Icon name={icon} size={18} />{/if}{result}
       </p>
       <p class="hint">{last}</p>
     </div>
-    {#if stage === 'available'}
+    {#if found}
       <Button size="sm" variant="primary" icon="update" onclick={() => u.show()}>{$t('upd.s.show')}</Button>
     {:else}
       <Button size="sm" icon="refresh" disabled={stage === 'checking'} onclick={() => void u.check()}>{stage === 'error' ? $t('upd.s.retry') : $t('upd.s.checkNow')}</Button>
@@ -65,7 +75,8 @@
   .rt { font-weight: 700; }
   .res { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; margin: 2px 0; color: var(--text-2); }
   .res.uptodate { color: var(--ok); }
-  .res.available { color: var(--primary-ink); }
+  .res.available, .res.downloading { color: var(--primary-ink); }
+  .res.ready { color: var(--ok); }
   .res.error { color: var(--bad); }
   .spin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--surface-3); border-top-color: var(--primary); animation: spin 0.9s linear infinite; flex: none; }
   @keyframes spin { to { transform: rotate(360deg); } }

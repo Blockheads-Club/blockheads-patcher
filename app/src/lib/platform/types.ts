@@ -10,6 +10,16 @@ export interface PackStore {
   put(id: string, bytes: Uint8Array): Promise<void>;
   remove(id: string): Promise<void>;
 }
+/** A signed in-place update found by the Tauri updater (desktop). */
+export interface InPlaceUpdate {
+  version: string;
+  /** Downloads and verifies the update; `total` is null when the server sends no length. */
+  download(onProgress: (p: { done: number; total: number | null }) => void): Promise<void>;
+  /** Installs the downloaded update (Windows: runs the installer, which closes the app). */
+  install(): Promise<void>;
+  /** Releases the update handle. */
+  close(): Promise<void>;
+}
 export interface PlatformAdapter {
   kind: PlatformKind;
   /** File picker. Returns null if cancelled. */
@@ -26,6 +36,10 @@ export interface PlatformAdapter {
   openUrl?(url: string): Promise<void>;
   /** Native builds: OS and architecture, to pick the release file that updates this install. */
   updateTarget?(): Promise<UpdateTarget>;
+  /** Desktop: the Tauri updater (configured endpoint: the latest release's latest.json). */
+  checkInPlaceUpdate?(): Promise<InPlaceUpdate | null>;
+  /** Desktop: restarts the app (after an in-place update). */
+  restart?(): Promise<void>;
   // Android only (undefined elsewhere):
   getInstalledGame?(): Promise<InstalledGameInfo | null>;
   loadInstalledApk?(): Promise<PickedApk>;

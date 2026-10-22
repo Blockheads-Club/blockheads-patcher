@@ -8,6 +8,12 @@ pub fn app_quit<R: tauri::Runtime>(app: tauri::AppHandle<R>) {
     app.exit(0);
 }
 
+/// Restarts the app after an in-place update was installed (the update popup's Restart now).
+#[tauri::command]
+pub fn app_restart<R: tauri::Runtime>(app: tauri::AppHandle<R>) {
+    app.restart();
+}
+
 /// The splash's Open log button: shows the boot error in the platform's file manager (logic lives in splash.rs).
 #[tauri::command]
 pub fn open_log<R: tauri::Runtime>(
