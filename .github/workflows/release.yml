@@ -101,15 +101,18 @@ jobs:
           - name: macos-universal
             os: macos-latest
             targets: aarch64-apple-darwin,x86_64-apple-darwin
-            args: --target universal-apple-darwin --bundles dmg
+            args: --target universal-apple-darwin --bundles app,dmg
+            mac_arch: universal
           - name: macos-arm64
             os: macos-latest
             targets: aarch64-apple-darwin
-            args: --target aarch64-apple-darwin --bundles dmg
+            args: --target aarch64-apple-darwin --bundles app,dmg
+            mac_arch: aarch64
           - name: macos-x64
             os: macos-latest
             targets: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin --bundles dmg
+            args: --target x86_64-apple-darwin --bundles app,dmg
+            mac_arch: x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -129,17 +132,37 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils file libfuse2
       - run: bun install --frozen-lockfile
+      # In-place updates: with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY[_PASSWORD]) the build also signs the
+      # updater artifacts (NSIS/MSI installers, AppImages, macOS .app.tar.gz) and writes a .sig next to each. Without the
+      # key (forks) it builds as before, and the publish job skips latest.json.
       - name: Build bundles
         working-directory: app
         shell: bash
-        run: bun tauri build ${{ matrix.args }} --config '{"version":"${{ needs.version.outputs.bundle_version }}"}'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          updater=false
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && updater=true
+          bun tauri build ${{ matrix.args }} --config "{\"version\":\"${{ needs.version.outputs.bundle_version }}\",\"bundle\":{\"createUpdaterArtifacts\":$updater}}"
       - name: Collect
         shell: bash
+        env:
+          MAC_ARCH: ${{ matrix.mac_arch }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           mkdir -p dist-release
           find app/src-tauri/target -path '*/release/bundle/*' -type f \
-            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) \
+            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \
+               -o -name '*.exe.sig' -o -name '*.msi.sig' -o -name '*.AppImage.sig' \) \
             -exec cp {} dist-release/ \;
+          # macOS updater tarballs are all named "<product>.app.tar.gz": give each the version and arch.
+          if [ -n "$MAC_ARCH" ]; then
+            find app/src-tauri/target -path '*/release/bundle/macos/*' -type f \( -name '*.app.tar.gz' -o -name '*.app.tar.gz.sig' \) | while read -r f; do
+              ext=".app.tar.gz"; case "$f" in *.sig) ext=".app.tar.gz.sig" ;; esac
+              cp "$f" "dist-release/Blockheads.Patcher_${VERSION}_${MAC_ARCH}${ext}"
+            done
+          fi
           ls -la dist-release
       - uses: actions/upload-artifact@v4
         with:
@@ -217,16 +240,37 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/download-artifact@v4
         with:
           pattern: rel-*
           path: dist-release
           merge-multiple: true
-      - name: Normalise asset names and write SHA256SUMS.txt
+      - name: Normalise asset names
         working-directory: dist-release
         run: |
-          # GitHub turns spaces in asset names into dots; rename first so the sums match the stored names.
+          # GitHub turns spaces in asset names into dots; rename first so the sums and latest.json match the stored names.
           for f in *' '*; do [ -e "$f" ] && mv -v -- "$f" "${f// /.}"; done
+          ls -la
+      # Tauri updater manifest (the app's updater endpoint is releases/latest/download/latest.json). Only for tag builds
+      # whose updater artifacts were signed.
+      - name: Write latest.json
+        if: needs.version.outputs.tag != ''
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if ls dist-release/*.sig >/dev/null 2>&1; then
+            bun scripts/updater-manifest.ts dist-release "$VERSION" "$TAG"
+          else
+            echo "::notice::no updater signatures (TAURI_SIGNING_PRIVATE_KEY unset): latest.json skipped"
+          fi
+      - name: Write SHA256SUMS.txt
+        working-directory: dist-release
+        run: |
           rm -f SHA256SUMS.txt
           sha256sum -- * > SHA256SUMS.txt
           cat SHA256SUMS.txt
