@@ -24,8 +24,8 @@ export interface ModLoaderPin {
 export const MOD_LOADER_PIN: ModLoaderPin = {
   version: '0.1.0',
   url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.1.0/bhmod-android-loader-0.1.0.zip',
-  sha256: '2deef809cda1b857390d4ba50936145c51c4363b371930c017654c805fb5d1e2',
-  size: 11353863,
+  sha256: '4a1b15eb8bae51fad11f60fd69589d36e8e502e1015112d3db4e803aebe2f75c',
+  size: 11352583,
 };
 
 /** File name of the pinned zip (app static assets serve it under `mod-loader/`). */

@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+# Release bundles must ship the pinned mod loader zip (app/scripts/fetch-mod-loader.ts fails instead of skipping it).
+env:
+  BH_MOD_LOADER_REQUIRED: '1'
+
 concurrency:
   group: release-${{ github.ref }}
   # Dry runs of a branch supersede each other; tag runs never cancel a half-uploaded release.
