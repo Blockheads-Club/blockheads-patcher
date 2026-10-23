@@ -23,7 +23,7 @@ const themeOf = (apk: Uint8Array): number | undefined => {
 };
 
 describe('index', () => {
-  it('exposes the version constant', () => expect(CORE_VERSION).toBe('0.1.1'));
+  it('exposes the version constant', () => expect(CORE_VERSION).toBe('0.2.0'));
 });
 
 describe('loadApk', () => {
