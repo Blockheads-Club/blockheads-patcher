@@ -22,10 +22,10 @@ export interface ModLoaderPin {
 
 /** The loader build this Patcher version installs. */
 export const MOD_LOADER_PIN: ModLoaderPin = {
-  version: '0.3.0',
-  url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.3.0/bhmod-android-loader-0.3.0.zip',
-  sha256: '22843c7c508d409dbba18726480486cecb8e1eba70f1fe5c5edb9367faa4b8a9',
-  size: 12321288,
+  version: '0.3.1',
+  url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.3.1/bhmod-android-loader-0.3.1.zip',
+  sha256: '0a2c4dfb8fd8d756ed35872f533497fab378a86857e74cbdd07f024ef519ae87',
+  size: 12350316,
 };
 
 /** File name of the pinned zip (app static assets serve it under `mod-loader/`). */

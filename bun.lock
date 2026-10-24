@@ -10,7 +10,7 @@
     },
     "app": {
       "name": "@bh-patcher/app",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@bh-patcher/core": "workspace:*",
         "@bh-patcher/tauri-plugin-apk-tools-api": "workspace:*",
@@ -44,7 +44,7 @@
     },
     "packages/core": {
       "name": "@bh-patcher/core",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "fflate": "0.8.2",
       },
@@ -57,7 +57,7 @@
     },
     "plugins/tauri-plugin-apk-tools": {
       "name": "@bh-patcher/tauri-plugin-apk-tools-api",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@tauri-apps/api": "^2.0.0",
       },
