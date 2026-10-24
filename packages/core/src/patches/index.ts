@@ -24,6 +24,7 @@ export { musicWithOtherApps, musicWithOtherAppsSpec, AUDIO_MANAGER_CLASS } from 
 export { fixAudioFocusStall, fixAudioFocusStallSpec } from './fix-audio-focus-stall';
 export { fixTextActivityFreeze } from './fix-text-activity-freeze';
 export { fixSurfaceDestroyFreeze, fixSurfaceDestroyFreezeSpec, GL_SURFACE_VIEW_CLASS, SURFACE_WAIT_MS } from './fix-surface-destroy-freeze';
+export { fixSurfaceWaitDeadlock, SURFACE_WAIT_CLASS, SURFACE_POLL_MS } from './fix-surface-wait-deadlock';
 export { fixBackgroundWakeup, fixBackgroundWakeupSpec, LIFECYCLE_CLASS, WAKE_METHOD } from './fix-background-wakeup';
 export { makeMethodRewritePatch, type MethodRewriteSpec } from './method-rewrite';
 export { makeTranslucentActivityPatch, type TranslucentActivitySpec } from './translucent-activity';

@@ -18,6 +18,7 @@ import { fixAudioFocusStall } from './fix-audio-focus-stall';
 import { fixTextActivityFreeze } from './fix-text-activity-freeze';
 import { fixSurfaceDestroyFreeze } from './fix-surface-destroy-freeze';
 import { fixBackgroundWakeup } from './fix-background-wakeup';
+import { fixSurfaceWaitDeadlock } from './fix-surface-wait-deadlock';
 import { adaptiveIcon } from './adaptive-icon';
 import { signEditorCentred } from './sign-editor-centred';
 import { lanMulticast } from './lan-multicast';
@@ -48,7 +49,7 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   fixPrivacyDialog, fixWelcomeMessageText, fixInviteEmailTypo, signsLowercase,
   fixWebviewCrash, fixConfigChangeCrash, immersiveFullscreen, fixEmailShareLink,
   fixJoinLinks,
-  musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixBackgroundWakeup,
+  musicWithOtherApps, fixAudioFocusStall, fixTextActivityFreeze, fixSurfaceDestroyFreeze, fixSurfaceWaitDeadlock, fixBackgroundWakeup,
   adaptiveIcon,
   signEditorCentred, lanMulticast, tabletLayout,
   musicResume, menuMusicLoop, worldSelectionKeep,
