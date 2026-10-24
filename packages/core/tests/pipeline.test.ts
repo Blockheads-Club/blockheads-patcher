@@ -189,6 +189,7 @@ describe('listPatches / applyPatches', () => {
       ['fix-audio-focus-stall', 'incompatible'],
       ['fix-text-activity-freeze', 'incompatible'],
       ['fix-surface-destroy-freeze', 'incompatible'],
+      ['fix-surface-wait-deadlock', 'incompatible'],
       ['fix-background-wakeup', 'incompatible'],
       ['adaptive-icon', 'incompatible'],
       ['sign-editor-centred', 'incompatible'],
