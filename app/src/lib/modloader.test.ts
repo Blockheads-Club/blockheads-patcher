@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { MOD_LOADER_PIN } from '@bh-patcher/core';
 import { fetchModLoader, modLoaderError } from './modloader';
 import { classifyError } from './errors';
+import tauriConf from '../../src-tauri/tauri.conf.json';
 
 const sha = async (b: Uint8Array) =>
   Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', b as BufferSource)), (x) => x.toString(16).padStart(2, '0')).join('');
@@ -25,5 +26,11 @@ describe('fetchModLoader', () => {
     const g = vi.spyOn(globalThis, 'fetch').mockResolvedValue(resp(new Uint8Array(), 404));
     await expect(fetchModLoader()).rejects.toThrow(/HTTP 404/);
     g.mockRestore();
+  });
+});
+
+describe('the app CSP', () => {
+  test('lets the app fetch its own files (the bundled mod loader)', () => {
+    expect(tauriConf.app.security.csp['connect-src'].split(' ')).toContain("'self'");
   });
 });
