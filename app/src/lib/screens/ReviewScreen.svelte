@@ -6,6 +6,7 @@
   import type { MessageKey } from '$lib/i18n';
   import type { PatcherState } from '$lib/state.svelte';
   import type { KeysState } from '$lib/keys.svelte';
+  import { displayOrder } from '$lib/patch-order';
   import Badge from '$lib/ui/Badge.svelte';
   import Button from '$lib/ui/Button.svelte';
   import Card from '$lib/ui/Card.svelte';
@@ -74,7 +75,7 @@
     {#if s.report.length === 0}
       <p class="muted">{$t('review.none')}</p>
     {/if}
-    {#each s.report as { patch, status, reasonCode, reason } (patch.id)}
+    {#each displayOrder(s.report) as { patch, status, reasonCode, reason } (patch.id)}
       {#if status === 'notApplied'}
         <Card tag="label" class="patch" selected>
           <input type="checkbox" class="chk" checked={s.selected.includes(patch.id)} aria-describedby={`pd-${patch.id}`}

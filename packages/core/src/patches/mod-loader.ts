@@ -166,7 +166,6 @@ export const modLoader: Patch = {
   nameKey: 'patch.mod-loader.name',
   descriptionKey: 'patch.mod-loader.description',
   appliesTo: { packageName: BLOCKHEADS_PACKAGE, versionNames: ['1.7.4', '1.7.5', '1.7.6'] },
-  optIn: true,
   detect,
   apply(ctx) {
     const a = current ?? fail('the loader files are not loaded');

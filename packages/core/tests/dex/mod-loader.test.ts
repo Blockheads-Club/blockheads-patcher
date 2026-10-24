@@ -99,8 +99,8 @@ describe('mod loader zip', () => {
 });
 
 describe('mod-loader patch', () => {
-  it('is optional, in the default registry, and needs the loader files to apply', () => {
-    expect(modLoader.optIn).toBe(true);
+  it('is on by default, in the default registry, and needs the loader files to apply', () => {
+    expect(modLoader.optIn).toBeUndefined();
     expect(defaultRegistry.get('mod-loader')).toBe(modLoader);
     expect(RESERVED_CLASS_PREFIXES).toContain('Lcom/blockheadsclub/modloader/');
     const c = ctxOf(gameDex());
