@@ -18,6 +18,9 @@ export interface ModLoaderPin {
   /** SHA-256 (lowercase hex) of the zip. */
   sha256: string;
   size: number;
+  /** SHA-256 of `libbhmodloader.so` / `classes.dex` inside the zip (from loader.json). A game carrying another build counts as not applied even before the zip is loaded. */
+  libSha256: string;
+  dexSha256: string;
 }
 
 /** The loader build this Patcher version installs. */
@@ -26,6 +29,8 @@ export const MOD_LOADER_PIN: ModLoaderPin = {
   url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.3.1/bhmod-android-loader-0.3.1.zip',
   sha256: '0a2c4dfb8fd8d756ed35872f533497fab378a86857e74cbdd07f024ef519ae87',
   size: 12350316,
+  libSha256: '0ae8b8a293f0d8b96e18100878a8b2f515042973d47b8e4434a8ad5d85dec662',
+  dexSha256: '1e5cf29a1666e84513eca492f750016b510ef144cec8c4dfce782b717e369a39',
 };
 
 /** File name of the pinned zip (app static assets serve it under `mod-loader/`). */
@@ -130,18 +135,19 @@ function state(ctx: PatchContext): State | undefined {
   const hit = set.findClass(MOD_LOADER_LISTENER_CLASS);
   const libEntry = getEntry(ctx.zip, MOD_LOADER_LIB_PATH);
   const lib = libEntry ? peekData(libEntry) : undefined;
-  const a = current;
+  // The build the patch would install: the loaded zip, else the pin's hashes (the app lists patches before it loads the zip).
+  const want = current ? { lib: current.libSha256, dex: sha256HexSync(current.dex) } : { lib: MOD_LOADER_PIN.libSha256, dex: MOD_LOADER_PIN.dexSha256 };
   return {
     libs, listeners,
     dexName: hit?.name,
     dexOwned: !!hit && hit.dex.classNames().every((c) => c.startsWith(MOD_LOADER_PACKAGE)),
     lib,
     done: {
-      // with a build at hand, an older installed loader counts as "not applied" (the patch updates it)
-      lib: !!lib && (!a || sha256HexSync(lib) === a.libSha256),
+      // with a build at hand (or pinned), an older installed loader counts as "not applied" (the patch updates it)
+      lib: !!lib && sha256HexSync(lib) === want.lib,
       libMeta: words(libs).includes(MOD_LOADER_LIB),
       listenerMeta: words(listeners).includes(MOD_LOADER_LISTENER),
-      dex: !!hit && (!a || sha256HexSync(peekData(getEntry(ctx.zip, hit.name)!)) === sha256HexSync(a.dex)),
+      dex: !!hit && sha256HexSync(peekData(getEntry(ctx.zip, hit.name)!)) === want.dex,
     },
   };
 }

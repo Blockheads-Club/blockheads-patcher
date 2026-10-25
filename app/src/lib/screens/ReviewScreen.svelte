@@ -75,6 +75,9 @@
     {#if s.report.length === 0}
       <p class="muted">{$t('review.none')}</p>
     {/if}
+    {#if s.resignOnly}
+      <Card class="resign" role="note"><p>{$t('review.resignNote')}</p></Card>
+    {/if}
     {#each displayOrder(s.report) as { patch, status, reasonCode, reason } (patch.id)}
       {#if status === 'notApplied'}
         <Card tag="label" class="patch" selected>

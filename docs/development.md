@@ -139,9 +139,15 @@ installed until the user clicks the update button** (same rule as the Blockheads
   Rust command `update_target` reports OS, arch and `$APPIMAGE`. The Tauri CSP allows `connect-src https://api.github.com`;
   the opener plugin may open only `https://github.com/Blockheads-Club/blockheads-patcher/releases/*` and
   `https://blockheads.club/*` (capabilities/default.json).
-- **Android:** "Download and install" opens the APK for the device ABI in the browser; installing it asks the user to
-  confirm. It installs over the current app only because every release APK is signed with the same release key (the
-  `ANDROID_*` secrets); a debug-signed build (no secrets) cannot update a release install.
+- **Android (in app):** the check runs at every launch (desktop and web: at most once a day). "Download and install"
+  downloads the APK for the app's ABI inside the app (`UpdateDownloader.kt` in `plugins/tauri-plugin-apk-tools`: only
+  this repository's release URLs, redirects followed by hand), with progress. It checks the size and, when the release
+  has `SHA256SUMS.txt`, the file's SHA-256 against it (a missing entry or mismatch fails the download). Then the popup
+  says "Install": the tap hands the file to the system installer (`install_apk`, PackageInstaller session). When Android
+  does not yet allow this app to install packages, the "install unknown apps" screen opens (the update stays downloaded)
+  and the user taps Install again. Nothing is installed without that tap. A failed download falls back to the browser
+  (the APK, as before). The update installs over the current app only because every release APK is signed with the same
+  release key (the `ANDROID_*` secrets); a debug-signed build (no secrets) cannot update a release install.
 
 ### Updater signing (release.yml)
 

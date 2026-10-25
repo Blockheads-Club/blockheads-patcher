@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Release } from '@bh-patcher/core';
 import { DAY_MS, RELEASES_URL, UpdateState, createUpdateState, releasePage, type UpdateDeps } from './update.svelte';
 import { mockPlatform } from './testing';
-import type { InPlaceUpdate } from './platform/types';
+import { INSTALL_NOT_ALLOWED, type InPlaceUpdate } from './platform/types';
 
 const asset = (name: string, size = 5_000_000) => ({ name, size, browser_download_url: `https://github.com/dl/${name}` });
 const rel = (tag: string, over: Partial<Release> = {}): Release => ({
@@ -256,6 +256,81 @@ describe('popup actions', () => {
     const broken = make({ openUrl: vi.fn(async () => { throw new Error('x'); }) }).u;
     broken.openPage();
     await Promise.resolve();
+  });
+});
+
+describe('Android in-app update', () => {
+  const sums = asset('SHA256SUMS.txt', 300);
+  const apkRel = (over: Partial<Release> = {}) => rel('v0.2.0', { assets: [...rel('v0.2.0').assets, sums], ...over });
+  const handle = (over: Partial<InPlaceUpdate> = {}) => ({
+    version: '0.2.0', download: vi.fn(async (cb: (p: { done: number; total: number | null }) => void) => { cb({ done: 1, total: 2 }); }),
+    install: vi.fn(async () => {}), close: vi.fn(async () => {}), ...over
+  }) satisfies InPlaceUpdate;
+  function android(h = handle(), release = apkRel()) {
+    const openAppUpdate = vi.fn(() => h);
+    const r = make({ kind: 'tauri-android', fetch: releases(release) as never, target: async () => ({ os: 'android', arch: 'aarch64' }), openAppUpdate });
+    return { ...r, h, openAppUpdate };
+  }
+
+  test('checks on every launch, however recent the last check was', () => {
+    localStorage.setItem('bhp.upd.checked', String(1_000_000_000_000 - 1000));
+    const a = android();
+    a.u.autoStart();
+    expect(a.deps.fetch).toHaveBeenCalled();
+    const desk = make();
+    localStorage.setItem('bhp.upd.checked', String(1_000_000_000_000 - 1000));
+    desk.u.autoStart();
+    expect(desk.deps.fetch).not.toHaveBeenCalled();
+  });
+  test('the offer carries the APK for this ABI and the checksum list; it installs in the app', async () => {
+    const { u, h, openAppUpdate, deps } = android();
+    await u.check();
+    expect(u.info?.inPlace).toBe(true);
+    expect(u.info?.download).toEqual({
+      name: 'blockheads-patcher-0.2.0-android-arm64.apk', url: 'https://github.com/dl/blockheads-patcher-0.2.0-android-arm64.apk', size: 5_000_000,
+      sumsUrl: 'https://github.com/dl/SHA256SUMS.txt'
+    });
+    await u.install();
+    expect(openAppUpdate).toHaveBeenCalledWith(u.info!.download, '0.2.0');
+    expect(deps.openUrl).not.toHaveBeenCalled();
+    expect(u.stage).toBe('ready');
+    await u.restart();
+    expect(h.install).toHaveBeenCalled();
+  });
+  test('a release without SHA256SUMS.txt is offered without a checksum list', async () => {
+    const { u } = android(handle(), rel('v0.2.0'));
+    await u.check();
+    expect(u.info?.download).not.toHaveProperty('sumsUrl');
+  });
+  test('a failed download falls back to the browser', async () => {
+    const { u, deps } = android(handle({ download: vi.fn(async () => { throw new Error('checksum mismatch'); }) }));
+    await u.check();
+    await u.install();
+    expect(u.error).toBe('checksum mismatch');
+    expect(deps.openUrl).toHaveBeenCalledWith('https://github.com/dl/blockheads-patcher-0.2.0-android-arm64.apk');
+  });
+  test('"install unknown apps" not allowed: stays ready with a hint, the next tap installs', async () => {
+    const install = vi.fn().mockRejectedValueOnce(new Error(INSTALL_NOT_ALLOWED)).mockResolvedValueOnce(undefined);
+    const { u, h } = android(handle({ install }));
+    await u.check();
+    await u.install();
+    await u.restart();
+    expect([u.stage, u.needsInstallPermission, u.installFailed]).toEqual(['ready', true, false]);
+    expect(h.close).not.toHaveBeenCalled();
+    await u.restart();
+    expect(u.needsInstallPermission).toBe(false);
+    expect(install).toHaveBeenCalledTimes(2);
+    u.cancelDownload();
+    expect(u.needsInstallPermission).toBe(false);
+  });
+  test('createUpdateState passes the platform’s update opener', async () => {
+    const h = handle();
+    const openAppUpdate = vi.fn(() => h);
+    const u = createUpdateState(mockPlatform({ kind: 'tauri-android', updateTarget: async () => ({ os: 'android' as const, arch: 'aarch64' }), openAppUpdate }), '0.0.1');
+    vi.stubGlobal('fetch', releases(apkRel()));
+    await u.check();
+    await u.install();
+    expect(openAppUpdate).toHaveBeenCalled();
   });
 });
 

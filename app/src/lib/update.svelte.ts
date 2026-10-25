@@ -8,7 +8,7 @@ import {
   PATCHER_REPO, fetchLatestRelease, isNewer, parseDeployedVersion, pickAsset, releaseNoteItems, type UpdateTarget
 } from '@bh-patcher/core';
 import { base } from '$app/paths';
-import type { InPlaceUpdate, PlatformAdapter, PlatformKind } from './platform/types';
+import { INSTALL_NOT_ALLOWED, type AppUpdateFile, type InPlaceUpdate, type PlatformAdapter, type PlatformKind } from './platform/types';
 
 export type UpdateStage = 'idle' | 'checking' | 'uptodate' | 'available' | 'downloading' | 'ready' | 'installing' | 'error';
 /** Stages of an in-place update that a check must not interrupt. */
@@ -22,8 +22,8 @@ export interface UpdateInfo {
   /** Release page (full notes, every download). */
   page: string;
   /** The file that updates this install; absent when the user has to pick one on the release page. */
-  download?: { name: string; url: string; size: number };
-  /** Desktop: the Tauri updater can install it in place. */
+  download?: AppUpdateFile;
+  /** Desktop: the Tauri updater can install it in place; Android: the app downloads and installs the APK itself. */
   inPlace?: boolean;
 }
 export interface UpdateDeps {
@@ -36,6 +36,8 @@ export interface UpdateDeps {
   reload?(): void;
   target?(): Promise<UpdateTarget>;
   checkInPlace?(): Promise<InPlaceUpdate | null>;
+  /** Android: in-app download + system installer for the release APK. */
+  openAppUpdate?(file: AppUpdateFile, version: string): InPlaceUpdate;
   restart?(): Promise<void>;
   now?(): number;
 }
@@ -64,6 +66,8 @@ export class UpdateState {
   pending = $state(false);
   /** Native: the download or the release page was handed to the system. */
   handedOff = $state(false);
+  /** Android: the installer was not started because Android does not allow this app to install packages yet. */
+  needsInstallPermission = $state(false);
   /** The error stage comes from a failed install, not a failed check. */
   installFailed = $state(false);
   autoCheck = $state(read(K.auto) !== '0');
@@ -105,7 +109,8 @@ export class UpdateState {
   autoStart(): void {
     if (!this.autoCheck) return;
     const known = read(K.latest);
-    if (this.now() - this.lastChecked >= DAY_MS || (known !== null && isNewer(known, this.current))) void this.check();
+    // The Android app looks at every launch (a release is only found when asked; GitHub's limit is far above that).
+    if (this.deps.kind === 'tauri-android' || this.now() - this.lastChecked >= DAY_MS || (known !== null && isNewer(known, this.current))) void this.check();
   }
 
   /** `popup`: the user asked (update icon) and sees the result in the popup; otherwise only a new version opens it. */
@@ -187,7 +192,7 @@ export class UpdateState {
     this.progress = { done: 0, total: null, speed: 0, eta: null };
     let handle: InPlaceUpdate | null = null;
     try {
-      handle = await this.deps.checkInPlace!();
+      handle = this.deps.openAppUpdate ? this.deps.openAppUpdate(info.download!, info.version) : await this.deps.checkInPlace!();
       if (seq !== this.dl) { await handle?.close(); return; }
       if (!handle || handle.version !== info.version) {
         // The updater endpoint serves the latest stable release only (pre-release channel, release still a draft).
@@ -226,6 +231,7 @@ export class UpdateState {
   private dropUpdate(): void {
     this.dl++;
     this.progress = null;
+    this.needsInstallPermission = false;
     void this.handle?.close().catch(() => {});
     this.handle = null;
   }
@@ -235,10 +241,17 @@ export class UpdateState {
     const handle = this.handle;
     if (!handle) return;
     this.stage = 'installing';
+    this.needsInstallPermission = false;
     try {
       await handle.install();
       await this.deps.restart?.();
     } catch (e) {
+      if (message(e) === INSTALL_NOT_ALLOWED) {
+        // Android opened the "install unknown apps" screen: the download stays, the user taps Install again afterwards.
+        this.needsInstallPermission = true;
+        this.stage = 'ready';
+        return;
+      }
       this.handle = null;
       void handle.close().catch(() => {});
       this.stage = 'error';
@@ -268,12 +281,13 @@ export class UpdateState {
     if (!rel || !isNewer(rel.tag_name, this.current)) return null;
     const target = await this.deps.target?.().catch(() => undefined);
     const asset = target ? pickAsset(rel.assets, target) : null;
+    const sums = rel.assets.find((a) => a.name === 'SHA256SUMS.txt');
     return {
       version: rel.tag_name.replace(/^v/, ''),
       notes: releaseNoteItems(rel.body),
       page: rel.html_url,
-      download: asset ? { name: asset.name, url: asset.browser_download_url, size: asset.size } : undefined,
-      inPlace: !!(asset && this.deps.checkInPlace)
+      download: asset ? { name: asset.name, url: asset.browser_download_url, size: asset.size, ...(sums ? { sumsUrl: sums.browser_download_url } : {}) } : undefined,
+      inPlace: !!(asset && (this.deps.checkInPlace || this.deps.openAppUpdate))
     };
   }
 }
@@ -288,6 +302,7 @@ export function createUpdateState(platform: PlatformAdapter, current: string = _
     reload: () => location.reload(),
     target: platform.updateTarget,
     checkInPlace: platform.checkInPlaceUpdate,
+    openAppUpdate: platform.openAppUpdate,
     restart: platform.restart
   });
 }

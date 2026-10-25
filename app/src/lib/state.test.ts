@@ -79,19 +79,41 @@ describe('PatcherState cancel and recovery', () => {
 
 describe('PatcherState misc', () => {
   test('step per stage and run guards', async () => {
-    const engine = mockEngine({ listPatches: vi.fn(() => mockPatchReport('applied')) });
+    const engine = mockEngine();
     const s = new PatcherState(mockPlatform(), engine);
     expect(s.step).toBe(1);
     await s.run(); // nothing loaded
     expect(s.stage).toBe('idle');
     await s.load(picked());
     expect(s.step).toBe(2);
-    await s.run(); // nothing selected
+    s.selected = [];
+    expect(s.resignOnly).toBe(false);
+    await s.run(); // nothing selected, but patches are open: the user has to pick one
     expect(s.stage).toBe('loaded');
     s.stage = 'patching'; expect(s.step).toBe(3);
     s.stage = 'done'; expect(s.step).toBe(4);
     s.stage = 'error'; expect(s.step).toBe(2);
     s.loaded = null; expect(s.step).toBe(1);
+  });
+});
+
+describe('PatcherState: every patch already applied (patch again)', () => {
+  test('nothing to tick, but the APK can still be rebuilt and signed with no patches', async () => {
+    const engine = mockEngine({ listPatches: vi.fn(() => mockPatchReport('applied')) });
+    const s = new PatcherState(mockPlatform(), engine);
+    await s.load(picked());
+    expect([s.selected, s.resignOnly]).toEqual([[], true]);
+    await s.run();
+    expect(s.stage).toBe('done');
+    expect(engine.patchLoaded).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ patchIds: [] }));
+    expect(s.result?.applied).toEqual([]);
+  });
+  test('not offered when nothing is applied (or nothing fits)', async () => {
+    for (const status of ['notApplied', 'incompatible'] as const) {
+      const s = new PatcherState(mockPlatform(), mockEngine({ listPatches: vi.fn(() => [...mockPatchReport(status), ...mockPatchReport('incompatible')]) }));
+      await s.load(picked());
+      expect(s.resignOnly).toBe(false);
+    }
   });
 });
 

@@ -130,8 +130,8 @@
       {#snippet start()}<Button icon="chev-l" onclick={() => s.reset()}>{$t('action.back')}</Button>{/snippet}
       {#snippet end()}
         <span class="hint">{$t('review.note')}</span>
-        <Button variant="primary" size="lg" icon="patch" disabled={count === 0} onclick={() => s.run()}>
-          {count === 0 ? $t('review.ctaNone') : $t('review.cta', { n: count })}
+        <Button variant="primary" size="lg" icon="patch" disabled={count === 0 && !s.resignOnly} onclick={() => s.run()}>
+          {s.resignOnly ? $t('review.ctaResign') : count === 0 ? $t('review.ctaNone') : $t('review.cta', { n: count })}
         </Button>
       {/snippet}
     </ActionBar>

@@ -56,10 +56,13 @@ fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync + 'static {
         commands::read_installed_apk,
         commands::request_uninstall,
         commands::install_apk,
+        commands::update_download,
     ]);
     move |invoke| match invoke.message.command() {
         "can_request_installs" => respond(invoke, commands::can_request_installs),
         "open_install_settings" => respond(invoke, commands::open_install_settings),
+        "update_status" => respond(invoke, commands::update_status),
+        "update_cancel" => respond(invoke, commands::update_cancel),
         _ => generated(invoke),
     }
 }
@@ -105,13 +108,16 @@ mod tests {
     use tauri::{WebviewWindow, WebviewWindowBuilder};
     use tauri_utils::acl::resolved::{Resolved, ResolvedCommand};
 
-    const COMMANDS: [&str; 6] = [
+    const COMMANDS: [&str; 9] = [
         "get_installed_package",
         "read_installed_apk",
         "request_uninstall",
         "install_apk",
         "can_request_installs",
         "open_install_settings",
+        "update_download",
+        "update_status",
+        "update_cancel",
     ];
 
     /// Mock app with the plugin registered and every plugin command allowed for the "main" window
@@ -154,7 +160,7 @@ mod tests {
     fn every_command_rejects_unsupported_on_desktop() {
         let (_app, window) = setup();
         for cmd in COMMANDS {
-            let body = json!({ "packageName": "com.example", "path": "/x.apk" });
+            let body = json!({ "packageName": "com.example", "path": "/x.apk", "url": "https://x", "name": "n.apk", "size": 1 });
             assert_eq!(invoke(&window, cmd, body).unwrap_err(), json!("unsupported"), "{cmd}");
         }
     }

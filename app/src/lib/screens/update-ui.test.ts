@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '$lib/i18n';
 import type { PlatformKind } from '$lib/platform/types';
 import { UpdateState, type UpdateInfo } from '$lib/update.svelte';
@@ -178,6 +178,23 @@ describe('UpdateDialog: in-place update (desktop)', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Restarting now would stop it');
     expect(btn('Restart now')).toBeDisabled();
   });
+  test('android: installing says to confirm; ready says Install, with the permission hint when needed', async () => {
+    dialog(mk('tauri-android', 'installing'));
+    expect(screen.getByRole('dialog', { name: 'Installing 0.2.0' })).toHaveAccessibleDescription('Confirm the update in the Android window.');
+    cleanup();
+    const u = mk('tauri-android', 'ready');
+    dialog(u);
+    expect(screen.getByRole('dialog', { name: 'Update ready' })).toHaveAccessibleDescription(/Tap Install/);
+    expect(screen.getByRole('status')).toHaveTextContent('Tap Install to update.');
+    await fireEvent.click(btn('Install'));
+    expect(u.restart).toHaveBeenCalled();
+    cleanup();
+    const need = mk('tauri-android', 'ready');
+    need.needsInstallPermission = true;
+    dialog(need);
+    expect(screen.getByRole('alert')).toHaveTextContent('allow the Patcher to install apps');
+    expect(btn('Install')).toBeEnabled();
+  });
   test('a failed install says so and offers the website', () => {
     const u = mk('tauri-desktop', 'error');
     u.installFailed = true;
@@ -214,7 +231,7 @@ describe('UpdateButton', () => {
     u.stage = 'installing';
     await vi.waitFor(() => expect(btn('Installing update')).toHaveAttribute('aria-busy', 'true'));
     u.stage = 'ready';
-    await vi.waitFor(() => expect(btn('Update downloaded, restart to finish')).toHaveTextContent('Restart to update'));
+    await vi.waitFor(() => expect(btn('Update ready')).toHaveTextContent('Update ready'));
     expect(container.querySelector('.pip')).not.toBeNull();
   });
   test('the app bar shows it next to the tabs, also while patching', () => {
@@ -278,7 +295,7 @@ describe('Settings → Updates', () => {
     u.stage = 'installing';
     await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Installing…'));
     u.stage = 'ready';
-    await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('0.2.0 is ready — restart to finish'));
+    await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('0.2.0 is ready'));
   });
   test('web: only the automatic switch, with the reload hint', () => {
     section(mk('web', 'idle'));
@@ -313,7 +330,7 @@ describe('title-bar chip', () => {
     await vi.waitFor(() => expect(btn('Installing update… — open the update window')).toBeInTheDocument());
     expect(document.querySelector('.cb')).toBeNull();
     u.stage = 'ready';
-    await vi.waitFor(() => expect(btn('Restart to update — open the update window')).toBeInTheDocument());
+    await vi.waitFor(() => expect(btn('Update ready — open the update window')).toBeInTheDocument());
     u.stage = 'uptodate';
     await vi.waitFor(() => expect(screen.queryByRole('button', { name: /update window/ })).toBeNull());
   });

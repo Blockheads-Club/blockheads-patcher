@@ -36,7 +36,7 @@ function loaderZip(s: ZipSpec = {}): Uint8Array {
   if (s.drop !== 'dex') setEntry(zip, { name: 'classes.dex', data: dex, method: 0 });
   return writeZip(zip);
 }
-const pinOf = (zip: Uint8Array, version = '0.1.0'): ModLoaderPin => ({ version, url: 'https://x/y.zip', sha256: sha256HexSync(zip), size: zip.length });
+const pinOf = (zip: Uint8Array, version = '0.1.0'): ModLoaderPin => ({ version, url: 'https://x/y.zip', sha256: sha256HexSync(zip), size: zip.length, libSha256: '', dexSha256: '' });
 
 type Meta = { name: string; value?: string | number };
 const meta = (m: Meta): BEl => ({
@@ -123,9 +123,16 @@ describe('mod-loader patch', () => {
     expect(metaOf(c, LISTENERS_META)).toBe(`com.apportable.iap.ApportableIAP ${MOD_LOADER_LISTENER}`);
     expect(DexFile.parse(getEntry(c.zip, 'classes3.dex')!.data).findClass(MOD_LOADER_LISTENER_CLASS)).toBeDefined();
     expect(() => modLoader.apply(c)).toThrow(/status: applied/);
-    // without a build at hand an installed loader counts as applied
+    // without a build at hand, the pinned build is the reference: a different installed loader is out of date
     setModLoaderArtifact(null);
-    expect(modLoader.detect(c)).toBe('applied');
+    expect(modLoader.detect(c)).toBe('notApplied');
+    // ... and the pinned build itself counts as applied without loading anything
+    const pin = MOD_LOADER_PIN, saved = { lib: pin.libSha256, dex: pin.dexSha256 };
+    try {
+      pin.libSha256 = sha256HexSync(ELF());
+      pin.dexSha256 = sha256HexSync(loaderDex());
+      expect(modLoader.detect(c)).toBe('applied');
+    } finally { pin.libSha256 = saved.lib; pin.dexSha256 = saved.dex; }
   });
 
   it('updates an older loader in place', () => {

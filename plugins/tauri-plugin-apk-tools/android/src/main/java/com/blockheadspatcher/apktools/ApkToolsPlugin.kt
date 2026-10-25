@@ -33,6 +33,14 @@ class PathArgs {
     var path: String = ""
 }
 
+@InvokeArg
+class UpdateArgs {
+    var url: String = ""
+    var name: String = ""
+    var size: Long = 0
+    var sumsUrl: String? = null
+}
+
 @TauriPlugin
 class ApkToolsPlugin(private val activity: Activity) : Plugin(activity) {
 
@@ -128,6 +136,27 @@ class ApkToolsPlugin(private val activity: Activity) : Plugin(activity) {
         val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${activity.packageName}"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         activity.startActivity(intent)
+        invoke.resolve(JSObject())
+    }
+
+    /** In-app update: starts downloading a release APK into the work dir; progress via update_status. */
+    @Command
+    fun update_download(invoke: Invoke) {
+        val args = invoke.parseArgs(UpdateArgs::class.java)
+        val err = UpdateDownloader.start(workDir, args.url, args.name, args.size, args.sumsUrl)
+        if (err != null) invoke.reject(err) else invoke.resolve(JSObject())
+    }
+
+    @Command
+    fun update_status(invoke: Invoke) {
+        val res = JSObject()
+        UpdateDownloader.status().forEach { (k, v) -> res.put(k, v) }
+        invoke.resolve(res)
+    }
+
+    @Command
+    fun update_cancel(invoke: Invoke) {
+        UpdateDownloader.cancel()
         invoke.resolve(JSObject())
     }
 

@@ -20,7 +20,7 @@
   const fingerprint = $derived(result.certSha256.toUpperCase().match(/../g)!.join(':'));
   const keyName = $derived(keys.keys.find((k) => k.fingerprint === fingerprint)?.name || $t('keys.defaultName'));
   const version = $derived(result.info.versionName ?? '');
-  const lead = $derived($t('result.lead', { n: result.applied.length, version }));
+  const lead = $derived($t(result.applied.length === 0 ? 'result.leadResign' : 'result.lead', { n: result.applied.length, version }));
 
   let note = $state<string | null>(null);
   let error = $state<string | null>(null);

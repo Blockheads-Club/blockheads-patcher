@@ -104,6 +104,18 @@ describe('patch flow', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Patch another game' }));
     await screen.findByRole('heading', { name: 'Choose your game' });
   });
+  test('every fix already applied: the note explains it and "Patch again" rebuilds and signs', async () => {
+    const patchLoaded = vi.fn(async (_a, opts) => ({ bytes: new Uint8Array(3), applied: [...opts.patchIds], skipped: [], info: { versionName: '1.7.4' }, certSha256: 'cc'.repeat(32), suggestedFileName: 'o.apk' }));
+    mount({ listPatches: vi.fn(() => rows('applied')) as never, patchLoaded: patchLoaded as never });
+    await choose();
+    expect(screen.getByText(/already has every fix/)).toBeInTheDocument();
+    const again = screen.getByRole('button', { name: 'Patch again (re-sign)' });
+    expect(again).toBeEnabled();
+    await fireEvent.click(again);
+    await screen.findByRole('heading', { name: 'Your game is fixed!' });
+    expect(patchLoaded).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ patchIds: [] }));
+    expect(screen.getByText('The Blockheads 1.7.4 was rebuilt and signed with your key.')).toBeInTheDocument();
+  });
   test('many fixes label, key change shortcut from review', async () => {
     const two = [...rows(), { ...rows()[0] as object, patch: { ...(rows()[0] as { patch: object }).patch, id: 'fix-system-font-crash', nameKey: 'patch.fix-system-font-crash.name', descriptionKey: 'patch.fix-system-font-crash.description' } }] as never;
     mount({ listPatches: vi.fn(() => two) as never });

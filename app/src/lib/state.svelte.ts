@@ -49,6 +49,12 @@ export class PatcherState {
     private readonly loadModLoader: () => Promise<Uint8Array> = () => fetchModLoader(),
   ) {}
 
+  /**
+   * Every patch that fits is already in the APK (a game patched by this version): nothing to tick, but the user can still
+   * rebuild and sign it with their key ("patch again") to get an installable file.
+   */
+  resignOnly = $derived(this.report.some((r) => r.status === 'applied') && !this.report.some((r) => r.status === 'notApplied'));
+
   /** Wizard step 1..4 for the step indicator. */
   step = $derived(
     this.stage === 'idle' || (this.stage === 'error' && !this.loaded) ? 1 : this.stage === 'loaded' ? 2 : this.stage === 'patching' ? 3 : this.stage === 'done' ? 4 : 2
@@ -107,7 +113,7 @@ export class PatcherState {
 
   async run(): Promise<void> {
     const picked = this.picked, loaded = this.loaded;
-    if (!picked || !loaded || this.selected.length === 0) return;
+    if (!picked || !loaded || (this.selected.length === 0 && !this.resignOnly)) return;
     this.error = null;
     this.runFailed = false;
     this.stage = 'patching';

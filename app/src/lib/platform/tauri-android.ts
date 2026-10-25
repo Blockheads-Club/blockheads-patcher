@@ -1,7 +1,7 @@
 import { appCacheDir, join } from '@tauri-apps/api/path';
 import { mkdir, readFile, remove } from '@tauri-apps/plugin-fs';
 import * as apk from '@bh-patcher/tauri-plugin-apk-tools-api';
-import type { InstalledGameInfo, PickedApk, PlatformAdapter } from './types';
+import { INSTALL_NOT_ALLOWED, type AppUpdateFile, type InPlaceUpdate, type InstalledGameInfo, type PickedApk, type PlatformAdapter } from './types';
 import { createFsPackStore } from './packs-fs';
 import { GAME_PACKAGE, openExternal, pickApkWithDialog, pickPackWithDialog, safeFileName, saveWithDialog, updateTarget, writeFileChunked } from './tauri-common';
 
@@ -10,6 +10,40 @@ async function workDir(): Promise<string> {
   const dir = await join(await appCacheDir(), 'bhp');
   await mkdir(dir, { recursive: true });
   return dir;
+}
+
+const POLL_MS = 250;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * The app update as an InPlaceUpdate: the Kotlin plugin downloads the release APK and verifies size and checksum
+ * (progress is polled), `install()` hands it to the system installer. When Android does not yet allow this app to
+ * install packages, `install()` opens that settings screen and rejects with INSTALL_NOT_ALLOWED.
+ */
+export function openAppUpdate(file: AppUpdateFile, version: string): InPlaceUpdate {
+  let path = '';
+  return {
+    version,
+    async download(onProgress) {
+      await apk.updateDownload(file.url, file.name, file.size, file.sumsUrl);
+      for (;;) {
+        await sleep(POLL_MS);
+        const s = await apk.updateStatus();
+        onProgress({ done: s.received, total: s.total > 0 ? s.total : null });
+        if (s.state === 'done') { path = s.path; return; }
+        if (s.state === 'error') throw new Error(s.error);
+        if (s.state === 'idle') throw new Error('the download was cancelled');
+      }
+    },
+    async install() {
+      if (!(await apk.canRequestInstalls()).allowed) {
+        await apk.openInstallSettings();
+        throw new Error(INSTALL_NOT_ALLOWED);
+      }
+      await apk.installApk(path);
+    },
+    close: () => apk.updateCancel()
+  };
 }
 
 /**
@@ -23,6 +57,7 @@ export function createTauriAndroidAdapter(): PlatformAdapter {
     kind: 'tauri-android',
     openUrl: openExternal,
     updateTarget,
+    openAppUpdate,
     pickApk: pickApkWithDialog,
     packStore: createFsPackStore(),
     pickPack: () => pickPackWithDialog(false),

@@ -10,6 +10,9 @@ Allows all apk-tools commands
 - `allow-install-apk`
 - `allow-can-request-installs`
 - `allow-open-install-settings`
+- `allow-update-download`
+- `allow-update-status`
+- `allow-update-cancel`
 
 ## Permission Table
 
@@ -172,6 +175,84 @@ Enables the request_uninstall command without any pre-configured scope.
 <td>
 
 Denies the request_uninstall command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:allow-update-cancel`
+
+</td>
+<td>
+
+Enables the update_cancel command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:deny-update-cancel`
+
+</td>
+<td>
+
+Denies the update_cancel command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:allow-update-download`
+
+</td>
+<td>
+
+Enables the update_download command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:deny-update-download`
+
+</td>
+<td>
+
+Denies the update_download command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:allow-update-status`
+
+</td>
+<td>
+
+Enables the update_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`apk-tools:deny-update-status`
+
+</td>
+<td>
+
+Denies the update_status command without any pre-configured scope.
 
 </td>
 </tr>

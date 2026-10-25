@@ -14,7 +14,10 @@ const plugin = vi.hoisted(() => ({
   requestUninstall: vi.fn(),
   installApk: vi.fn(),
   canRequestInstalls: vi.fn(),
-  openInstallSettings: vi.fn()
+  openInstallSettings: vi.fn(),
+  updateDownload: vi.fn(),
+  updateStatus: vi.fn(),
+  updateCancel: vi.fn()
 }));
 
 vi.mock('@tauri-apps/plugin-dialog', () => dialog);
@@ -173,6 +176,56 @@ describe('android adapter', () => {
     plugin.openInstallSettings.mockResolvedValueOnce(undefined);
     await a.openInstallSettings!();
     expect(plugin.openInstallSettings).toHaveBeenCalled();
+  });
+  describe('app update (APK download + system installer)', () => {
+    const file = { name: 'blockheads-patcher-0.4.0-android-arm64.apk', url: 'https://github.com/x/dl', size: 100, sumsUrl: 'https://github.com/x/sums' };
+    const status = (over = {}) => ({ state: 'running', received: 0, total: 0, path: '', error: '', ...over });
+
+    it('downloads natively, polls the progress, then installs the verified file', async () => {
+      vi.useFakeTimers();
+      try {
+        const a = createTauriAndroidAdapter();
+        const h = a.openAppUpdate!(file, '0.4.0');
+        expect(h.version).toBe('0.4.0');
+        plugin.updateStatus
+          .mockResolvedValueOnce(status({ received: 10, total: 100 }))
+          .mockResolvedValueOnce(status({ received: 5 }))
+          .mockResolvedValueOnce(status({ state: 'done', received: 100, total: 100, path: '/cache/bhp/updates/a.apk' }));
+        const seen: unknown[] = [];
+        const done = h.download((p) => seen.push(p));
+        await vi.advanceTimersByTimeAsync(1000);
+        await done;
+        expect(plugin.updateDownload).toHaveBeenCalledWith(file.url, file.name, 100, file.sumsUrl);
+        expect(seen).toEqual([{ done: 10, total: 100 }, { done: 5, total: null }, { done: 100, total: 100 }]);
+        plugin.canRequestInstalls.mockResolvedValueOnce({ allowed: true });
+        plugin.installApk.mockResolvedValueOnce({ started: true });
+        await h.install();
+        expect(plugin.installApk).toHaveBeenCalledWith('/cache/bhp/updates/a.apk');
+        await h.close();
+        expect(plugin.updateCancel).toHaveBeenCalled();
+      } finally { vi.useRealTimers(); }
+    });
+    it('a failed or cancelled download rejects', async () => {
+      vi.useFakeTimers();
+      try {
+        const a = createTauriAndroidAdapter();
+        plugin.updateStatus.mockResolvedValueOnce(status({ state: 'error', error: 'checksum mismatch' }));
+        const failed = expect(a.openAppUpdate!(file, '0.4.0').download(() => {})).rejects.toThrow('checksum mismatch');
+        await vi.advanceTimersByTimeAsync(300);
+        await failed;
+        plugin.updateStatus.mockResolvedValueOnce(status({ state: 'idle' }));
+        const cancelled = expect(a.openAppUpdate!(file, '0.4.0').download(() => {})).rejects.toThrow(/cancelled/);
+        await vi.advanceTimersByTimeAsync(300);
+        await cancelled;
+      } finally { vi.useRealTimers(); }
+    });
+    it('without the "install unknown apps" permission it opens that screen and rejects', async () => {
+      const a = createTauriAndroidAdapter();
+      plugin.canRequestInstalls.mockResolvedValueOnce({ allowed: false });
+      await expect(a.openAppUpdate!(file, '0.4.0').install()).rejects.toThrow('permission_denied');
+      expect(plugin.openInstallSettings).toHaveBeenCalled();
+      expect(plugin.installApk).not.toHaveBeenCalled();
+    });
   });
   it('saveOutput falls back to the cache when the dialog throws', async () => {
     const a = createTauriAndroidAdapter();

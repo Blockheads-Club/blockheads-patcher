@@ -46,8 +46,8 @@
       case 'uptodate': return $t('upd.b.uptodate');
       case 'error': return u.installFailed ? $t('upd.b.installFailed') : $t('upd.b.error');
       case 'downloading': return $t('upd.b.downloading');
-      case 'installing': return $t('upd.b.installing');
-      case 'ready': return $t('upd.b.ready');
+      case 'installing': return android ? $t('upd.b.installingAndroid') : $t('upd.b.installing');
+      case 'ready': return android ? $t('upd.b.readyAndroid') : $t('upd.b.ready');
     }
     if (handoff) {
       if (pageOnly) return $t('upd.b.handoffPage');
@@ -101,10 +101,12 @@
       <div class="stp"><span class="si cur"><span class="spin" aria-hidden="true"></span></span><strong>{$t('upd.installingStep')}</strong></div>
       <div class="stp dim"><span class="si"><Icon name="dot" size={16} /></span>{$t('upd.restartStep')}</div>
     {:else if stage === 'ready'}
-      {#if busy}
+      {#if u.needsInstallPermission}
+        <div class="box warn" role="alert"><Icon name="alert" /><span>{$t('upd.allowInstalls')}</span></div>
+      {:else if busy}
         <div class="box warn" role="status"><Icon name="alert" /><span>{$t('upd.busyRestart')}</span></div>
       {:else}
-        <div class="box ok" role="status"><Icon name="check" /><span>{$t('upd.readyLine')}</span></div>
+        <div class="box ok" role="status"><Icon name="check" /><span>{android ? $t('upd.readyLineAndroid') : $t('upd.readyLine')}</span></div>
       {/if}
     {:else if handoff}
       <div class="box ok" role="status"><Icon name="check" /><span>{$t('upd.kept')}</span></div>
@@ -135,7 +137,7 @@
       <Button disabled>{$t('upd.restartNow')}</Button>
     {:else if stage === 'ready'}
       <Button variant="ghost" onclick={close}>{$t('upd.later')}</Button>
-      <Button variant="primary" icon="refresh" disabled={busy} onclick={() => void u.restart()}>{$t('upd.restartNow')}</Button>
+      <Button variant="primary" icon="refresh" disabled={busy} onclick={() => void u.restart()}>{android ? $t('upd.installNow') : $t('upd.restartNow')}</Button>
     {:else if handoff}
       <Button variant="ghost" icon="globe" onclick={() => u.openPage()}>{$t('upd.openPage')}</Button>
       <Button variant="primary" onclick={close}>{$t('upd.ok')}</Button>

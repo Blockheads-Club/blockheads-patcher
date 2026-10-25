@@ -36,3 +36,18 @@ export const openInstallSettings = () => invoke<void>(cmd('open_install_settings
  */
 export const installApk = (path: string) =>
   invoke<{ started: boolean; status?: 'success' | 'pending' }>(cmd('install_apk'), { path });
+
+/** In-app update of the Patcher itself (Android): a release APK is downloaded natively, progress is polled. */
+export interface UpdateDownloadStatus {
+  state: 'idle' | 'running' | 'done' | 'error';
+  received: number;
+  total: number;
+  /** Absolute path of the verified APK once `state` is "done" (pass it to installApk). */
+  path: string;
+  error: string;
+}
+/** `sumsUrl`: the release's SHA256SUMS.txt; the download fails when the file's SHA-256 is not listed there. */
+export const updateDownload = (url: string, name: string, size: number, sumsUrl?: string) =>
+  invoke<void>(cmd('update_download'), { url, name, size, sumsUrl });
+export const updateStatus = () => invoke<UpdateDownloadStatus>(cmd('update_status'), {});
+export const updateCancel = () => invoke<void>(cmd('update_cancel'), {});

@@ -10,6 +10,10 @@ export interface PackStore {
   put(id: string, bytes: Uint8Array): Promise<void>;
   remove(id: string): Promise<void>;
 }
+/** The release file of an app update (Android APK) and where to find its checksum list. */
+export interface AppUpdateFile { name: string; url: string; size: number; sumsUrl?: string }
+/** `install()` rejects with this message when Android does not yet allow this app to install packages. */
+export const INSTALL_NOT_ALLOWED = 'permission_denied';
 /** A signed in-place update found by the Tauri updater (desktop). */
 export interface InPlaceUpdate {
   version: string;
@@ -38,6 +42,11 @@ export interface PlatformAdapter {
   updateTarget?(): Promise<UpdateTarget>;
   /** Desktop: the Tauri updater (configured endpoint: the latest release's latest.json). */
   checkInPlaceUpdate?(): Promise<InPlaceUpdate | null>;
+  /**
+   * Android: downloads the release APK of an app update natively (size and checksum verified) and hands it to the
+   * system installer. Same shape as the desktop updater so the update popup drives both.
+   */
+  openAppUpdate?(file: AppUpdateFile, version: string): InPlaceUpdate;
   /** Desktop: restarts the app (after an in-place update). */
   restart?(): Promise<void>;
   // Android only (undefined elsewhere):
