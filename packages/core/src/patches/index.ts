@@ -1,4 +1,5 @@
 export * from './types';
+export * from './versioning';
 export * from './registry';
 export { fixWelcomePopupDeadlock, ANDROID_THEME_ATTR_ID, THEME_TRANSLUCENT_NO_TITLE_BAR_FULLSCREEN } from './fix-welcome-popup-deadlock';
 export { fixSystemFontCrash, FALLBACK_FONTS, INFO_PLIST } from './fix-system-font-crash';
@@ -37,6 +38,6 @@ export { worldSelectionKeep } from './world-selection-keep';
 export { gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, GAMEPAD_DEADZONE, CURSOR_HIDE_MS } from './gamepad-controls';
 export { AUDIO_SITES, type AudioSites } from './audio-native';
 export {
-  modLoader, parseModLoaderZip, setModLoaderArtifact, modLoaderArtifact, modLoaderFileName, MOD_LOADER_PIN, MOD_LOADER_LIB,
+  modLoader, KNOWN_LOADER_LIBS, parseModLoaderZip, setModLoaderArtifact, modLoaderArtifact, modLoaderFileName, MOD_LOADER_PIN, MOD_LOADER_LIB,
   MOD_LOADER_LIB_PATH, MOD_LOADER_LISTENER, MOD_LOADER_LISTENER_CLASS, MOD_LOADER_PACKAGE, type ModLoaderPin, type ModLoaderArtifact,
 } from './mod-loader';

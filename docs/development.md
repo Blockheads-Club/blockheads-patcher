@@ -14,6 +14,49 @@ Patch pack format: [patch-packs.md](patch-packs.md).
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Module contracts |
 | [`patch-packs.md`](patch-packs.md), `examples/packs` | Patch pack format and an example pack (`bun scripts/build-pack.ts <folder>`) |
 
+## Patch versions
+
+Every patch has an integer `version` (`Patch.version`, default 1) that names the output it writes. **Bump it whenever the
+bytes the patch writes change** (a different value, a different replacement code, another asset); a change that only
+refactors the code or the detection of the same output does not bump it. A bumped patch must stop recognising the old
+output as its own (`detect` returns `applied` only for the current output), and it must either know how to turn the old
+output into the new one or say that it cannot.
+
+What the Patcher stores: before signing, every run writes `assets/blockheads-patcher.json` into the APK, for example
+`{"patcher":"0.3.3","patches":{"fix-system-font-crash":1,"mod-loader":3001},"schema":1}` (sorted keys, no whitespace). It
+names, for each patch whose output the APK holds, the version of that output. `loadApk` reads it into `LoadedApk.record`.
+
+Status, in this order:
+
+1. `detect()` says `applied`: applied (the content shows the current output, whatever the record says).
+2. Otherwise the older version is `patch.installedVersion?.(ctx)` (content evidence) or else the record's entry. When it is
+   below `patch.version`, or `detect()` itself returns `outdated`, the status is `outdated` (the review screen shows
+   "Update: v1 → v2", ticked by default for recommended patches). `fromVersion` is that older version, when known.
+3. Anything else keeps its content status. An APK without a record, and a patch that cannot read its own old output,
+   never get an `outdated` claim: nothing is said without evidence.
+
+Applying an `outdated` patch calls `patch.upgrade(ctx, from)`, which must leave the APK with exactly the current output
+(undo the old output and apply the new one, or edit in place). A patch without `upgrade` cannot be updated in place:
+`listPatches` reports `canUpgrade: false`, the review screen shows "Update needs the original APK" (not tickable) and
+`applyPatches` throws a `PatchError` with code `needsOriginal` instead of skipping or applying twice. Re-patch the
+original game APK to get the new output. Patch factories (`makeBooleanFlagPatch`, `makeMethodRewritePatch`,
+`makeTranslucentActivityPatch`, `makeNativePatch`) take `version`, `versionLabel`, `installedVersion` and `upgrade` in
+their spec.
+
+To bump a patch: raise `version`, change `detect` so it no longer accepts the old bytes, add `upgrade` if the old
+output can be rewritten (and `installedVersion` if the old output is recognisable without a record), and add a test that
+patches with the old version, lists with the new one (`outdated`, `fromVersion`), upgrades, and checks the record and
+`applied`. The record is rebuilt after every run: patches whose current output is in the APK are written at their
+current version.
+
+Which patches update in place today: only the mod loader (its version is the loader build, `major.minor.patch` as
+`major * 1_000_000 + minor * 1_000 + patch`, from `MOD_LOADER_PIN` or the build set with `setModLoaderArtifact`; an
+older `libbhmodloader.so` is recognised by its hash in `KNOWN_LOADER_LIBS` or by the record; `upgrade` replaces the
+library and the loader dex). Every other built-in patch is at version 1 and has no `upgrade`, so the first bump of
+one of them either brings an `upgrade` or needs the original game APK (the native-library and dex-rewrite patches
+check the original bytes of the code they replace, so they will normally need the original). Pack patches carry the
+pack's `major.minor.patch` as their version and cannot be updated in place.
+
 ## Build
 
 Prerequisites: [bun](https://bun.sh), Rust stable (rustup). `bun install` at the repo root.

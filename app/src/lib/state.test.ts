@@ -276,3 +276,39 @@ describe('PatcherState run, log and navigation', () => {
     expect(release).toHaveBeenCalled();
   });
 });
+
+describe('PatcherState: outdated patches', () => {
+  const rowOf = (id: string, status: string, extra: object = {}, patch: object = {}) =>
+    ({ patch: { id, version: 2, nameKey: `n.${id}`, descriptionKey: `d.${id}`, appliesTo: {}, ...patch }, status, ...extra }) as never;
+  const report = () => [
+    rowOf('fresh', 'notApplied'),
+    rowOf('upd', 'outdated', { fromVersion: 1, canUpgrade: true }),
+    rowOf('updOpt', 'outdated', { canUpgrade: true }, { optIn: true }),
+    rowOf('stuck', 'outdated', { fromVersion: 1, canUpgrade: false }),
+    rowOf('done', 'applied'),
+  ];
+
+  test('an update the patch can do in place is selected like a new fix; one that needs the original APK is not', async () => {
+    const s = new PatcherState(mockPlatform(), mockEngine({ listPatches: vi.fn(() => report()) }));
+    await s.load(picked());
+    expect(s.selected).toEqual(['fresh', 'upd']);
+    expect(s.resignOnly).toBe(false);
+  });
+
+  test('re-sign is offered when only updates that cannot be done in place are left', async () => {
+    const s = new PatcherState(mockPlatform(), mockEngine({ listPatches: vi.fn(() => [rowOf('stuck', 'outdated', { canUpgrade: false }), rowOf('done', 'applied')]) }));
+    await s.load(picked());
+    expect([s.selected, s.resignOnly]).toEqual([[], true]);
+  });
+
+  test('refresh keeps selected updates and drops what is no longer open', async () => {
+    let rows = report();
+    const engine = mockEngine({ listPatches: vi.fn(() => rows), reload: vi.fn(async (a: never) => a) });
+    const s = new PatcherState(mockPlatform(), engine);
+    await s.load(picked());
+    s.selected = ['fresh', 'upd', 'updOpt'];
+    rows = [rowOf('upd', 'outdated', { fromVersion: 1, canUpgrade: true }), rowOf('fresh', 'applied'), rowOf('updOpt', 'outdated', { canUpgrade: false })];
+    await s.refresh();
+    expect(s.selected).toEqual(['upd']);
+  });
+});

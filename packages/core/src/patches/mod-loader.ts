@@ -5,6 +5,7 @@ import { getEntry, peekData, readZip, setEntry, type ZipArchive } from '../zip';
 import { openDexSet } from './dex-support';
 import { BLOCKHEADS_PACKAGE } from './manifest-flags';
 import { PatchError, type Patch, type PatchContext, type PatchStatus } from './types';
+import { semverToVersion, versionToSemver } from './versioning';
 
 /**
  * The Blockheads Club mod loader (mod-sdk `crates/bhmod-android`): `libbhmodloader.so` (armeabi-v7a) plus its Java
@@ -31,6 +32,15 @@ export const MOD_LOADER_PIN: ModLoaderPin = {
   size: 12350316,
   libSha256: '0ae8b8a293f0d8b96e18100878a8b2f515042973d47b8e4434a8ad5d85dec662',
   dexSha256: '1e5cf29a1666e84513eca492f750016b510ef144cec8c4dfce782b717e369a39',
+};
+
+/**
+ * `libbhmodloader.so` hashes of earlier loader builds the Patcher shipped, by version. They let an APK without a
+ * record say which loader it carries ("Update: 0.3.0 to 0.3.1"); a build that is not listed still counts as older.
+ */
+export const KNOWN_LOADER_LIBS: Readonly<Record<string, string>> = {
+  '2083a5a1134dcacaff5c555de6f9e72817a48b6a414b643f503eab08d2499a6e': '0.3.0',
+  [MOD_LOADER_PIN.libSha256]: MOD_LOADER_PIN.version,
 };
 
 /** File name of the pinned zip (app static assets serve it under `mod-loader/`). */
@@ -83,7 +93,8 @@ export function parseModLoaderZip(zipBytes: Uint8Array, pin: ModLoaderPin | null
     if (e instanceof PatchError) throw e;
     return fail('loader.json is not JSON');
   }
-  if (typeof meta.version !== 'string' || meta.listener !== MOD_LOADER_LISTENER || meta.libName !== MOD_LOADER_LIB) fail('loader.json does not describe this loader');
+  if (typeof meta.version !== 'string' || semverToVersion(meta.version) === undefined) fail('loader.json has no major.minor.patch version');
+  if (meta.listener !== MOD_LOADER_LISTENER || meta.libName !== MOD_LOADER_LIB) fail('loader.json does not describe this loader');
   if (pin && meta.version !== pin.version) fail(`loader.json says ${String(meta.version)}, the pin says ${pin.version}`);
   const lib = file('libbhmodloader.so'), dex = file('classes.dex');
   for (const [name, bytes, m] of [['libbhmodloader.so', lib, meta.lib], ['classes.dex', dex, meta.dex]] as const) {
@@ -156,7 +167,27 @@ function detect(ctx: PatchContext): PatchStatus {
   const s = state(ctx);
   if (!s) return 'incompatible';
   if (s.dexName && !s.dexOwned) return 'incompatible';
-  return Object.values(s.done).every(Boolean) ? 'applied' : 'notApplied';
+  if (Object.values(s.done).every(Boolean)) return 'applied';
+  // a loader file of another build is in the APK: that is an older (or different) install the patch replaces
+  return (s.lib && !s.done.lib) || (s.dexName && !s.done.dex) ? 'outdated' : 'notApplied';
+}
+
+/** Writes the loader build into the APK: files not yet at that build are (re)written, manifest entries only added once. */
+function install(ctx: PatchContext, want: PatchStatus): void {
+  const a = current ?? fail('the loader files are not loaded');
+  const status = detect(ctx);
+  if (status !== want) throw new PatchError(`mod-loader cannot be applied (status: ${status})`, 'cannotApply', { status });
+  const { libs, listeners, dexName, done } = state(ctx)!;
+  if (!done.lib) setEntry(ctx.zip, { name: MOD_LOADER_LIB_PATH, data: a.lib.slice(), method: 0 });
+  if (!done.libMeta) setAttrString(ctx.manifest, libs, [...words(libs), MOD_LOADER_LIB].join(' '));
+  if (!done.listenerMeta) setAttrString(ctx.manifest, listeners, [...words(listeners), MOD_LOADER_LISTENER].join(' '));
+  if (!done.libMeta || !done.listenerMeta) ctx.markManifestDirty();
+  if (!done.dex) {
+    const set = openDexSet(ctx)!;
+    if (!dexName && set.names.some((n, i) => n !== DEX_NAME(i))) throw new PatchError('mod-loader: the APK dex files are not numbered consecutively', 'cannotApply');
+    setEntry(ctx.zip, { name: dexName ?? DEX_NAME(set.names.length), data: a.dex.slice() });
+  }
+  ctx.log(`mod-loader: ${a.version} (${MOD_LOADER_LIB_PATH}, ${MOD_LOADER_LISTENER})`);
 }
 
 /**
@@ -164,29 +195,28 @@ function detect(ctx: PatchContext): PatchStatus {
  * loads with `extractNativeLibs=false`), appends `bhmodloader` to the manifest meta-data `android.app.libs` (loaded
  * after libApplication on the game's main thread) and `com.blockheadsclub.modloader.Listener` to
  * `apportable.app.lifecycle_listeners`, and adds the loader's Java UI as the next `classesN.dex`. No game code is
- * changed: the loader hooks Objective-C methods at run time. Applying it again with a newer build replaces both files.
+ * changed: the loader hooks Objective-C methods at run time.
+ *
+ * The patch version is the loader build (`MOD_LOADER_PIN.version`, or the build set with setModLoaderArtifact) as one
+ * integer, see semverToVersion. An older loader in the APK is `outdated`; `upgrade` replaces both files in place.
  */
 export const modLoader: Patch = {
   id: 'mod-loader',
-  version: 1,
+  get version(): number { return semverToVersion((current ?? MOD_LOADER_PIN).version)!; },
+  versionLabel: versionToSemver,
   nameKey: 'patch.mod-loader.name',
   descriptionKey: 'patch.mod-loader.description',
   appliesTo: { packageName: BLOCKHEADS_PACKAGE, versionNames: ['1.7.4', '1.7.5', '1.7.6'] },
   detect,
+  installedVersion(ctx) {
+    const lib = getEntry(ctx.zip, MOD_LOADER_LIB_PATH);
+    const v = lib ? KNOWN_LOADER_LIBS[sha256HexSync(peekData(lib))] : undefined;
+    return v === undefined ? undefined : semverToVersion(v);
+  },
   apply(ctx) {
-    const a = current ?? fail('the loader files are not loaded');
-    const status = detect(ctx);
-    if (status !== 'notApplied') throw new PatchError(`mod-loader cannot be applied (status: ${status})`, 'cannotApply', { status });
-    const { libs, listeners, dexName, done } = state(ctx)!;
-    if (!done.lib) setEntry(ctx.zip, { name: MOD_LOADER_LIB_PATH, data: a.lib.slice(), method: 0 });
-    if (!done.libMeta) setAttrString(ctx.manifest, libs, [...words(libs), MOD_LOADER_LIB].join(' '));
-    if (!done.listenerMeta) setAttrString(ctx.manifest, listeners, [...words(listeners), MOD_LOADER_LISTENER].join(' '));
-    if (!done.libMeta || !done.listenerMeta) ctx.markManifestDirty();
-    if (!done.dex) {
-      const set = openDexSet(ctx)!;
-      if (!dexName && set.names.some((n, i) => n !== DEX_NAME(i))) throw new PatchError('mod-loader: the APK dex files are not numbered consecutively', 'cannotApply');
-      setEntry(ctx.zip, { name: dexName ?? DEX_NAME(set.names.length), data: a.dex.slice() });
-    }
-    ctx.log(`mod-loader: ${a.version} (${MOD_LOADER_LIB_PATH}, ${MOD_LOADER_LISTENER})`);
+    install(ctx, 'notApplied');
+  },
+  upgrade(ctx) {
+    install(ctx, 'outdated');
   },
 };

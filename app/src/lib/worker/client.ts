@@ -113,7 +113,7 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
     opts.signal?.addEventListener('abort', onAbort, { once: true });
     try {
       const r = (await send({ t: 'patch', id, handle: h.handle, patchIds: opts.patchIds, identity }, [], opts.onProgress)) as Extract<Response, { t: 'patched' }>;
-      return { bytes: r.bytes, applied: r.applied, skipped: r.skipped, info: r.info, certSha256: r.certSha256, suggestedFileName: r.suggestedFileName };
+      return { bytes: r.bytes, applied: r.applied, upgraded: r.upgraded, skipped: r.skipped, info: r.info, certSha256: r.certSha256, suggestedFileName: r.suggestedFileName };
     } finally {
       opts.signal?.removeEventListener('abort', onAbort);
     }
@@ -133,6 +133,8 @@ export function createWorkerEngine(spawn: () => WorkerLike, keystore: Keystore =
         const out: ApplicableReport[number] = { patch, status: row.status };
         if (row.reason !== undefined) out.reason = row.reason;
         if (row.reasonCode !== undefined) out.reasonCode = row.reasonCode;
+        if (row.fromVersion !== undefined) out.fromVersion = row.fromVersion;
+        if (row.canUpgrade !== undefined) out.canUpgrade = row.canUpgrade;
         return out;
       });
     },

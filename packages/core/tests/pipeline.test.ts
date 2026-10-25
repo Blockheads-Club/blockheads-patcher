@@ -210,7 +210,7 @@ describe('listPatches / applyPatches', () => {
     const b = stub('b', { packageName: BLOCKHEADS }, 'applied');
     const c = stub('c', { packageName: 'zzz' });
     const out = applyPatches(apk, ['a', 'b', 'c'], createRegistry([a, b, c]));
-    expect(out).toEqual({ applied: ['a'], skipped: [{ id: 'b', status: 'applied' }, { id: 'c', status: 'incompatible' }] });
+    expect(out).toEqual({ applied: ['a'], upgraded: [], skipped: [{ id: 'b', status: 'applied' }, { id: 'c', status: 'incompatible' }] });
     expect([a.applied, b.applied, c.applied]).toEqual([1, 0, 0]);
   });
 

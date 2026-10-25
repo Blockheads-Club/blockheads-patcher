@@ -14,10 +14,11 @@ vi.mock('@bh-patcher/core', async (orig) => {
       return { zip: {}, manifest: {}, info: { packageName: 'p', sha256: 's' } };
     }),
     listPatches: vi.fn(() => {
-      const [a, b] = real.defaultRegistry.list();
+      const [a, b, c] = real.defaultRegistry.list();
       return [
         { patch: a!, status: 'notApplied' },
-        { patch: b!, status: 'incompatible', reason: 'nope', reasonCode: { code: 'wrongPackage', params: { actual: 'x', expected: 'y' } } }
+        { patch: b!, status: 'incompatible', reason: 'nope', reasonCode: { code: 'wrongPackage', params: { actual: 'x', expected: 'y' } } },
+        { patch: c!, status: 'outdated', fromVersion: 1, canUpgrade: false }
       ];
     }),
     patchLoadedApk: vi.fn(async (_apk: unknown, opts: { onProgress?: (s: string, f: number) => void; signal?: AbortSignal }) => {
@@ -81,6 +82,9 @@ describe('worker engine', () => {
     expect(report[0]!.status).toBe('notApplied');
     expect(report[0]!.reason).toBeUndefined();
     expect(report[1]).toMatchObject({ status: 'incompatible', reason: 'nope', reasonCode: { code: 'wrongPackage' } });
+    expect(report[1]).not.toHaveProperty('fromVersion');
+    expect(report[0]).not.toHaveProperty('canUpgrade');
+    expect(report[2]).toMatchObject({ status: 'outdated', fromVersion: 1, canUpgrade: false });
   });
 
   test('transfers exact buffers and copies views / shared buffers', async () => {
@@ -123,7 +127,7 @@ describe('worker engine', () => {
     await expect(engine.patchLoaded(apk, { patchIds: ['a'] })).rejects.toThrow('boom');
     core.patchMode = 'ok';
     expect(await engine.reload!(apk)).toBe(apk);
-    expect(engine.listPatches(apk)).toHaveLength(2);
+    expect(engine.listPatches(apk)).toHaveLength(3);
     await expect(engine.patchLoaded(apk, { patchIds: ['a'] })).resolves.toBeTruthy();
   });
 

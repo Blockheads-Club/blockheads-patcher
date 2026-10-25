@@ -1,12 +1,12 @@
 import { ANDROID_NS, ValueType, addAttr, findElements, getAttr, setAttrValue, type AxmlElement } from '../axml';
-import { PatchError, type Patch, type PatchContext, type PatchCredits, type PatchStatus } from './types';
+import { PatchError, applyVersioning, type Patch, type PatchContext, type PatchCredits, type PatchStatus, type PatchVersioning } from './types';
 
 export const ANDROID_THEME_ATTR_ID = 0x01010000;
 const ANDROID_NAME_ATTR_ID = 0x01010003;
 /** @android:style/Theme.Translucent.NoTitleBar.Fullscreen */
 export const THEME_TRANSLUCENT_NO_TITLE_BAR_FULLSCREEN = 0x01030011;
 
-export interface TranslucentActivitySpec {
+export interface TranslucentActivitySpec extends PatchVersioning {
   id: string;
   /** Fully qualified class name of the activity to make translucent. */
   activity: string;
@@ -39,7 +39,7 @@ export function makeTranslucentActivityPatch(spec: TranslucentActivitySpec): Pat
     if (theme && theme.valueType === ValueType.Reference && theme.data === THEME_TRANSLUCENT_NO_TITLE_BAR_FULLSCREEN) return 'applied';
     return 'notApplied';
   };
-  return {
+  return applyVersioning({
     id: spec.id,
     version: 1,
     nameKey: `patch.${spec.id}.name`,
@@ -62,5 +62,5 @@ export function makeTranslucentActivityPatch(spec: TranslucentActivitySpec): Pat
       ctx.markManifestDirty();
       ctx.log(spec.logMessage);
     },
-  };
+  }, spec);
 }

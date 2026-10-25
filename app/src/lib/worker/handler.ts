@@ -19,6 +19,8 @@ const rowsOf = (apk: LoadedApk, registry: PatchRegistry): ReportRow[] =>
     const row: ReportRow = { id: r.patch.id, status: r.status };
     if (r.reason !== undefined) row.reason = r.reason;
     if (r.reasonCode !== undefined) row.reasonCode = r.reasonCode;
+    if (r.fromVersion !== undefined) row.fromVersion = r.fromVersion;
+    if (r.canUpgrade !== undefined) row.canUpgrade = r.canUpgrade;
     return row;
   });
 
@@ -81,7 +83,7 @@ export function createHandler(post: (msg: Response, transfer?: Transferable[]) =
       });
       held.delete(req.handle); // the archive was consumed; the UI drops its handle after a successful patch
       const out = r.bytes.byteLength === r.bytes.buffer.byteLength ? r.bytes : r.bytes.slice();
-      post({ t: 'patched', id: req.id, bytes: out, applied: r.applied, skipped: r.skipped, info: r.info, certSha256: r.certSha256, suggestedFileName: r.suggestedFileName }, [out.buffer]);
+      post({ t: 'patched', id: req.id, bytes: out, applied: r.applied, upgraded: r.upgraded, skipped: r.skipped, info: r.info, certSha256: r.certSha256, suggestedFileName: r.suggestedFileName }, [out.buffer]);
     } catch (e) {
       h.dirty = true; // the archive may be half-patched: it is re-parsed once, by the next reload or patch
       throw e;

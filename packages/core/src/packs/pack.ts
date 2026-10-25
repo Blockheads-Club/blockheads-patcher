@@ -1,3 +1,4 @@
+import { semverToVersion, versionToSemver } from '../patches/versioning';
 import { sha256HexSync } from '../elf/sha256';
 import { defaultRegistry, createRegistry } from '../patches/registry';
 import { PatchError, type ApkInfo, type Patch, type PatchAppliesTo, type PatchContext, type PatchRegistry, type PatchStatus, type PatchTexts } from '../patches/types';
@@ -155,7 +156,7 @@ function buildPatch(m: PackManifest, p: PackManifest['patches'][number], ops: Co
     return states.every((s) => s.s === 'done') ? 'applied' : 'notApplied';
   };
   return {
-    id, version: 1,
+    id, version: semverToVersion(m.version)!, versionLabel: versionToSemver,
     nameKey: `patch.${id}.name`, descriptionKey: `patch.${id}.description`,
     appliesTo: toAppliesTo(applies), optIn: true, texts: texts(p),
     source: { kind: 'pack', packId: m.id, packName: m.name.en, packVersion: m.version },

@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MemoryKeystore, generateIdentity, listPatches, loadApk, parseModLoaderZip, patchApk, setModLoaderArtifact } from '../src';
+import {
+  MemoryKeystore, RECORD_PATH, createRegistry, defaultRegistry, generateIdentity, listPatches, loadApk, parseModLoaderZip, patchApk, readRecord, readZip, semverToVersion, setModLoaderArtifact,
+} from '../src';
+import { removeEntry, writeZip } from '../src/zip';
 import { REAL_APKS, haveApk } from './helpers';
 
 // A game patched by an earlier Patcher (loader 0.3.0, no fix-surface-wait-deadlock) must offer the newer patches
@@ -11,7 +14,7 @@ const loaderZip = (v: string) => new Uint8Array(readFileSync(join(__dirname, '..
 afterEach(() => setModLoaderArtifact(null));
 
 describe.skipIf(!haveApk(path))('re-patching an already patched real game', () => {
-  it('older patched: new patches and the newer loader are notApplied; current patched: everything applied', async () => {
+  it('older patched: new patches and the older loader are open (outdated); current patched: everything applied', async () => {
     const ks = new MemoryKeystore();
     await ks.set(await generateIdentity());
     const input = new Uint8Array(readFileSync(path));
@@ -26,17 +29,32 @@ describe.skipIf(!haveApk(path))('re-patching an already patched real game', () =
     // the app lists patches before it has loaded any loader build
     setModLoaderArtifact(null);
     const oldReport = listPatches(await loadApk(old.bytes));
-    const open = (r: typeof oldReport) => r.filter((x) => x.status === 'notApplied').map((x) => x.patch.id);
+    const open = (r: typeof oldReport) => r.filter((x) => x.status === 'notApplied' || x.status === 'outdated').map((x) => x.patch.id);
     expect(open(oldReport)).toContain('fix-surface-wait-deadlock');
-    expect(open(oldReport)).toContain('mod-loader');
+    // the older loader is outdated (not missing), and the record says which build it was
+    const v030 = semverToVersion('0.3.0')!;
+    expect(readRecord(readZip(old.bytes))?.patches['mod-loader']).toBe(v030);
+    expect(oldReport.find((x) => x.patch.id === 'mod-loader')).toMatchObject({ status: 'outdated', fromVersion: v030, canUpgrade: true });
+    // an APK without a record: the loader's own hash still names the build
+    const bare = readZip(old.bytes);
+    removeEntry(bare, RECORD_PATH);
+    const bareRow = listPatches(await loadApk(writeZip(bare))).find((x) => x.patch.id === 'mod-loader');
+    expect(bareRow).toMatchObject({ status: 'outdated', fromVersion: v030, canUpgrade: true });
 
     // the current Patcher
     setModLoaderArtifact(parseModLoaderZip(loaderZip('0.3.1')));
     const cur = await patchApk(old.bytes, { patchIds: open(oldReport), keystore: ks });
     expect(cur.skipped).toEqual([]);
+    expect(cur.upgraded).toEqual(['mod-loader']);
+    expect(readRecord(readZip(cur.bytes))?.patches['mod-loader']).toBe(semverToVersion('0.3.1'));
     setModLoaderArtifact(null);
     const curReport = listPatches(await loadApk(cur.bytes));
     expect(open(curReport).filter((i) => !curReport.find((r) => r.patch.id === i)!.patch.optIn)).toEqual([]);
+
+    // a later Patcher bumps a patch whose output changed: the record names the old version, the patch cannot update in place
+    const old1 = defaultRegistry.get('fix-surface-wait-deadlock')!;
+    const bumped = createRegistry([{ ...old1, version: old1.version + 1, detect: () => 'incompatible' }]);
+    expect(listPatches(await loadApk(cur.bytes), bumped)[0]).toMatchObject({ status: 'outdated', fromVersion: old1.version, canUpgrade: false });
 
     // nothing left to apply: re-signing still gives an installable APK, signed with the same key
     const again = await patchApk(cur.bytes, { patchIds: [], keystore: ks });

@@ -9,7 +9,11 @@ export interface ApkInfo {
   /** Hex SHA-256 of the input file. */
   sha256: string;
 }
-export type PatchStatus = 'applied' | 'notApplied' | 'incompatible';
+/**
+ * `outdated`: an older output of this patch is in the APK (its version is below the patch's current one). Applying the
+ * patch then runs its `upgrade` hook; a patch without one cannot be updated in place (it needs the original game APK).
+ */
+export type PatchStatus = 'applied' | 'notApplied' | 'incompatible' | 'outdated';
 export interface PatchAppliesTo {
   packageName: string;
   versionCode?: { min?: number; max?: number };
@@ -46,8 +50,20 @@ export interface PatchSource {
   packName: string;
   packVersion: string;
 }
-export interface Patch {
+/** Optional version behaviour a patch (or a patch factory's spec) can add. */
+export interface PatchVersioning {
+  /** Current output version (positive integer; default 1). Bump it whenever the bytes the patch writes change. */
+  version?: number;
+  /** Text for a version number in the UI (default `v<n>`). */
+  versionLabel?(v: number): string;
+  /** Content evidence of an older output: the version found in the APK, for APKs without a record. Only called when detect() is not `applied`. */
+  installedVersion?(ctx: PatchContext): number | undefined;
+  /** Turns the older output (version `from`, when known) into the current one. Without it the patch cannot be updated in place. */
+  upgrade?(ctx: PatchContext, from: number | undefined): void;
+}
+export interface Patch extends Omit<PatchVersioning, 'version'> {
   id: string;
+  /** Current output version, a positive integer. Bump it whenever the bytes the patch writes change (docs/development.md). */
   version: number;
   nameKey: string;
   descriptionKey: string;
@@ -65,8 +81,16 @@ export interface Patch {
   /** Throws PatchError if detect() !== 'notApplied'. */
   apply(ctx: PatchContext): void;
 }
+/** Copies the optional version behaviour of a spec onto a patch built by a factory. */
+export function applyVersioning(patch: Patch, v: PatchVersioning): Patch {
+  if (v.version !== undefined) patch.version = v.version;
+  if (v.versionLabel) patch.versionLabel = v.versionLabel;
+  if (v.installedVersion) patch.installedVersion = v.installedVersion;
+  if (v.upgrade) patch.upgrade = v.upgrade;
+  return patch;
+}
 /** Stable machine-readable error codes so UIs can show translated messages. */
-export type PatchErrorCode = 'notApk' | 'noManifest' | 'unknownPatch' | 'cannotApply' | 'duplicatePatch' | 'modLoaderUnavailable' | 'generic';
+export type PatchErrorCode = 'notApk' | 'noManifest' | 'unknownPatch' | 'cannotApply' | 'duplicatePatch' | 'modLoaderUnavailable' | 'needsOriginal' | 'generic';
 export class PatchError extends Error {
   /** `params.message` carries the untranslated technical detail. */
   readonly params: Record<string, string | number>;

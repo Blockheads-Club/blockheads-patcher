@@ -211,7 +211,7 @@ describe('pack operations', () => {
     const a = await apk();
     const r = run(a, [p], [PID]);
     expect(r.status[PID]).toBe('notApplied');
-    expect(r.result).toEqual({ applied: [PID], skipped: [] });
+    expect(r.result).toEqual({ applied: [PID], upgraded: [], skipped: [] });
     expect(r.after[PID]).toBe('applied');
     expect(a.manifestDirty).toBe(true);
     const app = application(a), act = webview(a);
@@ -401,7 +401,7 @@ describe('pack operations', () => {
     ], { 'a.dex': helloDex() });
     const a = await apk([{ name: 'classes.dex', data: gameDex() }]);
     const r = run(a, [p], ['fix-config-change-crash', PID]);
-    expect(r.result).toEqual({ applied: ['fix-config-change-crash', PID], skipped: [] });
+    expect(r.result).toEqual({ applied: ['fix-config-change-crash', PID], upgraded: [], skipped: [] });
     expect(r.after[PID]).toBe('applied');
     expect(fixConfigChangeCrash.detect(ctxOf(a))).toBe('applied');
     for (const n of ['classes.dex', 'classes2.dex']) expect(validateDex(getEntry(a.zip, n)!.data)).toEqual([]);

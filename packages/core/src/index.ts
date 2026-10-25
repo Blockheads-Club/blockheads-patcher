@@ -14,3 +14,4 @@ export * from './arsc';
 export * from './image';
 export * from './packs';
 export * from './update';
+export * from './record';

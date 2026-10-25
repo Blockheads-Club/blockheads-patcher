@@ -1,5 +1,5 @@
 import { ANDROID_NS, ValueType, addAttr, findElements, getAttr, setAttrValue, type AxmlElement } from '../axml';
-import { PatchError, type Patch, type PatchContext, type PatchCredits, type PatchStatus } from './types';
+import { PatchError, applyVersioning, type Patch, type PatchContext, type PatchCredits, type PatchStatus, type PatchVersioning } from './types';
 
 export const BLOCKHEADS_PACKAGE = 'com.noodlecake.blockheads';
 export const MAIN_ACTIVITY = 'com.apportable.activity.VerdeActivity';
@@ -40,7 +40,7 @@ export function writeBool(ctx: PatchContext, el: AxmlElement, name: string, id: 
   else addAttr(ctx.manifest, el, { nsUri: ANDROID_NS, name, resourceId: id, rawValue: null, valueType: ValueType.IntBoolean, data });
 }
 
-export interface BooleanFlagSpec {
+export interface BooleanFlagSpec extends PatchVersioning {
   id: string;
   /** `application` or the class name of an activity. */
   target: 'application' | { activity: string };
@@ -61,7 +61,7 @@ export function makeBooleanFlagPatch(spec: BooleanFlagSpec): Patch {
     if (!el) return 'incompatible';
     return readBool(el, spec.attrName, spec.attrId) === spec.value ? 'applied' : 'notApplied';
   };
-  const patch: Patch = {
+  const patch: Patch = applyVersioning({
     id: spec.id,
     version: 1,
     nameKey: `patch.${spec.id}.name`,
@@ -75,7 +75,7 @@ export function makeBooleanFlagPatch(spec: BooleanFlagSpec): Patch {
       ctx.markManifestDirty();
       ctx.log(`${spec.id}: android:${spec.attrName}=${spec.value}`);
     },
-  };
+  }, spec);
   if (spec.credits) patch.credits = spec.credits;
   if (spec.optIn) patch.optIn = true;
   return patch;

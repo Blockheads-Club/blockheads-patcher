@@ -1,5 +1,5 @@
 import { sha256HexSync } from '../elf/sha256';
-import { PatchError, type Patch, type PatchContext, type PatchCredits, type PatchStatus } from '../patches/types';
+import { PatchError, applyVersioning, type Patch, type PatchContext, type PatchCredits, type PatchStatus, type PatchVersioning } from '../patches/types';
 import { getEntry, setEntry, type ZipArchive } from '../zip';
 import {
   ARM_NOP, COND_AL, THUMB_NOP, decodeArmBranch, decodeThumbBranch, encodeArmB, encodeArmBlxImm, encodeThumbBNarrow, encodeThumbBl,
@@ -74,7 +74,7 @@ export interface NativePatchVersion {
   libSha256: string;
   edits: NativeEdit[];
 }
-export interface NativePatchSpec {
+export interface NativePatchSpec extends PatchVersioning {
   id: string;
   packageName: string;
   libPath: string;
@@ -239,7 +239,7 @@ export function makeNativePatch(spec: NativePatchSpec): Patch {
     if (states.every((s) => s === 'original') && baselineSha(ctx.zip, spec.libPath, entry.data) === ver.libSha256) return 'notApplied';
     return 'incompatible';
   };
-  const patch: Patch = {
+  const patch: Patch = applyVersioning({
     id: spec.id,
     version: 1,
     nameKey: `patch.${spec.id}.name`,
@@ -259,7 +259,7 @@ export function makeNativePatch(spec: NativePatchSpec): Patch {
       setEntry(ctx.zip, { name: spec.libPath, data: img.data });
       ctx.log(`${spec.id}: patched ${spec.libPath}`);
     },
-  };
+  }, spec);
   if (spec.credits) patch.credits = spec.credits;
   if (spec.optIn) patch.optIn = true;
   return patch;

@@ -14,6 +14,8 @@ export interface Unsupported {
 
 const isCancelled = (e: unknown): boolean => e instanceof Error && e.name === 'CancelledError';
 const tick = () => new Promise<void>((r) => setTimeout(r, 0));
+/** A patch the user can tick: not in the APK yet, or an older version of it that the patch can update in place. */
+export const isOpen = (r: ApplicableReport[number]): boolean => r.status === 'notApplied' || (r.status === 'outdated' && r.canUpgrade === true);
 const errorText = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 export class PatcherState {
@@ -53,7 +55,7 @@ export class PatcherState {
    * Every patch that fits is already in the APK (a game patched by this version): nothing to tick, but the user can still
    * rebuild and sign it with their key ("patch again") to get an installable file.
    */
-  resignOnly = $derived(this.report.some((r) => r.status === 'applied') && !this.report.some((r) => r.status === 'notApplied'));
+  resignOnly = $derived(this.report.some((r) => r.status === 'applied') && !this.report.some(isOpen));
 
   /** Wizard step 1..4 for the step indicator. */
   step = $derived(
@@ -107,7 +109,7 @@ export class PatcherState {
     this.fileSize = size;
     this.loaded = loaded;
     this.report = report;
-    this.selected = report.filter((r) => r.status === 'notApplied' && !r.patch.optIn).map((r) => r.patch.id);
+    this.selected = report.filter((r) => isOpen(r) && !r.patch.optIn).map((r) => r.patch.id);
     this.stage = 'loaded';
   }
 
@@ -166,7 +168,7 @@ export class PatcherState {
     if (this.engine.reload) await this.engine.reload(loaded);
     if (this.loaded !== loaded) return;
     this.report = this.engine.listPatches(loaded);
-    const open = new Set(this.report.filter((r) => r.status === 'notApplied').map((r) => r.patch.id));
+    const open = new Set(this.report.filter(isOpen).map((r) => r.patch.id));
     this.selected = this.selected.filter((id) => open.has(id));
   }
 

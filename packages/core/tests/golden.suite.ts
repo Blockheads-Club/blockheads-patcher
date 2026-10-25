@@ -4,7 +4,7 @@ import { existsSync, rmSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync
 import { spawnSync } from 'node:child_process';
 import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { loadApk, listPatches, patchApk, MemoryKeystore, readZip, getEntry, defaultRegistry, createRegistry, fixWelcomePopupDeadlock, applyPatches, PatchError } from '../src/index';
+import { loadApk, listPatches, patchApk, MemoryKeystore, readZip, getEntry, defaultRegistry, createRegistry, fixWelcomePopupDeadlock, applyPatches, PatchError, RECORD_PATH } from '../src/index';
 
 const BT = join(homedir(), 'Android/Sdk/build-tools/35.0.0');
 const tools = existsSync(join(BT, 'apksigner')) && existsSync(join(BT, 'aapt2')) && existsSync(join(BT, 'zipalign'));
@@ -90,7 +90,9 @@ export function goldenSuite(version: string): void {
     it('all other entries are content-identical', () => {
       const a = readZip(input), b = readZip(output);
       const isSig = (n: string) => /^META-INF\/(MANIFEST\.MF|[^/]+\.(SF|RSA|DSA|EC)|SIG-.*)$/i.test(n);
-      const changed = (n: string) => n === 'AndroidManifest.xml';
+      // the manifest is patched, and every run adds the Patcher's own record
+      const changed = (n: string) => n === 'AndroidManifest.xml' || n === RECORD_PATH;
+      expect(getEntry(b, RECORD_PATH)).toBeDefined();
       const ea = a.entries.filter((e) => !isSig(e.name) && !changed(e.name));
       const eb = b.entries.filter((e) => !isSig(e.name) && !changed(e.name));
       expect(eb.map((e) => e.name)).toEqual(ea.map((e) => e.name));
@@ -139,8 +141,9 @@ export function goldenExtras(): void {
     it('only the manifest and classes.dex change', () => {
       const a = readZip(new Uint8Array(readFileSync(GUARD_APK.path))), b = readZip(output);
       const isSig = (n: string) => /^META-INF\/(MANIFEST\.MF|[^/]+\.(SF|RSA|DSA|EC)|SIG-.*)$/i.test(n);
-      const changed = b.entries.filter((e) => !isSig(e.name) && !sameContent(e, getEntry(a, e.name)!)).map((e) => e.name);
-      expect(changed.sort()).toEqual(['AndroidManifest.xml', 'classes.dex']);
+      const changed = b.entries.filter((e) => !isSig(e.name) && (!getEntry(a, e.name) || !sameContent(e, getEntry(a, e.name)!))).map((e) => e.name);
+      // plus the record every run adds
+      expect(changed.sort()).toEqual(['AndroidManifest.xml', 'assets/blockheads-patcher.json', 'classes.dex']);
     });
   });
 

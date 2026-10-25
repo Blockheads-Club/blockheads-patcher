@@ -42,6 +42,8 @@ export const PACK_LIMITS = {
 
 const ident = (max: number): Schema => ({ type: 'string', pattern: `^[a-z0-9](?:[a-z0-9._-]{0,${max - 2}}[a-z0-9])?$` });
 const semver: Schema = { type: 'string', pattern: '^(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})\\.(0|[1-9]\\d{0,5})$' };
+/** A pack's own version. Each part has at most 3 digits so that it maps onto a comparable patch version (see semverToVersion). */
+const packVersion: Schema = { type: 'string', pattern: '^(0|[1-9]\\d{0,2})\\.(0|[1-9]\\d{0,2})\\.(0|[1-9]\\d{0,2})$' };
 const localized = (max: number): Schema => ({
   type: 'object', required: ['en'], minProperties: 1, maxProperties: 32,
   propertyNames: { type: 'string', pattern: '^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$' },
@@ -127,7 +129,7 @@ export const PACK_SCHEMA: Schema = {
     $schema: { type: 'string', maxLength: 300, description: 'Optional, for editors; ignored.' },
     schemaVersion: { type: 'integer', const: PACK_SCHEMA_VERSION },
     id: ident(48),
-    version: semver,
+    version: packVersion,
     name: localized(80),
     description: localized(2000),
     author: { type: 'string', minLength: 1, maxLength: 120 },

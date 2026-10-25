@@ -142,7 +142,7 @@ Acceptance: `apksigner verify --verbose --print-certs out.apk` reports `Verified
 
 ```ts
 export interface ApkInfo { packageName: string; versionName?: string; versionCode?: number; sha256: string /* hex of input file */; }
-export type PatchStatus = 'applied' | 'notApplied' | 'incompatible';
+export type PatchStatus = 'applied' | 'notApplied' | 'incompatible' | 'outdated'; // outdated: an older output of the patch is in the APK (see development.md, Patch versions)
 export interface PatchAppliesTo {
   packageName: string;
   versionCode?: { min?: number; max?: number };
@@ -163,6 +163,7 @@ export interface Patch {
   nameKey: string;                // i18n key (app dictionaries), e.g. 'patch.fix-welcome-popup-deadlock.name'
   descriptionKey: string;         // i18n key
   appliesTo: PatchAppliesTo;
+  version: number;                             // current output version, integer; bump when the written bytes change
   detect(ctx: PatchContext): PatchStatus;      // pure, no mutation
   apply(ctx: PatchContext): void;              // throws PatchError if detect() !== 'notApplied'
 }
@@ -182,13 +183,13 @@ export const THEME_TRANSLUCENT_NO_TITLE_BAR_FULLSCREEN = 0x01030011;
 
 ```ts
 export interface LoadedApk { zip: ZipArchive; manifest: AxmlDocument; info: ApkInfo; }
-export type ApplicableReport = { patch: Patch; status: PatchStatus; reason?: string }[];
+export type ApplicableReport = { patch: Patch; status: PatchStatus; reason?: string; fromVersion?: number; canUpgrade?: boolean }[];
 export type Progress = (stage: 'read' | 'parse' | 'patch' | 'write' | 'sign' | 'done', fraction: number) => void;
 export function loadApk(bytes: Uint8Array): Promise<LoadedApk>;                   // computes sha256 with crypto.subtle; throws PatchError('not an APK' / 'no manifest')
 export function listPatches(apk: LoadedApk, registry?: PatchRegistry): ApplicableReport; // honours appliesTo (package, versionCode range, versionNames) -> 'incompatible' if outside, else patch.detect
-export function applyPatches(apk: LoadedApk, patchIds: string[], registry?: PatchRegistry): { applied: string[]; skipped: { id: string; status: PatchStatus }[] };
+export function applyPatches(apk: LoadedApk, patchIds: string[], registry?: PatchRegistry): { applied: string[]; upgraded: string[]; skipped: { id: string; status: PatchStatus }[] };
 export interface PatchApkOptions { patchIds: string[]; keystore: Keystore; registry?: PatchRegistry; onProgress?: Progress; }
-export interface PatchApkResult { bytes: Uint8Array; applied: string[]; skipped: { id: string; status: PatchStatus }[]; info: ApkInfo; certSha256: string; suggestedFileName: string /* e.g. 'blockheads-1.7.4-patched.apk' */; }
+export interface PatchApkResult { bytes: Uint8Array; applied: string[]; upgraded: string[]; skipped: { id: string; status: PatchStatus }[]; info: ApkInfo; certSha256: string; suggestedFileName: string /* e.g. 'blockheads-1.7.4-patched.apk' */; }
 /** Full flow: loadApk -> applyPatches -> serialize manifest into zip -> removeSignatureFiles -> signApk(keystore identity via getOrCreateIdentity). */
 export function patchApk(input: Uint8Array, opts: PatchApkOptions): Promise<PatchApkResult>;
 ```

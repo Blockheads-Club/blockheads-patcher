@@ -2,7 +2,8 @@
   import { t, lang } from '$lib/i18n';
   import { describeReason } from '$lib/errors';
   import { formatBytes, shortFingerprint } from '$lib/format';
-  import type { ApkInfo } from '@bh-patcher/core';
+  import type { ApkInfo, Patch, PatchStatus } from '@bh-patcher/core';
+  import { patchVersionText } from '$lib/versions';
   import type { MessageKey } from '$lib/i18n';
   import type { PatcherState } from '$lib/state.svelte';
   import type { KeysState } from '$lib/keys.svelte';
@@ -22,6 +23,10 @@
   function toggle(id: string, on: boolean) {
     s.selected = on ? [...s.selected.filter((x) => x !== id), id] : s.selected.filter((x) => x !== id);
   }
+  const updateText = (patch: Patch, from: number | undefined) =>
+    from === undefined ? $t('badge.updateTo', { to: patchVersionText(patch, patch.version) })
+      : $t('badge.update', { from: patchVersionText(patch, from), to: patchVersionText(patch, patch.version) });
+  const statusBadge = (status: PatchStatus): MessageKey => (status === 'applied' ? 'badge.applied' : status === 'outdated' ? 'badge.updateBlocked' : 'badge.notForVersion');
   const summary = (id: string) => `patch.${id}.summary` as MessageKey;
   /** Optional "when you need it" line of a patch (`patch.<id>.when`). */
   const when = (id: string) => `patch.${id}.when` as MessageKey;
@@ -78,8 +83,8 @@
     {#if s.resignOnly}
       <Card class="resign" role="note"><p>{$t('review.resignNote')}</p></Card>
     {/if}
-    {#each displayOrder(s.report) as { patch, status, reasonCode, reason } (patch.id)}
-      {#if status === 'notApplied'}
+    {#each displayOrder(s.report) as { patch, status, reasonCode, reason, fromVersion, canUpgrade } (patch.id)}
+      {#if status === 'notApplied' || (status === 'outdated' && canUpgrade)}
         <Card tag="label" class="patch" selected>
           <input type="checkbox" class="chk" checked={s.selected.includes(patch.id)} aria-describedby={`pd-${patch.id}`}
             onchange={(e) => toggle(patch.id, e.currentTarget.checked)} />
@@ -87,10 +92,12 @@
             <div class="pt">
               <span class="ptitle">{$t(patch.nameKey)}</span>
               {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{:else if patch.optIn}<Badge tone="info">{$t('badge.optional')}</Badge>{:else}<Badge tone="primary" icon="star">{$t('badge.recommended')}</Badge>{/if}
-              <Badge tone="ok" icon="check">{$t('badge.compatible')}</Badge>
+              {#if status === 'outdated'}<Badge tone="sun" icon="refresh">{updateText(patch, fromVersion)}</Badge>
+              {:else}<Badge tone="ok" icon="check">{$t('badge.compatible')}</Badge>{/if}
               {#if patch.optIn && patch.source}<Badge tone="info">{$t('review.optIn')}</Badge>{/if}
             </div>
             <p id={`pd-${patch.id}`} class="muted desc">{$t(summary(patch.id))}</p>
+            {#if status === 'outdated'}<p class="hint when">{$t('review.updateNote')}</p>{/if}
             <details class="more">
               <summary><Icon name="chev-d" size={16} />{$t('review.whatChanges')}</summary>
               {#if $t(when(patch.id)) !== when(patch.id)}<p class="hint when">{$t(when(patch.id))}</p>{/if}
@@ -102,15 +109,16 @@
         </Card>
       {:else}
         <Card class="patch off" muted aria-disabled="true">
-          <input type="checkbox" class="chk" disabled checked={status === 'applied'} aria-label={`${$t(patch.nameKey)} (${$t(status === 'applied' ? 'badge.applied' : 'badge.notForVersion')})`} />
+          <input type="checkbox" class="chk" disabled checked={status === 'applied'} aria-label={`${$t(patch.nameKey)} (${$t(statusBadge(status))})`} />
           <div class="pb">
             <div class="pt">
               <span class="ptitle off-t">{$t(patch.nameKey)}</span>
               {#if patch.source}<Badge tone="sun">{$t('badge.pack')}</Badge>{/if}
               {#if status === 'applied'}<Badge tone="info" icon="check">{$t('badge.applied')}</Badge>
+              {:else if status === 'outdated'}<Badge tone="warn" icon="ban">{$t('badge.updateBlocked')}</Badge>
               {:else}<Badge tone="bad" icon="ban">{$t('badge.notForVersion')}</Badge>{/if}
             </div>
-            <p class="muted desc">{status === 'applied' ? $t('review.appliedNote') : reasonCode ? describeReason($t, reasonCode) : reason}</p>
+            <p class="muted desc">{status === 'applied' ? $t('review.appliedNote') : status === 'outdated' ? $t('review.updateBlockedNote', { to: patchVersionText(patch, patch.version) }) : reasonCode ? describeReason($t, reasonCode) : reason}</p>
           </div>
         </Card>
       {/if}

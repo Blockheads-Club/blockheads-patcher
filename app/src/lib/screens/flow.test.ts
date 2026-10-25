@@ -304,3 +304,47 @@ describe('FailureScreen', () => {
     expect(screen.getByRole('button', { name: 'Copy log' })).toBeInTheDocument();
   });
 });
+
+describe('ReviewScreen: outdated patches', () => {
+  const outdated = (id: string, extra: object, patch: object = {}) => {
+    const r = row(id, 'outdated', extra);
+    Object.assign(r.patch, { version: 2, ...patch });
+    return r;
+  };
+  const show = async (report: unknown[]) => {
+    const { s, engine } = await loaded(report);
+    render(ReviewScreen, { state: s, keys: keysFor(engine), info: s.loaded!.info, file: { name: 'game.apk', size: 1 }, onchangekey: vi.fn() });
+    return s;
+  };
+
+  test('shows "Update: v1 → v2", selected by default, with a note that it replaces the older one', async () => {
+    const s = await show([outdated(W, { fromVersion: 1, canUpgrade: true })]);
+    expect(screen.getByText('Update: v1 → v2')).toBeInTheDocument();
+    expect(screen.queryByText('Compatible')).toBeNull();
+    expect(screen.getByText(/Patching replaces it with the current one/)).toBeInTheDocument();
+    expect(screen.getByText('Recommended')).toBeInTheDocument();
+    const cb = screen.getByRole('checkbox', { name: /Fix freeze/ });
+    expect(cb).toBeChecked();
+    expect(s.selected).toEqual([W]);
+    await fireEvent.click(cb);
+    expect(s.selected).toEqual([]);
+  });
+
+  test('uses the patch\'s own version labels, and says "Update to" when the old version is unknown', async () => {
+    await show([
+      outdated(W, { fromVersion: 3001, canUpgrade: true }, { version: 3002, versionLabel: (v: number) => `0.${Math.floor(v / 1000)}.${v % 1000}` }),
+      outdated(I, { canUpgrade: true }),
+    ]);
+    expect(screen.getByText('Update: 0.3.1 → 0.3.2')).toBeInTheDocument();
+    expect(screen.getByText('Update to v2')).toBeInTheDocument();
+  });
+
+  test('a patch that cannot be updated in place says it needs the original APK and cannot be ticked', async () => {
+    const s = await show([outdated(W, { fromVersion: 1, canUpgrade: false })]);
+    expect(screen.getByText('Update needs the original APK')).toBeInTheDocument();
+    expect(screen.getByText(/cannot be updated in place: patch the original game APK again to get v2/)).toBeInTheDocument();
+    const cb = screen.getByRole('checkbox', { name: /Fix freeze.*Update needs the original APK/ });
+    expect(cb).toBeDisabled();
+    expect(s.selected).toEqual([]);
+  });
+});

@@ -47,7 +47,7 @@ my-pack.bhpack
 | --- | --- | --- |
 | `schemaVersion` | required | `1` |
 | `id` | required | `[a-z0-9._-]`, 1–48 characters, starts and ends with a letter or digit; patch ids become `pack:<id>/<patchId>` |
-| `version` | required | `major.minor.patch` |
+| `version` | required | `major.minor.patch`, each part 0-999. It is the version of every patch in the pack: a game patched with an older version of the pack shows the patches as outdated, and (pack patches cannot be updated in place) they need the original game APK |
 | `name` | required | texts by language code, `en` required (`{ "en": "…", "tr": "…", "ru": "…", "kk": "…" }`) |
 | `description`, `author` | optional | |
 | `minPatcherVersion` | optional | the pack is refused by older Patchers |

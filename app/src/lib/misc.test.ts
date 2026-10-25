@@ -19,6 +19,10 @@ describe('errors', () => {
     expect(classifyError(42)).toEqual({ code: 'generic', params: { message: '42' } });
     expect(classifyError(null).code).toBe('generic');
   });
+  test('a patch that cannot be updated in place has its own message', () => {
+    const e = Object.assign(new Error('x'), { name: 'PatchError', code: 'needsOriginal', params: { id: 'doc' } });
+    expect(describeError(tt, e)).toContain('error.needsOriginal');
+  });
   test('describeError falls back to generic for unknown codes', () => {
     expect(describeError(tt, { name: 'PatchError', code: 'bogus', message: 'm' })).toContain('error.generic');
     expect(describeError(tt, new Error('x'))).toContain('error.generic');

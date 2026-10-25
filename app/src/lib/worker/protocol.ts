@@ -4,7 +4,7 @@ import type { ApkInfo, PatchReason, PatchStatus, SigningIdentity } from '@bh-pat
 export type ProgressStage = 'read' | 'parse' | 'patch' | 'write' | 'sign' | 'done';
 
 /** Serializable form of one ApplicableReport row (the Patch object itself holds functions). */
-export interface ReportRow { id: string; status: PatchStatus; reason?: string; reasonCode?: PatchReason }
+export interface ReportRow { id: string; status: PatchStatus; reason?: string; reasonCode?: PatchReason; fromVersion?: number; canUpgrade?: boolean }
 
 export interface WireError { name: string; message: string; code?: string; params?: Record<string, string | number> }
 
@@ -26,5 +26,5 @@ export type Response =
   | { t: 'packs'; id: number }
   | { t: 'modLoader'; id: number }
   | { t: 'progress'; id: number; stage: ProgressStage; fraction: number }
-  | { t: 'patched'; id: number; bytes: Uint8Array; applied: string[]; skipped: { id: string; status: PatchStatus }[]; info: ApkInfo; certSha256: string; suggestedFileName: string }
+  | { t: 'patched'; id: number; bytes: Uint8Array; applied: string[]; upgraded: string[]; skipped: { id: string; status: PatchStatus }[]; info: ApkInfo; certSha256: string; suggestedFileName: string }
   | { t: 'error'; id: number; error: WireError };

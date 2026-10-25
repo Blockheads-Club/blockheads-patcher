@@ -1,8 +1,8 @@
 import type { CodeBuilder, DexClass, DexFile } from '../dex';
 import { editDex, openDexSet } from './dex-support';
-import { PatchError, type Patch, type PatchContext, type PatchCredits, type PatchStatus } from './types';
+import { PatchError, applyVersioning, type Patch, type PatchContext, type PatchCredits, type PatchStatus, type PatchVersioning } from './types';
 
-export interface MethodRewriteSpec {
+export interface MethodRewriteSpec extends PatchVersioning {
   id: string;
   credits?: PatchCredits;
   optIn?: boolean;
@@ -45,7 +45,7 @@ export function makeMethodRewritePatch(spec: MethodRewriteSpec): Patch {
     if (same(t.code.insns, spec.patched(t.dex).build(t.ins).insns)) return 'applied';
     return same(t.code.insns, spec.original(t.dex).build(t.ins).insns) ? 'notApplied' : 'incompatible';
   };
-  return {
+  return applyVersioning({
     id: spec.id,
     version: 1,
     nameKey: `patch.${spec.id}.name`,
@@ -65,5 +65,5 @@ export function makeMethodRewritePatch(spec: MethodRewriteSpec): Patch {
       });
       ctx.log(spec.logMessage);
     },
-  };
+  }, spec);
 }

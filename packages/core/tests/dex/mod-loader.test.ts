@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { DexFile } from '../../src/dex';
 import {
   MOD_LOADER_LIB_PATH, MOD_LOADER_LISTENER, MOD_LOADER_LISTENER_CLASS, MOD_LOADER_PIN, PatchError, defaultRegistry,
-  modLoader, modLoaderArtifact, modLoaderFileName, parseModLoaderZip, setModLoaderArtifact, sha256HexSync,
+  modLoader, modLoaderArtifact, KNOWN_LOADER_LIBS, semverToVersion, modLoaderFileName, parseModLoaderZip, setModLoaderArtifact, sha256HexSync,
   RESERVED_CLASS_PREFIXES, type ModLoaderPin, type PatchContext,
 } from '../../src';
 import { findElementsByName, getAttr, parseAxml } from '../../src/axml';
@@ -85,7 +85,9 @@ describe('mod loader zip', () => {
     bad(new Uint8Array([1, 2, 3]), null, /not a zip/);
     bad(loaderZip({ json: null }), null, /loader.json is missing/);
     bad(loaderZip({ json: '{nope' }), null, /not JSON/);
-    bad(loaderZip({ json: '{"version": 1}' }), null, /does not describe/);
+    bad(loaderZip({ json: '{"version": 1}' }), null, /no major.minor.patch/);
+    bad(loaderZip({ version: 'x.y' }), null, /no major.minor.patch/);
+    bad(loaderZip({ json: '{"version": "0.1.0"}' }), null, /does not describe/);
     const v2 = loaderZip({ version: '0.2.0' });
     bad(v2, pinOf(v2, '0.1.0'), /pin says 0.1.0/);
     bad(loaderZip({ drop: 'lib' }), null, /libbhmodloader.so is missing/);
@@ -125,7 +127,7 @@ describe('mod-loader patch', () => {
     expect(() => modLoader.apply(c)).toThrow(/status: applied/);
     // without a build at hand, the pinned build is the reference: a different installed loader is out of date
     setModLoaderArtifact(null);
-    expect(modLoader.detect(c)).toBe('notApplied');
+    expect(modLoader.detect(c)).toBe('outdated');
     // ... and the pinned build itself counts as applied without loading anything
     const pin = MOD_LOADER_PIN, saved = { lib: pin.libSha256, dex: pin.dexSha256 };
     try {
@@ -142,12 +144,43 @@ describe('mod-loader patch', () => {
     modLoader.apply(c);
     const newDex = loaderDex([{ name: 'Lcom/blockheadsclub/modloader/New;', super: 'Ljava/lang/Object;' }]);
     setModLoaderArtifact(parseModLoaderZip(loaderZip({ lib: ELF(2), dex: newDex }), null));
-    expect(modLoader.detect(c)).toBe('notApplied');
-    modLoader.apply(c);
+    expect(modLoader.detect(c)).toBe('outdated');
+    expect(() => modLoader.apply(c)).toThrow(/status: outdated/);
+    modLoader.upgrade!(c, undefined);
     expect(c.dirty()).toBe(1);
     expect(getEntry(c.zip, MOD_LOADER_LIB_PATH)!.data).toEqual(ELF(2));
     expect(getEntry(c.zip, 'classes3.dex')!.data).toEqual(newDex);
     expect(getEntry(c.zip, 'classes4.dex')).toBeUndefined();
+    expect(modLoader.detect(c)).toBe('applied');
+    expect(() => modLoader.upgrade!(c, undefined)).toThrow(/status: applied/);
+  });
+
+  it('versions follow the loader build and the lib hash names an older one', () => {
+    expect(modLoader.version).toBe(semverToVersion(MOD_LOADER_PIN.version));
+    expect(modLoader.versionLabel!(modLoader.version)).toBe(MOD_LOADER_PIN.version);
+    setModLoaderArtifact(parseModLoaderZip(loaderZip({ version: '0.2.5' }), null));
+    expect(modLoader.version).toBe(2005);
+    const c = ctxOf(gameDex());
+    expect(modLoader.installedVersion!(c)).toBeUndefined();
+    setEntry(c.zip, { name: MOD_LOADER_LIB_PATH, data: ELF(9) });
+    expect(modLoader.installedVersion!(c)).toBeUndefined();
+    // a lib the Patcher shipped earlier (the real table lists the shipped builds' hashes)
+    expect(Object.values(KNOWN_LOADER_LIBS)).toEqual(['0.3.0', MOD_LOADER_PIN.version]);
+    const saved = KNOWN_LOADER_LIBS as Record<string, string>;
+    saved[sha256HexSync(ELF(9))] = '0.1.5';
+    try { expect(modLoader.installedVersion!(c)).toBe(semverToVersion('0.1.5')); } finally { delete saved[sha256HexSync(ELF(9))]; }
+  });
+
+  it('a stale dex alone (library missing or current) is outdated too', () => {
+    setModLoaderArtifact(parseModLoaderZip(loaderZip(), null));
+    const c = ctxOf(gameDex());
+    modLoader.apply(c);
+    const staleDex = loaderDex([{ name: 'Lcom/blockheadsclub/modloader/Old;', super: 'Ljava/lang/Object;' }]);
+    setEntry(c.zip, { name: 'classes3.dex', data: staleDex });
+    expect(modLoader.detect(c)).toBe('outdated');
+    c.zip.entries = c.zip.entries.filter((e) => e.name !== MOD_LOADER_LIB_PATH);
+    expect(modLoader.detect(c)).toBe('outdated');
+    modLoader.upgrade!(c, undefined);
     expect(modLoader.detect(c)).toBe('applied');
   });
 
