@@ -11,6 +11,8 @@ import { signsLowercase } from './signs-lowercase';
 import { fixWebviewCrash } from './fix-webview-crash';
 import { fixConfigChangeCrash } from './fix-config-change-crash';
 import { immersiveFullscreen } from './immersive-fullscreen';
+import { removeMaxAspect } from './remove-max-aspect';
+import { restartOnResize } from './restart-on-resize';
 import { fixEmailShareLink } from './fix-email-share-link';
 import { fixJoinLinks } from './fix-join-links';
 import { musicWithOtherApps } from './music-with-other-apps';
@@ -54,5 +56,6 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   signEditorCentred, lanMulticast, tabletLayout,
   musicResume, menuMusicLoop, worldSelectionKeep,
   gamepadControls,
+  removeMaxAspect, restartOnResize,
   modLoader,
 ]);

@@ -17,6 +17,8 @@ export { GAME_LIB_PATH, GAME_V174, GAME_V175, GAME_V176 } from './game-versions'
 export { signsLowercase } from './signs-lowercase';
 export { fixWebviewCrash, GUARD_CLASS } from './fix-webview-crash';
 export { fixConfigChangeCrash, LOOP_GUARD_CLASS, WRONG_THREAD_EXCEPTION } from './fix-config-change-crash';
+export { removeMaxAspect, MAX_ASPECT_META } from './remove-max-aspect';
+export { restartOnResize, SCREEN_RESTART_CLASS, RESTART_ACTIVITY_CLASS, RESTART_ACTIVITY_NAME, RESTART_MIN_DP } from './restart-on-resize';
 export { immersiveFullscreen, IMMERSIVE_CLASS, IMMERSIVE_MIN_API } from './immersive-fullscreen';
 export { fixEmailShareLink, MAIL_FIX_CLASS } from './fix-email-share-link';
 export { fixJoinLinks, joinLinkFilters, JOIN_SCHEME, JOIN_HOSTS, JOIN_PATH } from './fix-join-links';

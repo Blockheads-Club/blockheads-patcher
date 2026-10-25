@@ -5,7 +5,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DexFile, validateDex } from '../../src/dex';
 import {
-  applyPatches, defaultRegistry, fixConfigChangeCrash, fixEmailShareLink, gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, fixWebviewCrash, IMMERSIVE_CLASS, listPatches, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
+  applyPatches, defaultRegistry, fixConfigChangeCrash, fixEmailShareLink, gamepadControls, GAMEPAD_CLASS, WINDOW_DIALOG_CLASS, fixWebviewCrash, IMMERSIVE_CLASS, listPatches, LOOP_GUARD_CLASS, lanMulticast, loadApk, signEditorCentred, tabletLayout, GUARD_CLASS, SCREEN_RESTART_CLASS, MAIL_FIX_CLASS, MULTICAST_CLASS, MULTICAST_PERMISSION, TABLET_CLASS,
   type PatchContext,
 } from '../../src';
 import { findElementsByName } from '../../src/axml';
@@ -219,7 +219,7 @@ export function realGameSuite(version: string): void {
       // the mod loader needs its build: a synthetic one (fake library, a dex with the listener class)
       setModLoaderArtifact(parseModLoaderZip(fakeLoaderZip(), null));
       const ids = listPatches(apk).filter((r) => r.status === 'notApplied').map((r) => r.patch.id);
-      expect(ids).toEqual(expect.arrayContaining(['immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash', 'mod-loader']));
+      expect(ids).toEqual(expect.arrayContaining(['remove-max-aspect', 'restart-on-resize', 'immersive-fullscreen', 'gamepad-controls', 'fix-config-change-crash', 'mod-loader']));
       await yieldToRunner();
     const { applied, skipped } = applyPatches(apk, ids);
     await yieldToRunner();
@@ -242,6 +242,8 @@ export function realGameSuite(version: string): void {
             expect(calls('onCreate', ['Landroid/os/Bundle;'], LOOP_GUARD_CLASS)).toBe(true);
             expect(calls('onResume', [], MULTICAST_CLASS)).toBe(true);
             expect(calls('hideSystemUI', [], IMMERSIVE_CLASS)).toBe(true);
+            expect(calls('onCreate', ['Landroid/os/Bundle;'], SCREEN_RESTART_CLASS)).toBe(true);
+            expect(calls('onConfigurationChanged', ['Landroid/content/res/Configuration;'], SCREEN_RESTART_CLASS)).toBe(true);
             expect(calls('onConfigurationChanged', ['Landroid/content/res/Configuration;'], IMMERSIVE_CLASS)).toBe(true);
           }
           const dialog = dex.findClass(WINDOW_DIALOG_CLASS);
