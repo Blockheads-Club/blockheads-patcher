@@ -29,7 +29,7 @@ pub(crate) async fn update_download<R: Runtime>(
     url: String,
     name: String,
     size: u64,
-    sums_url: Option<String>,
+    sums_url: String,
 ) -> Result<Value> {
     app.apk_tools().call("update_download", json!({ "url": url, "name": name, "size": size, "sumsUrl": sums_url }))
 }

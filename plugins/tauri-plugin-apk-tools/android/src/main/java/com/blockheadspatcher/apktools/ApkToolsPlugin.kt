@@ -143,7 +143,7 @@ class ApkToolsPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun update_download(invoke: Invoke) {
         val args = invoke.parseArgs(UpdateArgs::class.java)
-        val err = UpdateDownloader.start(workDir, args.url, args.name, args.size, args.sumsUrl)
+        val err = UpdateDownloader.start(workDir, args.url, args.name, args.size, args.sumsUrl?.ifEmpty { null })
         if (err != null) invoke.reject(err) else invoke.resolve(JSObject())
     }
 

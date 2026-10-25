@@ -46,8 +46,8 @@ export interface UpdateDownloadStatus {
   path: string;
   error: string;
 }
-/** `sumsUrl`: the release's SHA256SUMS.txt; the download fails when the file's SHA-256 is not listed there. */
+/** `sumsUrl`: the release's SHA256SUMS.txt (omitted or empty = size check only); the download fails when the file's SHA-256 is not listed there. */
 export const updateDownload = (url: string, name: string, size: number, sumsUrl?: string) =>
-  invoke<void>(cmd('update_download'), { url, name, size, sumsUrl });
+  invoke<void>(cmd('update_download'), { url, name, size, sumsUrl: sumsUrl ?? '' });
 export const updateStatus = () => invoke<UpdateDownloadStatus>(cmd('update_status'), {});
 export const updateCancel = () => invoke<void>(cmd('update_cancel'), {});

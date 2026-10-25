@@ -160,7 +160,7 @@ mod tests {
     fn every_command_rejects_unsupported_on_desktop() {
         let (_app, window) = setup();
         for cmd in COMMANDS {
-            let body = json!({ "packageName": "com.example", "path": "/x.apk", "url": "https://x", "name": "n.apk", "size": 1 });
+            let body = json!({ "packageName": "com.example", "path": "/x.apk", "url": "https://x", "name": "n.apk", "size": 1, "sumsUrl": "" });
             assert_eq!(invoke(&window, cmd, body).unwrap_err(), json!("unsupported"), "{cmd}");
         }
     }
@@ -171,6 +171,18 @@ mod tests {
         for cmd in COMMANDS {
             let err = invoke(&window, cmd, json!({})).unwrap_err();
             assert!(err == json!("unsupported") || err.as_str().unwrap().contains("missing required key"), "{cmd}: {err}");
+        }
+    }
+
+    #[test]
+    fn update_download_rejects_each_missing_argument() {
+        let (_app, window) = setup();
+        let full = json!({ "url": "https://x", "name": "n.apk", "size": 1, "sumsUrl": "" });
+        for key in ["url", "name", "size", "sumsUrl"] {
+            let mut body = full.clone();
+            body.as_object_mut().unwrap().remove(key);
+            let err = invoke(&window, "update_download", body).unwrap_err();
+            assert!(err.as_str().unwrap().contains(&format!("missing required key {key}")), "{key}: {err}");
         }
     }
 
