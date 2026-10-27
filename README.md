@@ -18,7 +18,7 @@
 ---
 
 ## 🚀 Project Status
-**Current Status:** Alpha (v0.3.3 pre-release). Usable, but test the patched game before you rely on it.
+**Current Status:** Alpha (v0.4.0 pre-release). Usable, but test the patched game before you rely on it.
 
 The Patcher takes **your own copy** of The Blockheads for Android and gives you back a fixed copy to install. It fixes
 the freeze on the "WELCOME TO ...!" popup when joining a server on Android 10+, several crashes and freezes, and adds

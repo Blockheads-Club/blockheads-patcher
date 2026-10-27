@@ -1,6 +1,6 @@
 {
   "name": "@bh-patcher/tauri-plugin-apk-tools-api",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "main": "./guest-js/index.ts",
