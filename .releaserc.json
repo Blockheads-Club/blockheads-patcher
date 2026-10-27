@@ -1,0 +1,46 @@
+{
+  "branches": ["dev"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "bun scripts/set-version.ts ${nextRelease.version}",
+        "successCmd": "echo \"tag=${nextRelease.gitTag}\" >> \"$GITHUB_OUTPUT\""
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "README.md",
+          "app/package.json",
+          "packages/core/package.json",
+          "plugins/tauri-plugin-apk-tools/package.json",
+          "packages/core/src/version.ts",
+          "packages/core/tests/pipeline.test.ts",
+          "app/src/routes/boot.test.ts",
+          "app/src-tauri/tauri.conf.json",
+          "app/src-tauri/Cargo.toml",
+          "plugins/tauri-plugin-apk-tools/Cargo.toml",
+          "app/src-tauri/Cargo.lock",
+          "plugins/tauri-plugin-apk-tools/Cargo.lock",
+          "bun.lock"
+        ],
+        "message": "chore(release): v${nextRelease.version}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "draftRelease": true,
+        "successComment": false,
+        "failComment": false,
+        "failTitle": false,
+        "releasedLabels": false
+      }
+    ]
+  ]
+}

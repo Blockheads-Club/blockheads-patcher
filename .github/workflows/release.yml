@@ -1,8 +1,9 @@
 name: release
 
-# Push a tag `vX.Y.Z` (or `vX.Y.Z-pre.N`) to build every bundle and attach it to a DRAFT GitHub release for that tag.
-# Publish the draft by hand once CI is green. Manual runs (workflow_dispatch) take the tag as input; with an empty tag
-# they build the dispatched commit as a dry run (artifacts + SHA256SUMS.txt only, no release is touched).
+# Releases are cut by auto-release.yml: it tags the version and dispatches this workflow with `publish`, which builds
+# every bundle, attaches it to the release and publishes it. A pushed tag `vX.Y.Z` (or `vX.Y.Z-pre.N`) builds into a
+# DRAFT GitHub release that is published by hand. Manual runs (workflow_dispatch) take the tag as input; with an empty
+# tag they build the dispatched commit as a dry run (artifacts + SHA256SUMS.txt only, no release is touched).
 on:
   push:
     tags: ['v*']
@@ -12,6 +13,11 @@ on:
         description: 'Existing tag to build and attach (e.g. v0.1.0); empty = dry run of the dispatched commit'
         required: false
         default: ''
+      publish:
+        description: 'Publish the release once every bundle is attached (and rebuild the website)'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -248,6 +254,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -302,3 +309,13 @@ jobs:
           else
             gh release create "$TAG" dist-release/* --draft $pre --verify-tag --title "$TAG" --generate-notes -R "$GITHUB_REPOSITORY"
           fi
+      # A release published with GITHUB_TOKEN starts no `release: published` workflow, so the website rebuild is
+      # dispatched here.
+      - name: Publish the release and rebuild the website
+        if: needs.version.outputs.tag != '' && inputs.publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          gh release edit "$TAG" --draft=false -R "$GITHUB_REPOSITORY"
+          gh workflow run website-rebuild.yml -R "$GITHUB_REPOSITORY" --ref dev

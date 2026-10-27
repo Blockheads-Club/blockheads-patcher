@@ -127,7 +127,8 @@ the nearest `404.html` for unknown `/patcher/*` paths) and copies `index.html` t
 
 ### Website rebuild on release
 
-`.github/workflows/website-rebuild.yml` runs when a release is **published** (and by hand) and POSTs to the website
+`.github/workflows/website-rebuild.yml` runs when a release is **published** (by hand, or dispatched by `release.yml`
+after an automatic release) and POSTs to the website
 Worker's Cloudflare deploy hook, stored as the repository secret `WEBSITE_DEPLOY_HOOK`; without the secret it only
 logs a notice. Create the hook in the Cloudflare dashboard (Workers & Pages → `blockheads-club-website` → Settings →
 Builds → Deploy Hooks, branch = the website's production branch) and add its URL under this repo's Settings → Secrets
@@ -139,9 +140,15 @@ running; Playwright reuses the server).
 
 ## Releases
 
-Push a signed tag `vX.Y.Z` on `dev` (versions follow `app/package.json`, `app/src-tauri/Cargo.toml` and
-`tauri.conf.json`). `release.yml` (on a `v*` tag, or manual with the tag as input) builds every bundle and attaches it to
-a **draft** GitHub release for that tag (marked prerelease only for `-pre` tags such as `v0.2.0-rc.1`); publish the draft once CI is green.
+Releases are automatic (semantic-release, `.releaserc.json`). When `ci` passes for a push to `dev`,
+`auto-release.yml` reads the Conventional Commits since the last `v*` tag: `fix`/`perf` cut a patch release, `feat` a
+minor one, `BREAKING CHANGE` a major one; other types cut none. It sets the version in every file that carries it
+(`scripts/set-version.ts`), commits `chore(release): vX.Y.Z`, tags it, opens a draft release with the generated notes
+and dispatches `release.yml` with `publish`, which builds every bundle, attaches it, publishes the release and rebuilds
+the website. Edit the release notes on GitHub afterwards if they need a `## What's new` section.
+
+By hand: a pushed tag `vX.Y.Z` (or a manual `release.yml` run with the tag as input) builds into a **draft** GitHub
+release (marked prerelease only for `-pre` tags such as `v0.2.0-rc.1`) to publish once CI is green.
 A manual run with an empty tag is a dry run of the dispatched commit: it uploads the bundles as workflow artifacts only.
 
 - Windows x64 + arm64: NSIS `.exe` + `.msi`; Linux x64 + arm64: `.AppImage`, `.deb`, `.rpm` (built on Ubuntu 22.04)
