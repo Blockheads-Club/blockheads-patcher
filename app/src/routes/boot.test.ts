@@ -63,7 +63,7 @@ test('desktop: pushes the boot state to the splash window and reveals the main w
   host.kind = 'tauri-desktop';
   render(Page);
   await waitFor(() => expect(ipc.mainReady).toHaveBeenCalledTimes(1));
-  expect(ipc.set).toHaveBeenCalledWith({ boot: 'loading', error: '', version: '0.4.0', lang: 'en' });
+  expect(ipc.set).toHaveBeenCalledWith({ boot: 'loading', error: '', version: '0.5.0', lang: 'en' });
   expect((await screen.findAllByRole('heading')).length).toBeGreaterThan(0);
 });
 
