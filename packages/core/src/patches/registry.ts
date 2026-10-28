@@ -30,6 +30,7 @@ import { menuMusicLoop } from './menu-music-loop';
 import { worldSelectionKeep } from './world-selection-keep';
 import { gamepadControls } from './gamepad-controls';
 import { modLoader } from './mod-loader';
+import { recordAudio } from './record-audio';
 import { PatchError, type Patch, type PatchRegistry } from './types';
 
 export function createRegistry(patches: Patch[] = []): PatchRegistry {
@@ -57,5 +58,5 @@ export const defaultRegistry: PatchRegistry = createRegistry([
   musicResume, menuMusicLoop, worldSelectionKeep,
   gamepadControls,
   removeMaxAspect, restartOnResize,
-  modLoader,
+  modLoader, recordAudio,
 ]);

@@ -202,6 +202,7 @@ describe('listPatches / applyPatches', () => {
       ['remove-max-aspect', 'applied'],
       ['restart-on-resize', 'incompatible'],
       ['mod-loader', 'incompatible'],
+      ['record-audio', 'notApplied'],
     ]);
     expect(defaultRegistry.get('fix-welcome-popup-deadlock')).toBe(fixWelcomePopupDeadlock);
   });
