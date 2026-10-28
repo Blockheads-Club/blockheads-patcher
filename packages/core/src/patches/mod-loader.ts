@@ -26,21 +26,22 @@ export interface ModLoaderPin {
 
 /** The loader build this Patcher version installs. */
 export const MOD_LOADER_PIN: ModLoaderPin = {
-  version: '0.4.0',
-  url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.4.0/bhmod-android-loader-0.4.0.zip',
-  sha256: 'baadd5f55192a31d8f69b92238951d6c5253452c3e90b7ca67fdea972c137d14',
-  size: 13583608,
-  libSha256: 'ac2169ee783b3a29fcac18982ac5e634344e951c7e1d4b54a583dbcc2d0821ce',
-  dexSha256: '575a3248cdaff16a8df06f166c046443f178bf1f6a9b0cc3e4631da439f860da',
+  version: '0.4.1',
+  url: 'https://github.com/Blockheads-Club/mod-sdk/releases/download/v0.4.1/bhmod-android-loader-0.4.1.zip',
+  sha256: '7f80d859e677e77d48c11bc450875410019ae24e277ca0c600c81381c209c562',
+  size: 13580604,
+  libSha256: '2b81ef708806639ad238bc5e86d67d2e58b787917ae615aa4353f18664da7828',
+  dexSha256: 'bbc4f1de7d4c5a19696761f07a54617018a9cec2c2e3c516022a91a75cd92329',
 };
 
 /**
  * `libbhmodloader.so` hashes of earlier loader builds the Patcher shipped, by version. They let an APK without a
- * record say which loader it carries ("Update: 0.3.1 to 0.4.0"); a build that is not listed still counts as older.
+ * record say which loader it carries ("Update: 0.4.0 to 0.4.1"); a build that is not listed still counts as older.
  */
 export const KNOWN_LOADER_LIBS: Readonly<Record<string, string>> = {
   '2083a5a1134dcacaff5c555de6f9e72817a48b6a414b643f503eab08d2499a6e': '0.3.0',
   '0ae8b8a293f0d8b96e18100878a8b2f515042973d47b8e4434a8ad5d85dec662': '0.3.1',
+  'ac2169ee783b3a29fcac18982ac5e634344e951c7e1d4b54a583dbcc2d0821ce': '0.4.0',
   [MOD_LOADER_PIN.libSha256]: MOD_LOADER_PIN.version,
 };
 

@@ -165,7 +165,7 @@ describe('mod-loader patch', () => {
     setEntry(c.zip, { name: MOD_LOADER_LIB_PATH, data: ELF(9) });
     expect(modLoader.installedVersion!(c)).toBeUndefined();
     // a lib the Patcher shipped earlier (the real table lists the shipped builds' hashes)
-    expect(Object.values(KNOWN_LOADER_LIBS)).toEqual(['0.3.0', '0.3.1', MOD_LOADER_PIN.version]);
+    expect(Object.values(KNOWN_LOADER_LIBS)).toEqual(['0.3.0', '0.3.1', '0.4.0', MOD_LOADER_PIN.version]);
     const saved = KNOWN_LOADER_LIBS as Record<string, string>;
     saved[sha256HexSync(ELF(9))] = '0.1.5';
     try { expect(modLoader.installedVersion!(c)).toBe(semverToVersion('0.1.5')); } finally { delete saved[sha256HexSync(ELF(9))]; }
