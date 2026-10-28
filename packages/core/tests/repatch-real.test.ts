@@ -42,11 +42,11 @@ describe.skipIf(!haveApk(path))('re-patching an already patched real game', () =
     expect(bareRow).toMatchObject({ status: 'outdated', fromVersion: v030, canUpgrade: true });
 
     // the current Patcher
-    setModLoaderArtifact(parseModLoaderZip(loaderZip('0.3.1')));
+    setModLoaderArtifact(parseModLoaderZip(loaderZip('0.4.0')));
     const cur = await patchApk(old.bytes, { patchIds: open(oldReport), keystore: ks });
     expect(cur.skipped).toEqual([]);
     expect(cur.upgraded).toEqual(['mod-loader']);
-    expect(readRecord(readZip(cur.bytes))?.patches['mod-loader']).toBe(semverToVersion('0.3.1'));
+    expect(readRecord(readZip(cur.bytes))?.patches['mod-loader']).toBe(semverToVersion('0.4.0'));
     setModLoaderArtifact(null);
     const curReport = listPatches(await loadApk(cur.bytes));
     expect(open(curReport).filter((i) => !curReport.find((r) => r.patch.id === i)!.patch.optIn)).toEqual([]);
